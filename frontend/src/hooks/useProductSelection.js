@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from "react";
-import { getCheckboxChecked } from "../utils/fieldEvent";
 
 export function useProductSelection(filteredProducts) {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
@@ -10,14 +9,14 @@ export function useProductSelection(filteredProducts) {
     () =>
       filteredProducts.length > 0 &&
       filteredProducts.every((product) => selectedIds.has(product.id)),
-    [filteredProducts, selectedIds],
+    [filteredProducts, selectedIds]
   );
 
   const someFilteredSelected = useMemo(
     () =>
       filteredProducts.some((product) => selectedIds.has(product.id)) &&
       !allFilteredSelected,
-    [filteredProducts, selectedIds, allFilteredSelected],
+    [filteredProducts, selectedIds, allFilteredSelected]
   );
 
   const toggleProduct = useCallback((productId, checked) => {
@@ -46,7 +45,7 @@ export function useProductSelection(filteredProducts) {
         return next;
       });
     },
-    [filteredProducts],
+    [filteredProducts]
   );
 
   const clearSelection = useCallback(() => {
@@ -55,7 +54,7 @@ export function useProductSelection(filteredProducts) {
 
   const isSelected = useCallback(
     (productId) => selectedIds.has(productId),
-    [selectedIds],
+    [selectedIds]
   );
 
   const getSelectedIds = useCallback(() => [...selectedIds], [selectedIds]);
