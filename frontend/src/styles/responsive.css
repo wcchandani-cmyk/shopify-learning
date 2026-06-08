@@ -1,0 +1,172 @@
+/* Global layout */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body,
+#root,
+.app-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body {
+  margin: 0;
+}
+
+.products-table-host {
+  width: 100%;
+}
+
+.page-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  min-height: 8rem;
+}
+
+/* Rich text editor — match Polaris / form field typography */
+.product-rich-text-editor {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  font-family: inherit;
+}
+
+.product-rich-text-editor .ql-toolbar {
+  flex-wrap: wrap;
+  border-radius: 0.5rem 0.5rem 0 0;
+  font-family: inherit;
+}
+
+.product-rich-text-editor .ql-container {
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: #303030;
+}
+
+.product-rich-text-editor .ql-editor {
+  min-height: 8rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: #303030;
+}
+
+/* Override Quill defaults and pasted inline font-family */
+.product-rich-text-editor .ql-editor,
+.product-rich-text-editor .ql-editor * {
+  font-family: inherit;
+}
+
+.product-rich-text-editor .ql-editor h1 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.product-rich-text-editor .ql-editor h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.product-rich-text-editor .ql-editor h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.product-rich-text-editor .ql-editor.ql-blank::before {
+  color: #6d7175;
+  font-style: normal;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+/* Media upload */
+.product-media-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.product-media-upload > s-stack {
+  flex-wrap: wrap;
+}
+
+.product-media-upload__item {
+  position: relative;
+  display: inline-flex;
+}
+
+.product-media-upload__remove {
+  position: absolute;
+  top: -6px;
+  inset-inline-end: -6px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.product-media-upload__remove:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+/* Product detail: one column by default; two columns when container is wide */
+.product-detail-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  width: 100%;
+  min-width: 0;
+}
+
+@container product-detail (inline-size >= 48rem) {
+  .product-detail-layout {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.product-detail-layout__main,
+.product-detail-layout__aside {
+  min-width: 0;
+}
+
+/* Product detail: title + status pill (Shopify admin style) */
+.product-detail-page-header {
+  padding: 0.125rem 0 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.product-detail-page-header__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #303030;
+}

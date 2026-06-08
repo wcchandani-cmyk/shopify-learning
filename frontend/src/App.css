@@ -1,0 +1,5 @@
+/* App-level theme; layout responsiveness is in styles/responsive.css */
+body {
+  margin: 0;
+  background: #f1f2f4;
+}
