@@ -1,0 +1,35 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "740db51f5f9a3dde074c1262c2ba19ae"
+name = "chandani"
+application_url = "https://wfldb5t2-3000.inc1.devtunnels.ms"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = false
+
+[webhooks]
+api_version = "2026-07"
+
+# Backend tunnel (port 5000) — update host to match WEBHOOK_URI in backend .env
+[[webhooks.subscriptions]]
+topics = ["products/create"]
+uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/create"
+
+[[webhooks.subscriptions]]
+topics = ["products/update"]
+uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/update"
+
+[[webhooks.subscriptions]]
+topics = ["products/delete"]
+uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/delete"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/app/uninstalled"
+
+[access_scopes]
+scopes = "write_products,read_products,write_inventory,read_inventory"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
