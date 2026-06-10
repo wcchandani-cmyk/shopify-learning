@@ -27,4 +27,14 @@ const SHOP_QUERY = `
   }
 `;
 
-module.exports = { SHOP_QUERY };
+const SHOP_LOCALES_QUERY = `
+  query ShopLocales {
+    shopLocales {
+      locale
+      primary
+      published
+    }
+  }
+`;
+
+module.exports = { SHOP_QUERY, SHOP_LOCALES_QUERY };

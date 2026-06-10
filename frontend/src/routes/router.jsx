@@ -3,10 +3,18 @@ import HomePage from "../pages/HomePage";
 import ProductDetailPage from "../pages/ProductDetailPage";
 import ProductVariantPage from "../pages/ProductVariantPage";
 import ProductsPage from "../pages/ProductsPage";
+import CustomersPage from "../pages/CustomersPage";
+import CompaniesPage from "../pages/CompaniesPage";
+import CompanyDetailPage from "../pages/CompanyDetailPage";
+import CustomerDetailPage from "../pages/CustomerDetailPage";
 
 export const appRouter = createBrowserRouter([
   { path: "/", element: <HomePage /> },
   { path: "/products", element: <ProductsPage /> },
   { path: "/products/:id/variants/new", element: <ProductVariantPage /> },
   { path: "/products/:id", element: <ProductDetailPage /> },
+  { path: "/customers", element: <CustomersPage /> },
+  { path: "/companies", element: <CompaniesPage /> },
+  { path: "/companies/:id", element: <CompanyDetailPage /> },
+  { path: "/customers/:id", element: <CustomerDetailPage /> },
 ]);

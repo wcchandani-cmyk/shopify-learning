@@ -1,0 +1,680 @@
+/* Default address card (collapsed, Shopify-style) */
+.address-add-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d9dbde;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.address-add-card:hover {
+  background: #f7f7f7;
+  border-color: #c9cccf;
+}
+
+.address-add-card__left {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.address-add-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1.5px solid #8c9196;
+  color: #5c5f62;
+  font-size: 15px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.address-add-card__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address-add-card__chevron {
+  color: #8c9196;
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+/* Phone field with country calling-code selector */
+.phone-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.phone-field__label {
+  font-size: 0.8125rem;
+  color: #303030;
+}
+
+.phone-field__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.phone-field__flag {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  display: block;
+}
+
+.phone-field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #8a8a8a;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+.phone-field__input:focus {
+  outline: 2px solid #005bd3;
+  outline-offset: -1px;
+}
+
+.phone-field__list {
+  width: 280px;
+  max-width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.phone-field__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: #303030;
+}
+
+.phone-field__option:hover {
+  background: #f1f1f1;
+}
+
+.phone-field__option-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Marketing permission note (Shopify-style subdued box) */
+.customer-marketing-note {
+  margin-top: 0.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: #f7f7f7;
+  color: #616161;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* ── Searchable Select ────────────────────────────────── */
+.searchable-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.searchable-select__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #303030;
+}
+
+.searchable-select__details {
+  font-size: 0.75rem;
+  color: #6d7175;
+  margin-bottom: 0.15rem;
+}
+
+/* Trigger styled to match the Polaris text fields beside it */
+.searchable-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 36px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #8a8a8a;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #303030;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.searchable-select__trigger:hover {
+  border-color: #616161;
+}
+
+.searchable-select__trigger:focus-visible {
+  outline: none;
+  border-color: #005bd3;
+  box-shadow: 0 0 0 2px #005bd3;
+}
+
+.searchable-select__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.searchable-select__placeholder {
+  color: #999;
+}
+
+.searchable-select__arrow {
+  font-size: 0.75rem;
+  color: #6d7175;
+  flex-shrink: 0;
+  margin-left: 0.25rem;
+}
+
+.searchable-select__search-wrap {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.searchable-select__search {
+  width: 100%;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #c9cccf;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.875rem;
+  background: #fafafa;
+  color: #303030;
+  box-sizing: border-box;
+}
+
+.searchable-select__search:focus {
+  outline: 2px solid #005bd3;
+  outline-offset: -1px;
+  border-color: #005bd3;
+  background: #fff;
+}
+
+.searchable-select__list {
+  width: 280px;
+  max-width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.searchable-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #303030;
+  transition: background 0.08s ease;
+}
+
+.searchable-select__option:hover {
+  background: #f1f1f1;
+}
+
+.searchable-select__option--selected {
+  background: #f0f5ff;
+  font-weight: 500;
+}
+
+.searchable-select__option--selected:hover {
+  background: #e4edff;
+}
+
+.searchable-select__check {
+  color: #005bd3;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.searchable-select__empty {
+  padding: 0.75rem 0.6rem;
+  text-align: center;
+  color: #8c9196;
+  font-size: 0.8125rem;
+}
+
+/* ── Phone field popover search ─────────────────────── */
+.phone-field__search-wrap {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.phone-field__search {
+  width: 100%;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #c9cccf;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.875rem;
+  background: #fafafa;
+  color: #303030;
+  box-sizing: border-box;
+}
+
+.phone-field__search:focus {
+  outline: 2px solid #005bd3;
+  outline-offset: -1px;
+  border-color: #005bd3;
+  background: #fff;
+}
+
+.phone-field__no-results {
+  padding: 0.75rem 0.6rem;
+  text-align: center;
+  color: #8c9196;
+  font-size: 0.8125rem;
+}
+
+/* ── Customer overview card ─────────────────────────── */
+.cust-email-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  line-height: 1.2;
+}
+
+.cust-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin: -3px 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #5c5f62;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.cust-copy:hover {
+  background: #f1f1f1;
+  color: #303030;
+}
+
+.cust-copy s-icon {
+  display: block;
+}
+
+.cust-marketing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 8px;
+  background: #e3e3e3;
+  color: #303030;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.cust-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.cust-badge__dot--on {
+  background: #29845a;
+}
+
+.cust-badge__dot--off {
+  background: #b5b5b5;
+}
+
+/* ── Customer timeline ──────────────────────────────── */
+.cust-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.cust-timeline__composer {
+  border: 1px solid #d9dbde;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.cust-timeline__composer-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem 0.4rem;
+}
+
+.cust-timeline__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e0567f;
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.cust-timeline__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 34px;
+  margin-top: 0.25rem;
+  border: none;
+  outline: none;
+  resize: none;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #303030;
+  background: transparent;
+}
+
+.cust-timeline__input::placeholder {
+  color: #8c9196;
+}
+
+.cust-timeline__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem 0.55rem;
+}
+
+.cust-timeline__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.cust-timeline__tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #5c5f62;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.cust-timeline__tool:hover {
+  background: #f1f1f1;
+  color: #303030;
+}
+
+.cust-timeline__tool-text {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.cust-timeline__caption {
+  margin: 0.55rem 0.1rem 0.2rem;
+  text-align: right;
+  color: #8c9196;
+  font-size: 0.8125rem;
+}
+
+.cust-timeline__empty {
+  margin-top: 0.5rem;
+  color: #8c9196;
+  font-size: 0.875rem;
+}
+
+/* Vertical line runs the height of the feed */
+.cust-timeline__feed {
+  position: relative;
+  margin-top: 0.35rem;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.cust-timeline__feed::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: #e3e3e3;
+}
+
+.cust-timeline__group {
+  position: relative;
+}
+
+.cust-timeline__group-label {
+  position: relative;
+  padding: 0.7rem 0 0.35rem 34px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #616161;
+}
+
+.cust-timeline__item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.5rem 0 0.5rem 34px;
+}
+
+.cust-timeline__dot {
+  position: absolute;
+  left: 0;
+  top: 0.7rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #44474a;
+  box-sizing: border-box;
+}
+
+.cust-timeline__item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.05rem;
+  color: #5c5f62;
+  flex: 0 0 auto;
+}
+
+.cust-timeline__item-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #303030;
+  word-break: break-word;
+}
+
+.cust-timeline__item-time {
+  flex: 0 0 auto;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: #8c9196;
+}
+
+.cust-timeline__delete {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-left: 0.15rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8c9196;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  visibility: hidden;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.cust-timeline__item:hover .cust-timeline__delete {
+  visibility: visible;
+}
+
+.cust-timeline__delete:hover {
+  background: #fbeae5;
+  color: #c4320a;
+}
+
+/* ── Add to company modal ───────────────────────────── */
+.company-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: none;
+  border-bottom: 1px solid #ededed;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #303030;
+  transition: background 0.1s ease;
+}
+
+.company-option:last-child {
+  border-bottom: none;
+}
+
+.company-option:hover:not(:disabled) {
+  background: #f6f6f7;
+}
+
+.company-option:disabled {
+  cursor: default;
+  color: #8c9196;
+}
+
+.company-option--create {
+  font-weight: 500;
+}
+
+.company-option--status {
+  cursor: default;
+  color: #8c9196;
+}
+
+.company-option__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Show more / less toggle on the customer card */
+.cust-show-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ebebeb;
+}
+
+/* Assigned company shown on the separate Company card */
+.cust-company-link {
+  color: #1f4fb3;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.cust-company-manage {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #1f4fb3;
+  cursor: pointer;
+}
+
+.cust-company-manage:hover {
+  text-decoration: underline;
+}
+

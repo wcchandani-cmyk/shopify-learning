@@ -12,7 +12,13 @@ const {
   DB_PORT,
 } = require("../config/constants");
 const sequelize = require("../config/db");
-const { Shop, Product, Variant } = require("../models/associations");
+const {
+  Shop,
+  Product,
+  Variant,
+  Customer,
+  CustomerComment,
+} = require("../models/associations");
 
 async function ensureDatabase() {
   const connection = await mysql.createConnection({
@@ -42,6 +48,12 @@ async function main() {
 
   await Variant.sync(syncOptions);
   console.log("Table created/verified: variants");
+
+  await Customer.sync(syncOptions);
+  console.log("Table created/verified: customers");
+
+  await CustomerComment.sync(syncOptions);
+  console.log("Table created/verified: customer_comments");
 
   await sequelize.close();
 }

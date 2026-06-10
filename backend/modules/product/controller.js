@@ -93,13 +93,13 @@ const fetchAllProductTypes = async (shop) => {
     const live = await fetchShopifyStringConnection(
       shop,
       PRODUCT_TYPES_QUERY,
-      "productTypes",
+      "productTypes"
     );
     if (live.length) return live;
   } catch (error) {
     console.error(
       "Live product types fetch failed, falling back to DB:",
-      error.message,
+      error.message
     );
   }
   return fetchDbProductColumn(shop.id, "productType");
@@ -110,13 +110,13 @@ const fetchAllProductVendors = async (shop) => {
     const live = await fetchShopifyStringConnection(
       shop,
       PRODUCT_VENDORS_QUERY,
-      "productVendors",
+      "productVendors"
     );
     if (live.length) return live;
   } catch (error) {
     console.error(
       "Live product vendors fetch failed, falling back to DB:",
-      error.message,
+      error.message
     );
   }
   return fetchDbProductColumn(shop.id, "vendor");
@@ -430,18 +430,6 @@ async function applyPayloadOverridesToDb(productId, payload) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// GraphQL productSet (declarative options + variants reconciliation)
-//
-// REST product/variant management is deprecated and cannot add/remove product
-// options reliably (it leaves stale options behind, causing
-// "You need to add option values for <option>" 422s). productSet sets the whole
-// product to match the input, so Shopify creates/updates/deletes options and
-// variants as needed. Images stay on REST (productSet uses staged file uploads,
-// which the form's base64 data URLs don't fit).
-// The GraphQL strings live in ./queries.js.
-// ---------------------------------------------------------------------------
-
 const DEFAULT_OPTION_NAME = "Title";
 const DEFAULT_OPTION_VALUE = "Default Title";
 
@@ -534,7 +522,6 @@ function buildProductSetInput(payload, { productGid } = {}) {
   }
 
   const allVariants = Array.isArray(payload.variants) ? payload.variants : [];
-  // Without custom options a product has exactly one (default) variant.
   const sourceVariants = optionNames.length
     ? allVariants
     : allVariants.slice(0, 1);
@@ -549,7 +536,6 @@ function buildProductSetInput(payload, { productGid } = {}) {
   return input;
 }
 
-/** Run productSet synchronously and return the product's Shopify GID. */
 async function runProductSet(shop, input) {
   const { graphqlClient } = getGraphQLClient({
     shopDomain: shop.myshopifyDomain,
@@ -589,7 +575,6 @@ async function runProductSet(shop, input) {
   return productId;
 }
 
-/** Apply the form's image gallery to a product via REST (replaces image set). */
 async function applyProductImagesRest(shop, shopifyProductId, payload) {
   const images = buildShopifyProductImages(payload);
   if (!images) return;
@@ -602,7 +587,6 @@ async function applyProductImagesRest(shop, shopifyProductId, payload) {
   });
 }
 
-/** Fetch canonical product from Shopify and upsert DB (same path as webhooks). */
 async function syncProductFromShopify(shop, shopifyProductId) {
   const client = getRestClient(shop);
   const response = await client.get({
@@ -657,8 +641,6 @@ async function updateProductFlow(shop, product, payload) {
 
   await applyPayloadOverridesToDb(product.id, normalizedPayload);
 
-  // productSet reconciles options + variants in one declarative call, so
-  // removing/adding options just works (REST cannot remove an option).
   const input = buildProductSetInput(normalizedPayload, {
     productGid: toProductGid(product.shopifyId),
   });
@@ -716,10 +698,6 @@ async function deleteProductsFlow(shop, productIds) {
 
   return { deletedCount: deletedIds.length, deletedIds };
 }
-
-// ---------------------------------------------------------------------------
-// HTTP handlers
-// ---------------------------------------------------------------------------
 
 const listProducts = async (req, res) => {
   try {
@@ -917,7 +895,6 @@ const listProductVendors = async (req, res) => {
   }
 };
 
-/** Live search of Shopify's standardized product taxonomy (no hardcoding). */
 const searchTaxonomy = async (req, res) => {
   try {
     const shop = await getShopRecord(req);

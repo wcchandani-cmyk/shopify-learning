@@ -5,6 +5,8 @@ const cors = require("cors");
 require("./models/associations");
 const shopRoutes = require("./modules/shop/route");
 const productRoutes = require("./modules/product/route");
+const customerRoutes = require("./modules/customer/route");
+const companyRoutes = require("./modules/company/route");
 const webhookRoutes = require("./modules/webhook/route");
 const { PORT, BACKEND_URI } = require("./config/constants");
 
@@ -20,6 +22,8 @@ app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
 app.use("/api/shop", shopRoutes);
 app.use("/api/product", productRoutes);
+app.use("/api/customer", customerRoutes);
+app.use("/api/company", companyRoutes);
 
 app.listen(PORT, () => {
   console.log(

@@ -1,0 +1,139 @@
+.company-actions {
+  position: relative;
+  display: inline-flex;
+}
+
+.company-actions__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+  min-width: 220px;
+  background: #ffffff;
+  border: 1px solid #e1e3e5;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  padding: 6px;
+}
+
+.company-actions__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: #303030;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.company-actions__item:hover,
+.company-actions__item:focus {
+  background: #f1f2f4;
+  text-decoration: none;
+}
+
+.company-customizations {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cust-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cust-field--row {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cust-field__main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cust-field__label {
+  font-size: 13px;
+  line-height: 16px;
+  color: #616161;
+}
+
+.cust-chip {
+  align-self: flex-start;
+  display: inline-block;
+  background: #f1f2f4;
+  color: #303030;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid #e1e3e5;
+  transition: background 0.15s ease;
+}
+
+.cust-chip:hover,
+.cust-chip:focus {
+  background: #e3e3e3;
+  text-decoration: none;
+}
+
+.cust-add-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0a7d54;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.cust-add-link:hover,
+.cust-add-link:focus {
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.cust-add-link__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.cust-value {
+  font-size: 14px;
+  line-height: 20px;
+  color: #303030;
+}
+
+.cust-checkout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cust-checkout-list span {
+  font-size: 13px;
+  line-height: 18px;
+  color: #303030;
+}
