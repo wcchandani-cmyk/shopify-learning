@@ -8,10 +8,13 @@ async function resolveShopForApi(shopDomain, sessionToken) {
     throw err;
   }
 
-  if (!sessionToken) {
-    const shop = await Shop.findOne({
+  const loadInstalledShop = () =>
+    Shop.findOne({
       where: { myshopifyDomain: shopDomain, appInstall: "1" },
     });
+
+  if (!sessionToken) {
+    const shop = await loadInstalledShop();
     if (!shop?.token) {
       const err = new Error(
         "Shop not found. Open this app from your Shopify admin."
@@ -22,11 +25,25 @@ async function resolveShopForApi(shopDomain, sessionToken) {
     return shop;
   }
 
-  const { session } = await auth.tokenExchange({
-    sessionToken,
-    shop: shopDomain,
-    requestedTokenType: RequestedTokenType.OfflineAccessToken,
-  });
+  let session;
+  try {
+    ({ session } = await auth.tokenExchange({
+      sessionToken,
+      shop: shopDomain,
+      requestedTokenType: RequestedTokenType.OfflineAccessToken,
+    }));
+  } catch (exchangeError) {
+    // Token exchange can fail even for a locally-valid session token, most
+    // often due to clock skew or a session token that expired in transit
+    // (Shopify returns `invalid_subject_token`). Since the app already holds a
+    // long-lived offline token from install (the same one webhooks use), fall
+    // back to it so reads/writes keep working instead of hard-failing.
+    const shop = await loadInstalledShop();
+    if (shop?.token) {
+      return shop;
+    }
+    throw exchangeError;
+  }
 
   const accessToken = session.accessToken;
   const canonicalDomain = session.shop || shopDomain;

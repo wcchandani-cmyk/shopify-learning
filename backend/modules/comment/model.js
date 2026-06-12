@@ -1,8 +1,8 @@
 const { SEQUELIZE_DATA_TYPE } = require("../../config/constants");
 const sequelize = require("../../config/db");
 
-const CustomerComment = sequelize.define(
-  "customer_comment",
+const Comment = sequelize.define(
+  "comment",
   {
     id: {
       type: SEQUELIZE_DATA_TYPE.INTEGER,
@@ -20,9 +20,17 @@ const CustomerComment = sequelize.define(
     },
     customerId: {
       type: SEQUELIZE_DATA_TYPE.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: "customers",
+        key: "id",
+      },
+    },
+    discountId: {
+      type: SEQUELIZE_DATA_TYPE.INTEGER,
+      allowNull: true,
+      references: {
+        model: "discounts",
         key: "id",
       },
     },
@@ -37,8 +45,11 @@ const CustomerComment = sequelize.define(
   },
   {
     timestamps: true,
-    indexes: [{ fields: ["shopId", "customerId"] }],
+    indexes: [
+      { fields: ["shopId", "customerId"] },
+      { fields: ["shopId", "discountId"] },
+    ],
   }
 );
 
-module.exports = CustomerComment;
+module.exports = Comment;

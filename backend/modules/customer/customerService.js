@@ -1,5 +1,5 @@
 const Customer = require("./model");
-const CustomerComment = require("./commentModel");
+const Comment = require("../comment/model");
 const { getRestClient } = require("../../utils/shopify");
 
 const trimOrNull = (value) => {
@@ -303,7 +303,7 @@ const createCustomer = async (shop, payload) => {
   await persistLocaleLocally(row, payload);
 
   try {
-    await CustomerComment.create({
+    await Comment.create({
       shopId: shop.id,
       customerId: row.id,
       authorName: shop.shopOwner || shop.name || "Staff",
@@ -408,7 +408,7 @@ const deleteCustomers = async (shop, customerIds) => {
   }
 
   // Remove timeline comments first (FK may not be ON DELETE CASCADE), then rows.
-  await CustomerComment.destroy({
+  await Comment.destroy({
     where: { customerId: deletedIds, shopId: shop.id },
   });
   await Customer.destroy({ where: { id: deletedIds, shopId: shop.id } });

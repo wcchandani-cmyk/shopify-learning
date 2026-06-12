@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { listCompanies, bulkDeleteCompanies } from "../../services/companyService";
-import { useCompanySelection } from "../../hooks/useCompanySelection";
+import { useCompanySelection } from "../../hooks/company/useCompanySelection";
 import { getInputEventValue, getCheckboxChecked } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
 import PageLoader from "../PageLoader";

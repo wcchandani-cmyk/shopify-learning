@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import PageLoader from "../components/PageLoader";
 import CustomerDetail from "../components/customers/CustomerDetail";
 import CustomerOverview from "../components/customers/CustomerOverview";
-import { useCustomerDetail } from "../hooks/useCustomerDetail";
+import { useCustomerDetail } from "../hooks/customer/useCustomerDetail";
 
 export default function CustomerDetailPage() {
   const { id } = useParams();

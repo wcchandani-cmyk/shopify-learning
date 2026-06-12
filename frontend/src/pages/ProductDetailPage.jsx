@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageLoader from "../components/PageLoader";
 import ProductDetail from "../components/products/ProductDetail";
-import { useCatalogProductTypes } from "../hooks/useCatalogProductTypes";
-import { useProduct } from "../hooks/useProduct";
+import { useCatalogProductTypes } from "../hooks/product/useCatalogProductTypes";
+import { useProduct } from "../hooks/product/useProduct";
 import { EMPTY_PRODUCT } from "../utils/productForm";
 import { normalizeProductTypes } from "../utils/productTypes";
 

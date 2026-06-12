@@ -4,7 +4,7 @@ import {
   formatStatus,
   getInventorySummary,
   getStatusBadgeProps,
-} from "../utils/productDisplay";
+} from "../../utils/productDisplay";
 
 export function useProductListItem(product, productTypes = []) {
   const navigate = useNavigate();

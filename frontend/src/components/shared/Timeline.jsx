@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import {
-  addCustomerComment,
-  deleteCustomerComment,
-  listCustomerComments,
-} from "../../services/customerService";
 import { getInputEventValue } from "../../utils/fieldEvent";
-import "../../styles/CustomerDetail.css";
 
 function relativeOrTime(value) {
   if (!value) return "";
@@ -138,7 +132,12 @@ const TOOLBAR_ICONS = [
   { id: "link", node: <LinkIcon />, label: "Link" },
 ];
 
-export default function CustomerTimeline({ customerId }) {
+export default function Timeline({
+  entityId,
+  listComments,
+  addComment,
+  deleteComment,
+}) {
   const shopify = useAppBridge();
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
@@ -146,10 +145,10 @@ export default function CustomerTimeline({ customerId }) {
 
   useEffect(() => {
     let active = true;
-    if (!customerId) return undefined;
+    if (!entityId || !listComments) return undefined;
     shopify
       .idToken()
-      .then((token) => listCustomerComments(customerId, token))
+      .then((token) => listComments(entityId, token))
       .then((data) => {
         if (active) setComments(data);
       })
@@ -159,15 +158,15 @@ export default function CustomerTimeline({ customerId }) {
     return () => {
       active = false;
     };
-  }, [shopify, customerId]);
+  }, [shopify, entityId, listComments]);
 
   const handlePost = useCallback(async () => {
     const body = text.trim();
-    if (!body || posting) return;
+    if (!body || posting || !addComment) return;
     setPosting(true);
     try {
       const token = await shopify.idToken();
-      const created = await addCustomerComment(customerId, body, token);
+      const created = await addComment(entityId, body, token);
       setComments((prev) => [created, ...prev]);
       setText("");
     } catch (err) {
@@ -177,13 +176,14 @@ export default function CustomerTimeline({ customerId }) {
     } finally {
       setPosting(false);
     }
-  }, [text, posting, shopify, customerId]);
+  }, [text, posting, shopify, entityId, addComment]);
 
   const handleDelete = useCallback(
     async (commentId) => {
+      if (!deleteComment) return;
       try {
         const token = await shopify.idToken();
-        await deleteCustomerComment(customerId, commentId, token);
+        await deleteComment(entityId, commentId, token);
         setComments((prev) => prev.filter((item) => item.id !== commentId));
       } catch (err) {
         shopify.toast.show(err.message || "Failed to delete comment", {
@@ -191,7 +191,7 @@ export default function CustomerTimeline({ customerId }) {
         });
       }
     },
-    [shopify, customerId]
+    [shopify, entityId, deleteComment]
   );
 
   const groups = groupByDay(comments);

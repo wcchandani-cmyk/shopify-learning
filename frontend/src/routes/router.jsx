@@ -7,6 +7,9 @@ import CustomersPage from "../pages/CustomersPage";
 import CompaniesPage from "../pages/CompaniesPage";
 import CompanyDetailPage from "../pages/CompanyDetailPage";
 import CustomerDetailPage from "../pages/CustomerDetailPage";
+import DiscountsPage from "../pages/DiscountsPage";
+import DiscountCreatePage from "../pages/DiscountCreatePage";
+import DiscountEditPage from "../pages/DiscountEditPage";
 
 export const appRouter = createBrowserRouter([
   { path: "/", element: <HomePage /> },
@@ -17,4 +20,7 @@ export const appRouter = createBrowserRouter([
   { path: "/companies", element: <CompaniesPage /> },
   { path: "/companies/:id", element: <CompanyDetailPage /> },
   { path: "/customers/:id", element: <CustomerDetailPage /> },
+  { path: "/discounts", element: <DiscountsPage /> },
+  { path: "/discounts/new/:type", element: <DiscountCreatePage /> },
+  { path: "/discounts/:id", element: <DiscountEditPage /> },
 ]);

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { getCustomer } from "../services/customerService";
+import { getCustomer } from "../../services/customerService";
 
 export function useCustomerDetail(customerId) {
   const shopify = useAppBridge();

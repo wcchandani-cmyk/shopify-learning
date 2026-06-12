@@ -17,7 +17,8 @@ const {
   Product,
   Variant,
   Customer,
-  CustomerComment,
+  Discount,
+  Comment,
 } = require("../models/associations");
 
 async function ensureDatabase() {
@@ -52,8 +53,11 @@ async function main() {
   await Customer.sync(syncOptions);
   console.log("Table created/verified: customers");
 
-  await CustomerComment.sync(syncOptions);
-  console.log("Table created/verified: customer_comments");
+  await Discount.sync(syncOptions);
+  console.log("Table created/verified: discounts");
+
+  await Comment.sync(syncOptions);
+  console.log("Table created/verified: comments");
 
   await sequelize.close();
 }

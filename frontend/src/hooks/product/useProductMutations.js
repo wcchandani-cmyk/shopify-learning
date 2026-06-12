@@ -4,7 +4,7 @@ import {
   bulkDeleteProducts,
   createProduct,
   updateProduct,
-} from "../services/productService";
+} from "../../services/productService";
 
 export function useProductMutations() {
   const shopify = useAppBridge();

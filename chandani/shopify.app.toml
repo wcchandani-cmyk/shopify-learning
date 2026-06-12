@@ -40,8 +40,20 @@ uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/customers/delete"
 topics = ["app/uninstalled"]
 uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/app/uninstalled"
 
+[[webhooks.subscriptions]]
+topics = ["discounts/create"]
+uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/create"
+
+[[webhooks.subscriptions]]
+topics = ["discounts/update"]
+uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/update"
+
+[[webhooks.subscriptions]]
+topics = ["discounts/delete"]
+uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/delete"
+
 [access_scopes]
-scopes = "write_products,read_products,write_inventory,read_inventory,read_customers,write_customers,read_companies,write_companies,read_orders,read_locales"
+scopes = "write_products,read_products,write_inventory,read_inventory,read_customers,write_customers,read_companies,write_companies,read_orders,read_locales,read_discounts,read_price_rules,write_price_rules"
 
 [auth]
 redirect_urls = [ "https://example.com/api/auth" ]

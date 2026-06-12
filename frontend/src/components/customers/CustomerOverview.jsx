@@ -11,6 +11,9 @@ import {
 import {
   listCustomerTags,
   updateCustomer,
+  listCustomerComments,
+  addCustomerComment,
+  deleteCustomerComment,
 } from "../../services/customerService";
 import {
   assignCustomerToCompany,
@@ -27,7 +30,7 @@ import CustomerNotesCard from "./CustomerNotesCard";
 import CustomerStats from "./CustomerStats";
 import CustomerSummaryCard from "./CustomerSummaryCard";
 import CustomerTagsCard from "./CustomerTagsCard";
-import CustomerTimeline from "./CustomerTimeline";
+import CustomerTimeline from "../shared/Timeline";
 
 const EDIT_MODAL_ID = "customer-edit-modal";
 const MANAGE_ADDRESSES_MODAL_ID = "customer-manage-addresses";
@@ -261,7 +264,12 @@ export default function CustomerOverview({ customer }) {
           <div className="product-detail-layout__main">
             <s-stack gap="base">
               <CustomerStats form={form} />
-              <CustomerTimeline customerId={customer.id} />
+              <CustomerTimeline
+                entityId={customer.id}
+                listComments={listCustomerComments}
+                addComment={addCustomerComment}
+                deleteComment={deleteCustomerComment}
+              />
             </s-stack>
           </div>
 

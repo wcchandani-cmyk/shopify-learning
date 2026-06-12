@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { useProductMutations } from "../../hooks/useProductMutations";
-import { useUnsavedProductGuard } from "../../hooks/useUnsavedProductGuard";
+import { useProductMutations } from "../../hooks/product/useProductMutations";
+import { useUnsavedProductGuard } from "../../hooks/product/useUnsavedProductGuard";
 import { getInputEventValue } from "../../utils/fieldEvent";
 import {
   buildUpdatePayload,

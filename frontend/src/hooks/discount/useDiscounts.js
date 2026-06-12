@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { listCustomers } from "../services/customerService";
+import { listDiscounts } from "../../services/discountService";
 
 const DEFAULT_PAGE_SIZE = 25;
 
-/** Paginated list of customers for the Customers list page. */
-export function useCustomerList(pageSize = DEFAULT_PAGE_SIZE) {
+export function useDiscounts(pageSize = DEFAULT_PAGE_SIZE) {
   const shopify = useAppBridge();
   const [page, setPage] = useState(1);
-  const [customers, setCustomers] = useState([]);
-  const [count, setCount] = useState(0);
+  const [discounts, setDiscounts] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,19 +20,17 @@ export function useCustomerList(pageSize = DEFAULT_PAGE_SIZE) {
       return shopify
         .idToken()
         .then((token) =>
-          listCustomers({ page: targetPage, limit: pageSize }, token)
+          listDiscounts({ page: targetPage, limit: pageSize }, token)
         )
         .then((data) => {
-          setCustomers(data?.customers ?? []);
-          setCount(data?.count ?? 0);
+          setDiscounts(data?.discounts ?? []);
           setPagination(data?.pagination ?? null);
           setPage(targetPage);
         })
         .catch((err) => {
-          setCustomers([]);
-          setCount(0);
+          setDiscounts([]);
           setPagination(null);
-          setError(err.message || "Failed to load customers");
+          setError(err.message || "Failed to load discounts");
         })
         .finally(() => setLoading(false));
     },
@@ -55,8 +51,7 @@ export function useCustomerList(pageSize = DEFAULT_PAGE_SIZE) {
   );
 
   return {
-    customers,
-    count,
+    discounts,
     pagination,
     loading,
     error,

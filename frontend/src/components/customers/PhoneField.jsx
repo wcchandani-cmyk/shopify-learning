@@ -6,21 +6,9 @@ import {
   parsePhone,
 } from "../../utils/countryCallingCodes";
 import { getInputEventValue } from "../../utils/fieldEvent";
+import { Flag } from "../shared/CountryFlag";
 
-const flagUrl = (iso) => `https://flagcdn.com/w40/${iso.toLowerCase()}.png`;
 
-function Flag({ iso }) {
-  return (
-    <img
-      className="phone-field__flag"
-      src={flagUrl(iso)}
-      alt={iso}
-      loading="lazy"
-      width="20"
-      height="15"
-    />
-  );
-}
 
 export default function PhoneField({
   label = "Phone number",

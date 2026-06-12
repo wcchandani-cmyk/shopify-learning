@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { getProduct } from "../services/productService";
+import { getProduct } from "../../services/productService";
 
 const sameProductId = (a, b) => String(a) === String(b);
 

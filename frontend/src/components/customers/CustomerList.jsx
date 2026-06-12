@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { useCustomerList } from "../../hooks/useCustomerList";
-import { useCustomerSelection } from "../../hooks/useCustomerSelection";
+import { useCustomerList } from "../../hooks/customer/useCustomerList";
+import { useCustomerSelection } from "../../hooks/customer/useCustomerSelection";
 import { bulkDeleteCustomers } from "../../services/customerService";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";

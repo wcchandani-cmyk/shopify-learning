@@ -11,6 +11,7 @@ const {
   mapRestCustomer,
   upsertCustomer,
 } = require("../customer/customerService");
+const { syncDiscountsFromShopify } = require("../discount/discountService");
 
 const parseWebhookPayload = (body) => {
   let payload = body;
@@ -191,3 +192,28 @@ exports.customerDelete = async (req, res) => {
     return res.status(200).send({ message: "ok" });
   }
 };
+
+const handleDiscountChange = (label) => async (req, res) => {
+  try {
+    if (skipWebhookProcessing()) {
+      return res.status(200).send({ message: "webhooks disabled" });
+    }
+
+    const { shopDomain, shop } = await resolveInstalledShop(req);
+    if (!shopDomain || !shop) {
+      return res.status(200).send({ message: "ignored" });
+    }
+
+    await syncDiscountsFromShopify(shop);
+    console.log(`${label}: resynced discounts (${shopDomain})`);
+
+    return res.status(200).send({ message: "ok" });
+  } catch (error) {
+    console.error(`Webhooks ${label}:`, error);
+    return res.status(200).send({ message: "ok" });
+  }
+};
+
+exports.discountCreate = handleDiscountChange("DISCOUNTS_CREATE");
+exports.discountUpdate = handleDiscountChange("DISCOUNTS_UPDATE");
+exports.discountDelete = handleDiscountChange("DISCOUNTS_DELETE");

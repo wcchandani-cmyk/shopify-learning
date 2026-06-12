@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { getCheckboxChecked } from "../../utils/fieldEvent";
-import { useProductListItem } from "../../hooks/useProductListItem";
+import { useProductListItem } from "../../hooks/product/useProductListItem";
 import ProductThumbnail from "./ProductThumbnail";
 
 const ProductListCard = memo(function ProductListCard({

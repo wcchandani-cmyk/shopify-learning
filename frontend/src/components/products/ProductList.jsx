@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { useProductMutations } from "../../hooks/useProductMutations";
-import { useProductSelection } from "../../hooks/useProductSelection";
-import { useProducts } from "../../hooks/useProducts";
+import { useProductMutations } from "../../hooks/product/useProductMutations";
+import { useProductSelection } from "../../hooks/product/useProductSelection";
+import { useProducts } from "../../hooks/product/useProducts";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
 import { matchesProductSearch } from "../../utils/productDisplay";

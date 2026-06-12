@@ -9,7 +9,7 @@ jest.mock("@shopify/app-bridge-react", () => ({
   }),
 }));
 
-jest.mock("./hooks/useProducts", () => ({
+jest.mock("./hooks/product/useProducts", () => ({
   useProducts: () => ({
     products: [],
     pagination: null,

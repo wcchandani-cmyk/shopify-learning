@@ -2,7 +2,8 @@ const Shop = require("../modules/shop/model");
 const Product = require("../modules/product/model");
 const Variant = require("../modules/variant/model");
 const Customer = require("../modules/customer/model");
-const CustomerComment = require("../modules/customer/commentModel");
+const Comment = require("../modules/comment/model");
+const Discount = require("../modules/discount/model");
 
 Shop.hasMany(Product, {
   foreignKey: "shopId",
@@ -34,24 +35,52 @@ Variant.belongsTo(Product, {
   as: "product",
 });
 
-Customer.hasMany(CustomerComment, {
+Customer.hasMany(Comment, {
   foreignKey: "customerId",
   as: "comments",
   onDelete: "CASCADE",
 });
-CustomerComment.belongsTo(Customer, {
+Comment.belongsTo(Customer, {
   foreignKey: "customerId",
   as: "customer",
 });
 
-Shop.hasMany(CustomerComment, {
+Shop.hasMany(Discount, {
   foreignKey: "shopId",
-  as: "customerComments",
+  as: "discounts",
   onDelete: "CASCADE",
 });
-CustomerComment.belongsTo(Shop, {
+Discount.belongsTo(Shop, {
   foreignKey: "shopId",
   as: "shop",
 });
 
-module.exports = { Shop, Product, Variant, Customer, CustomerComment };
+Discount.hasMany(Comment, {
+  foreignKey: "discountId",
+  as: "comments",
+  onDelete: "CASCADE",
+});
+Comment.belongsTo(Discount, {
+  foreignKey: "discountId",
+  as: "discount",
+});
+
+Shop.hasMany(Comment, {
+  foreignKey: "shopId",
+  as: "comments",
+  onDelete: "CASCADE",
+});
+Comment.belongsTo(Shop, {
+  foreignKey: "shopId",
+  as: "shop",
+});
+
+module.exports = {
+  Shop,
+  Product,
+  Variant,
+  Customer,
+  Comment,
+  Discount,
+};
+

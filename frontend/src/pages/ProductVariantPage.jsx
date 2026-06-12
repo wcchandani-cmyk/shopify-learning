@@ -4,7 +4,7 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import PageLoader from "../components/PageLoader";
 import ProductVariantForm from "../components/products/ProductVariantForm";
 import ProductVariantSidebar from "../components/products/ProductVariantSidebar";
-import { useProduct } from "../hooks/useProduct";
+import { useProduct } from "../hooks/product/useProduct";
 import {
   createNewVariantDraft,
   mergeOptionValuesFromVariants,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlocker } from "react-router-dom";
-import { snapshotFormState } from "../utils/productForm";
+import { snapshotFormState } from "../../utils/productForm";
 
 export function useUnsavedProductGuard(
   form,

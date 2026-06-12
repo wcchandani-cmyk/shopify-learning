@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { listProducts } from "../services/productService";
-import { normalizeProductTypes } from "../utils/productTypes";
+import { listProducts } from "../../services/productService";
+import { normalizeProductTypes } from "../../utils/productTypes";
 
 export function useCatalogProductTypes(seedTypes = []) {
   const shopify = useAppBridge();

@@ -4,7 +4,7 @@ const {
   isShopifyUnauthorized,
 } = require("../../utils/shopAccess");
 const Customer = require("./model");
-const CustomerComment = require("./commentModel");
+const Comment = require("../comment/model");
 const {
   toCustomerDTO,
   toCustomerDetail,
@@ -179,7 +179,7 @@ const listComments = async (req, res) => {
     const { shop, customer, error } = await resolveShopCustomer(req);
     if (error) return errorResponse(res, ...error);
 
-    const comments = await CustomerComment.findAll({
+    const comments = await Comment.findAll({
       where: { shopId: shop.id, customerId: customer.id },
       order: [["createdAt", "DESC"]],
     });
@@ -201,7 +201,7 @@ const createComment = async (req, res) => {
     const body = String(req.body?.body ?? "").trim();
     if (!body) return errorResponse(res, 400, "Comment can't be empty");
 
-    const comment = await CustomerComment.create({
+    const comment = await Comment.create({
       shopId: shop.id,
       customerId: customer.id,
       authorName: shop.shopOwner || shop.name || "Staff",
@@ -225,7 +225,7 @@ const deleteComment = async (req, res) => {
       return errorResponse(res, 400, "Invalid comment id");
     }
 
-    const deleted = await CustomerComment.destroy({
+    const deleted = await Comment.destroy({
       where: { id: commentId, shopId: shop.id, customerId: customer.id },
     });
     if (!deleted) return errorResponse(res, 404, "Comment not found");

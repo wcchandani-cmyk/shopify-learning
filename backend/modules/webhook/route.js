@@ -8,6 +8,9 @@ const {
   customerCreate,
   customerUpdate,
   customerDelete,
+  discountCreate,
+  discountUpdate,
+  discountDelete,
 } = require("./controller");
 
 const router = express.Router();
@@ -26,5 +29,9 @@ router.post("/products/delete", rawJson, verifyShopifyWebhook, productDelete);
 router.post("/customers/create", rawJson, verifyShopifyWebhook, customerCreate);
 router.post("/customers/update", rawJson, verifyShopifyWebhook, customerUpdate);
 router.post("/customers/delete", rawJson, verifyShopifyWebhook, customerDelete);
+
+router.post("/discounts/create", rawJson, verifyShopifyWebhook, discountCreate);
+router.post("/discounts/update", rawJson, verifyShopifyWebhook, discountUpdate);
+router.post("/discounts/delete", rawJson, verifyShopifyWebhook, discountDelete);
 
 module.exports = router;

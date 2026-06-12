@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { listProducts } from "../services/productService";
+import { listCustomers } from "../../services/customerService";
 
 const DEFAULT_PAGE_SIZE = 25;
 
-export function useProducts(pageSize = DEFAULT_PAGE_SIZE) {
+/** Paginated list of customers for the Customers list page. */
+export function useCustomerList(pageSize = DEFAULT_PAGE_SIZE) {
   const shopify = useAppBridge();
   const [page, setPage] = useState(1);
-  const [products, setProducts] = useState([]);
-  const [productTypes, setProductTypes] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [count, setCount] = useState(0);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,23 +22,23 @@ export function useProducts(pageSize = DEFAULT_PAGE_SIZE) {
       return shopify
         .idToken()
         .then((token) =>
-          listProducts({ page: targetPage, limit: pageSize }, token),
+          listCustomers({ page: targetPage, limit: pageSize }, token)
         )
         .then((data) => {
-          setProducts(data?.products ?? []);
-          setProductTypes(data?.productTypes ?? []);
+          setCustomers(data?.customers ?? []);
+          setCount(data?.count ?? 0);
           setPagination(data?.pagination ?? null);
           setPage(targetPage);
         })
         .catch((err) => {
-          setProducts([]);
-          setProductTypes([]);
+          setCustomers([]);
+          setCount(0);
           setPagination(null);
-          setError(err.message || "Failed to load products");
+          setError(err.message || "Failed to load customers");
         })
         .finally(() => setLoading(false));
     },
-    [shopify, pageSize],
+    [shopify, pageSize]
   );
 
   useEffect(() => {
@@ -50,12 +51,12 @@ export function useProducts(pageSize = DEFAULT_PAGE_SIZE) {
       if (pagination && nextPage > pagination.totalPages) return;
       load(nextPage);
     },
-    [load, loading, pagination],
+    [load, loading, pagination]
   );
 
   return {
-    products,
-    productTypes,
+    customers,
+    count,
     pagination,
     loading,
     error,
