@@ -48,6 +48,34 @@ const getRestClient = (shop) => {
   return new shopify.clients.Rest({ session });
 };
 
+const extractGraphqlError = (error) => {
+  const gqlErrors =
+    error?.body?.errors?.graphQLErrors ||
+    error?.response?.errors?.graphQLErrors ||
+    [];
+  if (Array.isArray(gqlErrors) && gqlErrors.length > 0) {
+    const detail = gqlErrors
+      .map((e) => {
+        const problems = e?.extensions?.problems || e?.problems;
+        if (Array.isArray(problems) && problems.length > 0) {
+          return problems
+            .map(
+              (p) =>
+                `${(p.path || []).join(".") || "(input)"}: ${
+                  p.explanation || p.message
+                }`
+            )
+            .join("; ");
+        }
+        return e?.message;
+      })
+      .filter(Boolean)
+      .join(" | ");
+    if (detail) return detail;
+  }
+  return error?.message || "Unknown Shopify error";
+};
+
 module.exports = {
   shopify,
   auth: shopify.auth,
@@ -55,4 +83,5 @@ module.exports = {
   RequestedTokenType,
   getGraphQLClient,
   getRestClient,
+  extractGraphqlError,
 };

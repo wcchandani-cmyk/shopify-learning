@@ -1,0 +1,865 @@
+/* Styling for Custom Discounts Detail and List pages */
+
+.custom-discount-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Form groups and labels */
+.form-group-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #202223;
+  margin-bottom: 6px;
+}
+
+.form-group-subtext {
+  font-size: 12px;
+  color: #5c5f62;
+  margin-top: 4px;
+}
+
+/* Radio button styles */
+.radio-options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.radio-option-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  font-size: 14px;
+  color: #202223 !important;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+}
+
+.radio-option-label span {
+  color: #202223 !important;
+  text-decoration: none;
+}
+
+.radio-option-label input[type="radio"] {
+  appearance: none;
+  background-color: #ffffff;
+  margin: 0;
+  font: inherit;
+  color: #202223;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #8c9196;
+  border-radius: 50%;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.radio-option-label input[type="radio"]::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em #202223;
+}
+
+.radio-option-label input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+.radio-option-label input[type="radio"]:checked {
+  border-color: #202223;
+}
+
+/* Side by Side layout */
+.side-by-side-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.side-by-side-row > div {
+  flex: 1;
+}
+
+/* Input Suffix Styling */
+.input-with-suffix-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-suffix-wrapper s-text-field {
+  width: 100%;
+}
+
+.input-with-suffix-wrapper .field-suffix-label {
+  position: absolute;
+  right: 12px;
+  color: #6d7175;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Dropdown Select fields */
+.custom-select-field {
+  width: 100%;
+  height: 30px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #8c9196;
+  font-size: 14px;
+  color: #202223;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236d7175'%3E%3Cpath fill-rule='evenodd' d='M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm0 14a1 1 0 01-.707-.293l-3-3a1 1 0 011.414-1.414L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+}
+.custom-select-field:focus {
+  outline: none;
+  border-color: #2b7de9;
+  box-shadow: 0 0 0 2px rgba(43, 125, 233, 0.25);
+}
+
+/* Reduce optgroup label weight (Cart Details, Customer, etc.) */
+.custom-select-field optgroup {
+  font-weight: 500;
+}
+
+/* Checkbox Entitled Item container */
+.entitled-item-checkbox-container {
+  border-top: 1px solid #e1e3e5;
+  margin-top: 12px;
+  padding-top: 16px;
+}
+
+/* Discount amount and value fields */
+.discount-input-field {
+  width: 100%;
+  height: 30px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #8c9196;
+  font-size: 14px;
+  color: #202223;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+.discount-input-field:focus {
+  outline: none;
+  border-color: #2b7de9;
+  box-shadow: 0 0 0 2px rgba(43, 125, 233, 0.25);
+}
+
+.discount-value-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.discount-value-input-wrapper.has-prefix .discount-input-field {
+  padding-left: 24px;
+}
+
+.discount-value-input-wrapper.has-suffix .discount-input-field {
+  padding-right: 24px;
+}
+
+.discount-value-icon {
+  position: absolute;
+  color: #6d7175;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  pointer-events: none;
+}
+
+.discount-value-icon.prefix {
+  left: 10px;
+}
+
+.discount-value-icon.suffix {
+  right: 10px;
+}
+
+/* Additional Options custom layouts */
+.additional-options-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.additional-options-header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #202223;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.additional-options-collapse-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #c9cccf;
+  background-color: #f6f6f7;
+  color: #444749;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.additional-options-collapse-btn:hover {
+  background-color: #e4e5e7;
+  border-color: #b5b8bc;
+}
+
+.additional-options-collapse-btn svg.caret-icon {
+  transition: transform 0.2s ease;
+}
+
+.additional-options-collapse-btn svg.caret-icon.open {
+  transform: rotate(0deg);
+}
+
+.additional-options-collapse-btn svg.caret-icon:not(.open) {
+  transform: rotate(180deg);
+}
+
+.additional-options-content-body {
+  margin-top: 12px;
+}
+
+.additional-options-sub-section {
+  border-top: 1px solid #e1e3e5;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.additional-options-last-section {
+  padding-bottom: 0;
+}
+
+.additional-options-sub-section.border-none {
+  border-top: 1px solid #e1e3e5;
+  padding-bottom: 0;
+}
+
+/* Custom Summary Card Styles */
+.summary-card {
+  border: 2px solid #c9cccf;
+  border-radius: 12px;
+  padding: 16px;
+  background-color: #ffffff;
+}
+
+.additional-options-sub-heading {
+  font-size: 13px;
+  font-weight: 500;
+  color: #202223;
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.checkbox-options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-option-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  font-size: 14px;
+  color: #202223 !important;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+}
+
+.checkbox-option-label span {
+  color: #202223 !important;
+  text-decoration: none;
+}
+
+.checkbox-option-label input[type="checkbox"] {
+  appearance: none;
+  background-color: #ffffff;
+  margin: 0;
+  color: #202223;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #8c9196;
+  border-radius: 4px;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-option-label input[type="checkbox"]::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background-color: #ffffff;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  clip-path: polygon(14% 44%, 0 58%, 38% 96%, 100% 14%, 86% 0%, 38% 68%);
+}
+
+.checkbox-option-label input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+.checkbox-option-label input[type="checkbox"]:checked {
+  border-color: #202223;
+  background-color: #202223;
+}
+
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.date-input-wrapper .date-input-icon {
+  position: absolute;
+  left: 11px;
+  color: #6d7175;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.date-input-wrapper input[type="date"] {
+  padding-left: 36px;
+  padding-right: 10px;
+  width: 100%;
+  height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid #8c9196;
+  font-size: 14px;
+  color: #202223;
+  background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  box-sizing: border-box;
+  /* hide the native browser calendar picker icon */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Remove native calendar picker button in WebKit */
+.date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Remove native calendar picker button in Firefox */
+.date-input-wrapper input[type="date"]::-moz-calendar-picker-indicator {
+  display: none;
+}
+
+.date-input-wrapper input[type="date"]:focus {
+  outline: none;
+  border-color: #2b7de9;
+  box-shadow: 0 0 0 2px rgba(43, 125, 233, 0.25);
+}
+
+.condition-builder-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 20px 0;
+  border-bottom: 1px solid #e1e3e5;
+  position: relative;
+}
+
+.condition-builder-fields-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.condition-builder-delete-btn {
+  height: 30px;
+  width: 36px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.5px solid #8c9196;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #c0392b;
+  cursor: pointer;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.condition-builder-delete-btn:hover {
+  background-color: #f6f6f7;
+}
+
+/* Styling for Visual Mockup Simulator in creation cards */
+.mockup-container {
+  border: 2px solid #c9cccf;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background-color: #fafbfb;
+  margin-bottom: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  font-size: 13px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.mockup-container-image {
+  border: 2px solid #c9cccf;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background-color: #fafbfb;
+  margin-bottom: 20px;
+  height: 160px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.mockup-image {
+  max-width: 100%;
+  max-height: 136px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.creation-cards-grid s-heading {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif !important;
+  color: #202223 !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  margin-top: 16px !important;
+  margin-bottom: 8px !important;
+  display: block !important;
+}
+
+.creation-cards-grid s-paragraph {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif !important;
+  color: #5c5f62 !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  margin-top: 8px !important;
+  margin-bottom: 20px !important;
+  display: block !important;
+  min-height: 36px !important;
+}
+
+.creation-cards-grid s-button {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif !important;
+}
+
+.mockup-header {
+  color: #008060;
+  font-weight: 500;
+  font-size: 11px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mockup-item-box {
+  display: flex;
+  justify-content: space-between;
+  border: 2px solid #8ccb73;
+  border-radius: 6px;
+  padding: 10px;
+  background-color: #ffffff;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.mockup-item-icon-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.mockup-item-icon {
+  width: 28px;
+  height: 28px;
+  background-color: #f6f6f7;
+  border: 1px solid #e1e3e5;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5c5f62;
+  font-size: 16px;
+}
+
+.mockup-item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.mockup-item-title {
+  font-weight: 500;
+  color: #202223;
+  font-size: 12px;
+}
+
+.mockup-item-subtext {
+  font-size: 10px;
+  color: #6d7175;
+  margin-top: 1px;
+}
+
+.mockup-item-price {
+  text-align: right;
+  font-size: 12px;
+}
+
+.mockup-item-price-original {
+  text-decoration: line-through;
+  color: #8c9196;
+}
+
+.mockup-item-price-discounted {
+  font-weight: 500;
+  color: #008060;
+  margin-top: 2px;
+}
+
+/* Green tag badges */
+.mockup-tag-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #e3f9eb;
+  border: 1px solid #a5d6a7;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: #008060;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.mockup-tag-badge-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mockup-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #202223;
+}
+
+.mockup-row-label {
+  color: #6d7175;
+}
+
+.mockup-row-value {
+  font-weight: 500;
+}
+
+.mockup-row-value-original {
+  text-decoration: line-through;
+  color: #8c9196;
+  margin-right: 6px;
+}
+
+.mockup-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid #e1e3e5;
+  font-size: 12px;
+  font-weight: 500;
+  color: #202223;
+  margin-top: 4px;
+}
+
+.mockup-total-value {
+  font-weight: 800;
+  color: #008060;
+}
+
+/* Discount Tiers layouts */
+.tier-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tier-number-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #202223;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.remove-tier-btn {
+  background: none;
+  border: none;
+  color: #d82c0d;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.remove-tier-btn:hover {
+  text-decoration: underline;
+}
+
+.add-tier-btn {
+  background-color: #202223;
+  color: #ffffff;
+  border: 2px solid #202223;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.add-tier-btn:hover {
+  background-color: #303335;
+}
+
+.discount-tiers-footer {
+  border-top: 1px solid #e1e3e5;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.tier-item-container {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1.5px solid #e1e3e5;
+}
+
+.tier-item-container:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* ── Custom Discount Summary Card ──────────────────────────── */
+.custom-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.custom-summary-card__header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.custom-summary-card__title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #202223;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.custom-summary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.custom-summary-item__bullet {
+  font-size: 16px;
+  color: #202223;
+  font-weight: 500;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.custom-summary-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.custom-summary-item__key {
+  font-size: 14px;
+  font-weight: 500;
+  color: #202223;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.custom-summary-item__value {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6d7175;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.shipping-method-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shipping-method-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 12px;
+  background: #f1f1f1;
+  border: 1px solid #e1e3e5;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #202223;
+}
+
+.shipping-method-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #6d7175;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shipping-method-chip__remove:hover {
+  background: #e1e3e5;
+  color: #202223;
+}
+
+/* Discount Generate Code layout */
+.discount-generate-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.discount-generate-container > div {
+  flex: 1;
+}
+
+.discount-generate-container s-button {
+  height: 36px;
+  min-block-size: 2rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Native action button that matches the Polaris field height. Polaris s-button
+   sets min-block-size on an element inside its shadow DOM, which external CSS
+   cannot override, so a native button is used where it must align with a field. */
+.field-action-btn {
+  min-block-size: 2rem;
+  height: 2rem;
+  padding: 0 12px;
+  border: 1px solid #c9cccf;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #303030;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.field-action-btn:hover {
+  background-color: #f7f7f7;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.custom-action-btn {
+  width: fit-content;
+  background-color: #202223;
+  color: #ffffff;
+}
+
+.discount-combinations-summary {
+  background-color: #f6f6f7;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e1e3e5;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.discount-combinations-summary__title {
+  font-weight: 600;
+}

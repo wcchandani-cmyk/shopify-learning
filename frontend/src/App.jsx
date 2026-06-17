@@ -18,6 +18,7 @@ export default function App() {
         <a href="/customers">Customers</a>
         <a href="/companies">Companies</a>
         <a href="/discounts">Discounts</a>
+        <a href="/custom-discounts">Custom Discount</a>
       </ui-nav-menu>
       <RouterProvider router={appRouter} />
     </div>

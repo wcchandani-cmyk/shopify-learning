@@ -11,49 +11,49 @@ automatically_update_urls_on_dev = false
 [webhooks]
 api_version = "2026-07"
 
-# Backend tunnel (port 5000) — update host to match WEBHOOK_URI in backend .env
-[[webhooks.subscriptions]]
-topics = ["products/create"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/create"
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/create"
 
-[[webhooks.subscriptions]]
-topics = ["products/update"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/update"
+  [[webhooks.subscriptions]]
+  topics = [ "customers/update" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/customers/update"
 
-[[webhooks.subscriptions]]
-topics = ["products/delete"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/delete"
+  [[webhooks.subscriptions]]
+  topics = [ "discounts/update" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/update"
 
-[[webhooks.subscriptions]]
-topics = ["customers/create"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/customers/create"
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/app/uninstalled"
 
-[[webhooks.subscriptions]]
-topics = ["customers/update"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/customers/update"
+  [[webhooks.subscriptions]]
+  topics = [ "customers/create" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/customers/create"
 
-[[webhooks.subscriptions]]
-topics = ["customers/delete"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/customers/delete"
+  [[webhooks.subscriptions]]
+  topics = [ "discounts/delete" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/delete"
 
-[[webhooks.subscriptions]]
-topics = ["app/uninstalled"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/app/uninstalled"
+  [[webhooks.subscriptions]]
+  topics = [ "discounts/create" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/create"
 
-[[webhooks.subscriptions]]
-topics = ["discounts/create"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/create"
+  [[webhooks.subscriptions]]
+  topics = [ "products/delete" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/delete"
 
-[[webhooks.subscriptions]]
-topics = ["discounts/update"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/update"
+  [[webhooks.subscriptions]]
+  topics = [ "customers/delete" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/customers/delete"
 
-[[webhooks.subscriptions]]
-topics = ["discounts/delete"]
-uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/discounts/delete"
+  [[webhooks.subscriptions]]
+  topics = [ "products/update" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/update"
 
 [access_scopes]
-scopes = "write_products,read_products,write_inventory,read_inventory,read_customers,write_customers,read_companies,write_companies,read_orders,read_locales,read_discounts,read_price_rules,write_price_rules"
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_companies,read_customers,read_discounts,read_inventory,read_locales,read_orders,read_price_rules,read_products,write_companies,write_customers,write_discounts,write_inventory,write_price_rules,write_products"
 
 [auth]
 redirect_urls = [ "https://example.com/api/auth" ]

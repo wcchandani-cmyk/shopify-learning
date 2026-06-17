@@ -1,0 +1,56 @@
+query CartDeliveryInput {
+  cart {
+    cost {
+      subtotalAmount {
+        amount
+      }
+    }
+    lines {
+      id
+      quantity
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          sku
+          weight
+          product {
+            id
+          }
+        }
+      }
+    }
+    buyerIdentity {
+      customer {
+        numberOfOrders
+        amountSpent {
+          amount
+        }
+        metafield(namespace: "custom", key: "tags") {
+          value
+        }
+      }
+    }
+    deliveryGroups {
+      id
+      deliveryAddress {
+        countryCode
+        provinceCode
+        zip
+        city
+        address1
+        address2
+      }
+      deliveryOptions {
+        handle
+        title
+      }
+    }
+  }
+  discount {
+    discountClasses
+    metafield(namespace: "$app:custom-discount", key: "function-configuration") {
+      value
+    }
+  }
+}

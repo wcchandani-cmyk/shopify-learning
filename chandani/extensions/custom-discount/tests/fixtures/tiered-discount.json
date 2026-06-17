@@ -1,0 +1,72 @@
+{
+  "payload": {
+    "export": "run",
+    "target": "purchase.product-discount.run",
+    "input": {
+      "cart": {
+        "lines": [
+          {
+            "id": "gid://shopify/CartLine/0",
+            "quantity": 4,
+            "cost": {
+              "amountPerQuantity": {
+                "amount": "100.0",
+                "currencyCode": "USD"
+              }
+            },
+            "merchandise": {
+              "__typename": "ProductVariant",
+              "id": "gid://shopify/ProductVariant/0",
+              "sku": "SKU-ABC",
+              "product": {
+                "id": "gid://shopify/Product/0"
+              }
+            }
+          }
+        ],
+        "cost": {
+          "subtotalAmount": {
+            "amount": "400.0",
+            "currencyCode": "USD"
+          }
+        },
+        "buyerIdentity": {
+          "customer": {
+            "id": "gid://shopify/Customer/0",
+            "numberOfOrders": 1,
+            "amountSpent": {
+              "amount": "100.0",
+              "currencyCode": "USD"
+            },
+            "metafield": null
+          }
+        }
+      },
+      "discountNode": {
+        "metafield": {
+          "value": "{\"conditions\":[],\"combination\":\"all\",\"discountType\":\"percentage\",\"campaignType\":\"tiered_discount\",\"title\":\"Tiered Promo\",\"tiers\":[{\"quantity\":\"3\",\"discountValue\":\"15\",\"message\":\"15% off for 3+ items\"},{\"quantity\":\"5\",\"discountValue\":\"25\",\"message\":\"25% off for 5+ items\"}]}"
+        }
+      }
+    },
+    "output": {
+      "discountApplicationStrategy": "FIRST",
+      "discounts": [
+        {
+          "value": {
+            "percentage": {
+              "value": 15
+            }
+          },
+          "targets": [
+            {
+              "cartLine": {
+                "id": "gid://shopify/CartLine/0"
+              }
+            }
+          ],
+          "message": "15% off for 3+ items"
+        }
+      ]
+    }
+  }
+}

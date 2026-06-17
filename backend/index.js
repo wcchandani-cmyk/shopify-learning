@@ -8,6 +8,7 @@ const productRoutes = require("./modules/product/route");
 const customerRoutes = require("./modules/customer/route");
 const companyRoutes = require("./modules/company/route");
 const discountRoutes = require("./modules/discount/route");
+const discountCustomizationRoutes = require("./modules/customDiscount/route");
 const webhookRoutes = require("./modules/webhook/route");
 const { PORT, BACKEND_URI } = require("./config/constants");
 
@@ -26,6 +27,7 @@ app.use("/api/product", productRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/discount", discountRoutes);
+app.use("/api/custom-discounts", discountCustomizationRoutes);
 
 app.listen(PORT, () => {
   console.log(

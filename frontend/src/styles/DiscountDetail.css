@@ -835,3 +835,16 @@
   width: 14px;
   height: 14px;
 }
+
+.discount-combinations-summary {
+  background-color: #f6f6f7;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e1e3e5;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.discount-combinations-summary__title {
+  font-weight: 600;
+}

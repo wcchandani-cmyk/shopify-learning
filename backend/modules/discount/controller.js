@@ -490,6 +490,15 @@ const createDiscount = async (req, res) => {
       mapEntitledFields(priceRule, appliesTo, selectedItems);
     }
 
+    if (type === DISCOUNT_TYPE.FREE_SHIPPING) {
+      if (req.body.excludeShippingRates) {
+        const cleanVal = String(req.body.excludeShippingRatesValue || "").replace(/,/g, "");
+        priceRule.prerequisite_shipping_price_range = {
+          less_than_or_equal_to: parseFloat(cleanVal || 0),
+        };
+      }
+    }
+
     if (limitTotalUses && limitTotalUsesValue) {
       priceRule.usage_limit = parseInt(limitTotalUsesValue, 10);
     }
@@ -691,6 +700,18 @@ const getDiscount = async (req, res) => {
       }
     }
 
+    let excludeShippingRates = false;
+    let excludeShippingRatesValue = "";
+    if (
+      discount.type === DISCOUNT_TYPE.FREE_SHIPPING &&
+      rule.prerequisite_shipping_price_range
+    ) {
+      excludeShippingRates = true;
+      excludeShippingRatesValue = String(
+        rule.prerequisite_shipping_price_range.less_than_or_equal_to || ""
+      );
+    }
+
     let parsedSelectedItems = [];
     let bxgyFields = {};
     let selectedCustomers = [];
@@ -770,6 +791,8 @@ const getDiscount = async (req, res) => {
       tags: "",
       shippingCountries,
       selectedCountries,
+      excludeShippingRates,
+      excludeShippingRatesValue,
     };
 
     successResponse(res, 200, "Discount fetched successfully", responseData);
@@ -879,6 +902,15 @@ const updateDiscount = async (req, res) => {
       } else {
         priceRule.target_selection = TARGET_SELECTION.ALL;
         priceRule.entitled_country_ids = [];
+      }
+
+      if (req.body.excludeShippingRates) {
+        const cleanVal = String(req.body.excludeShippingRatesValue || "").replace(/,/g, "");
+        priceRule.prerequisite_shipping_price_range = {
+          less_than_or_equal_to: parseFloat(cleanVal || 0),
+        };
+      } else {
+        priceRule.prerequisite_shipping_price_range = null;
       }
     } else if (discount.type === DISCOUNT_TYPE.BUY_X_GET_Y) {
       mapBxgyFields(priceRule, req.body);

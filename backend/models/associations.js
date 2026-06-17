@@ -4,6 +4,7 @@ const Variant = require("../modules/variant/model");
 const Customer = require("../modules/customer/model");
 const Comment = require("../modules/comment/model");
 const Discount = require("../modules/discount/model");
+const CustomDiscount = require("../modules/customDiscount/model");
 
 Shop.hasMany(Product, {
   foreignKey: "shopId",
@@ -75,6 +76,16 @@ Comment.belongsTo(Shop, {
   as: "shop",
 });
 
+Shop.hasMany(CustomDiscount, {
+  foreignKey: "shopId",
+  as: "customDiscounts",
+  onDelete: "CASCADE",
+});
+CustomDiscount.belongsTo(Shop, {
+  foreignKey: "shopId",
+  as: "shop",
+});
+
 module.exports = {
   Shop,
   Product,
@@ -82,5 +93,7 @@ module.exports = {
   Customer,
   Comment,
   Discount,
+  CustomDiscount,
 };
+
 

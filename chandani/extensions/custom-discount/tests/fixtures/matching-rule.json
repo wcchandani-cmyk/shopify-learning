@@ -1,0 +1,72 @@
+{
+  "payload": {
+    "export": "run",
+    "target": "purchase.product-discount.run",
+    "input": {
+      "cart": {
+        "lines": [
+          {
+            "id": "gid://shopify/CartLine/0",
+            "quantity": 1,
+            "cost": {
+              "amountPerQuantity": {
+                "amount": "150.0",
+                "currencyCode": "USD"
+              }
+            },
+            "merchandise": {
+              "__typename": "ProductVariant",
+              "id": "gid://shopify/ProductVariant/0",
+              "sku": "SKU-XYZ",
+              "product": {
+                "id": "gid://shopify/Product/0"
+              }
+            }
+          }
+        ],
+        "cost": {
+          "subtotalAmount": {
+            "amount": "150.0",
+            "currencyCode": "USD"
+          }
+        },
+        "buyerIdentity": {
+          "customer": {
+            "id": "gid://shopify/Customer/0",
+            "numberOfOrders": 5,
+            "amountSpent": {
+              "amount": "500.0",
+              "currencyCode": "USD"
+            },
+            "metafield": null
+          }
+        }
+      },
+      "discountNode": {
+        "metafield": {
+          "value": "{\"conditions\":[{\"type\":\"total_amount\",\"operator\":\"greater_than_or_equals\",\"value\":\"100\"}],\"combination\":\"all\",\"discountType\":\"percentage\",\"discountValue\":\"10\",\"title\":\"10% off $100+\"}"
+        }
+      }
+    },
+    "output": {
+      "discountApplicationStrategy": "FIRST",
+      "discounts": [
+        {
+          "value": {
+            "percentage": {
+              "value": 10
+            }
+          },
+          "targets": [
+            {
+              "cartLine": {
+                "id": "gid://shopify/CartLine/0"
+              }
+            }
+          ],
+          "message": "10% off $100+"
+        }
+      ]
+    }
+  }
+}

@@ -44,6 +44,8 @@ export const getInitialDiscountForm = () => ({
   tags: "",
   shippingCountries: "all",
   selectedCountries: [],
+  excludeShippingRates: false,
+  excludeShippingRatesValue: "",
 });
 
 export const combineDateTime = (dateStr, timeStr) => {
@@ -224,10 +226,20 @@ export const getSummaryDetails = (form, type) => {
     details.push("No usage limits");
   }
 
+  const isShipping = form.functionType === "2" || type === "Free shipping" || type === "Shipping Discount";
+
   const combined = [];
-  if (form.combinesWithProduct) combined.push("Product");
-  if (form.combinesWithOrder) combined.push("Order");
-  if (form.combinesWithShipping) combined.push("Shipping");
+  if (form.combinesWithProduct) {
+    combined.push(isShipping ? "other Product" : "Product");
+  }
+  const actualCombinesWithOrder = form.combinesWithOrder;
+  if (actualCombinesWithOrder) {
+    combined.push(isShipping ? "other Order" : "Order");
+  }
+  const actualCombinesWithShipping = (form.functionType === "2" && form.shippingDiscountType === "free_shipping") ? false : form.combinesWithShipping;
+  if (actualCombinesWithShipping && !isShipping) {
+    combined.push("Shipping");
+  }
   if (combined.length > 0) {
     details.push(`Combines with ${combined.join(", ")} discounts`);
   } else {
@@ -242,3 +254,86 @@ export const getSummaryDetails = (form, type) => {
 
   return details;
 };
+
+export const validateCustomDiscount = ({
+  title,
+  method,
+  code,
+  campaignType,
+  discountValue,
+  tiers,
+  functionType,
+  shippingDiscountType,
+}) => {
+  const cleanTitle = (title || "").trim();
+  if (!cleanTitle) {
+    return "Title is required";
+  }
+
+  if (method === "Code" && !(code || "").trim()) {
+    return "Discount code is required";
+  }
+
+  const isFreeShipping =
+    functionType === "2" && shippingDiscountType === "free_shipping";
+
+  if (isFreeShipping) {
+    return null;
+  }
+
+  if (campaignType !== "tiered_discount") {
+    const val = parseFloat(discountValue);
+    if (isNaN(val) || val <= 0) {
+      return "Please enter a valid positive discount value";
+    }
+  } else {
+    if (!tiers || tiers.length === 0) {
+      return "Please add at least one tier";
+    }
+    for (let i = 0; i < tiers.length; i++) {
+      const t = tiers[i];
+      const qty = parseInt(t.quantity, 10);
+      const tVal = parseFloat(t.discountValue);
+      if (isNaN(qty) || qty <= 0) {
+        return `Please enter a valid positive quantity for Tier ${i + 1}`;
+      }
+      if (isNaN(tVal) || tVal <= 0) {
+        return `Please enter a valid positive discount value for Tier ${i + 1}`;
+      }
+    }
+  }
+
+  return null;
+};
+
+export const getInitialCustomDiscountForm = (initialFunctionType = "1") => ({
+  title: "",
+  method: "Automatic",
+  code: "",
+  functionType: initialFunctionType,
+  combinesWithProduct: false,
+  combinesWithOrder: false,
+  combinesWithShipping: false,
+  startDate: new Date().toISOString().substring(0, 10),
+  startTime: "12:00 AM",
+  hasEndDate: false,
+  endDate: "",
+  endTime: "12:00 AM",
+  conditions: [],
+  combination: "all",
+  discountType: "percentage",
+  discountValue: "",
+  discountMessage: "",
+  campaignType: "conditional_discount",
+  limitTotalUses: false,
+  limitTotalUsesValue: "",
+  limitOnePerCustomer: false,
+  applyToEachEntitledItem: false,
+  tiers: [
+    { id: Date.now(), message: "", quantity: "", discountValue: "" },
+  ],
+  shippingDiscountType: "discount",
+  shippingMethodScope: "all",
+  shippingMethods: [],
+});
+

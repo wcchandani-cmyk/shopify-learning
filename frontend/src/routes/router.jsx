@@ -10,6 +10,9 @@ import CustomerDetailPage from "../pages/CustomerDetailPage";
 import DiscountsPage from "../pages/DiscountsPage";
 import DiscountCreatePage from "../pages/DiscountCreatePage";
 import DiscountEditPage from "../pages/DiscountEditPage";
+import CustomDiscountsPage from "../pages/CustomDiscountsPage";
+import CustomDiscountCreatePage from "../pages/CustomDiscountCreatePage";
+import CustomDiscountEditPage from "../pages/CustomDiscountEditPage";
 
 export const appRouter = createBrowserRouter([
   { path: "/", element: <HomePage /> },
@@ -23,4 +26,7 @@ export const appRouter = createBrowserRouter([
   { path: "/discounts", element: <DiscountsPage /> },
   { path: "/discounts/new/:type", element: <DiscountCreatePage /> },
   { path: "/discounts/:id", element: <DiscountEditPage /> },
+  { path: "/custom-discounts", element: <CustomDiscountsPage /> },
+  { path: "/custom-discounts/new", element: <CustomDiscountCreatePage /> },
+  { path: "/custom-discounts/:id", element: <CustomDiscountEditPage /> },
 ]);

@@ -40,7 +40,22 @@ function useCheckedRef(checked) {
 export default function CombinationsSection({ form, updateField, displayType }) {
   const productRef = useCheckedRef(form.combinesWithProduct);
   const orderRef = useCheckedRef(form.combinesWithOrder);
-  const shippingRef = useCheckedRef(form.combinesWithShipping);
+
+  const shippingChecked = (form.functionType === "2") ? false : form.combinesWithShipping;
+  const shippingRef = useCheckedRef(shippingChecked);
+
+  const useOtherPrefix = form.functionType === "1" || form.functionType === "2";
+
+  const productLabel = useOtherPrefix ? "Other product discounts" : "Product discounts";
+  const orderLabel = useOtherPrefix ? "Other order discounts" : "Order discounts";
+  const shippingLabel = useOtherPrefix ? "Other shipping discounts" : "Shipping discounts";
+
+  const productSummaryText = useOtherPrefix ? "other product discounts" : "product discounts";
+  const orderSummaryText = useOtherPrefix ? "other order discounts" : "order discounts";
+  const shippingSummaryText = useOtherPrefix ? "other shipping discounts" : "shipping discounts";
+
+  const orderChecked = form.combinesWithOrder;
+  const wonCombine = !form.combinesWithProduct && !orderChecked && !shippingChecked;
 
   return (
     <s-section heading="Combinations">
@@ -51,32 +66,34 @@ export default function CombinationsSection({ form, updateField, displayType }) 
         <div className="checkbox-group tight-gap">
           <s-checkbox
             ref={productRef}
-            label="Product discounts"
+            label={productLabel}
             checked={form.combinesWithProduct}
             onChange={(event) => updateField("combinesWithProduct", getCheckboxChecked(event))}
           />
           <s-checkbox
             ref={orderRef}
-            label="Order discounts"
-            checked={form.combinesWithOrder}
+            label={orderLabel}
+            checked={orderChecked}
             onChange={(event) => updateField("combinesWithOrder", getCheckboxChecked(event))}
           />
-          <s-checkbox
-            ref={shippingRef}
-            label="Shipping discounts"
-            checked={form.combinesWithShipping}
-            onChange={(event) => updateField("combinesWithShipping", getCheckboxChecked(event))}
-          />
+          {form.functionType !== "2" && (
+            <s-checkbox
+              ref={shippingRef}
+              label={shippingLabel}
+              checked={shippingChecked}
+              onChange={(event) => updateField("combinesWithShipping", getCheckboxChecked(event))}
+            />
+          )}
         </div>
 
         <div style={{ backgroundColor: "#f6f6f7", padding: "12px", borderRadius: "8px", border: "1px solid #e1e3e5", marginTop: "12px", fontSize: "13px" }}>
           <span style={{ fontWeight: 600 }}>{form.title || displayType}</span>{" "}
-          {(!form.combinesWithProduct && !form.combinesWithOrder && !form.combinesWithShipping)
+          {wonCombine
             ? "won't combine with any other discount at checkout"
             : `will combine with ${[
-                form.combinesWithProduct && "product discounts",
-                form.combinesWithOrder && "order discounts",
-                form.combinesWithShipping && "shipping discounts"
+                form.combinesWithProduct && productSummaryText,
+                orderChecked && orderSummaryText,
+                shippingChecked && shippingSummaryText
               ].filter(Boolean).join(", ")} at checkout.`}
         </div>
       </s-stack>

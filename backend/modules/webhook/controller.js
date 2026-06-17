@@ -52,7 +52,8 @@ exports.handleAppUninstalled = async (req, res) => {
           chargeId: null,
           planType: "0",
           planInterval: "1",
-          appInstall: "0",
+          // Keep appInstall as "1" so that products/customers remain visible/accessible when reinstalled
+          // appInstall: "0",
         },
         {
           where: { id: shop.id },
@@ -202,6 +203,21 @@ const handleDiscountChange = (label) => async (req, res) => {
     const { shopDomain, shop } = await resolveInstalledShop(req);
     if (!shopDomain || !shop) {
       return res.status(200).send({ message: "ignored" });
+    }
+
+    if (label === "DISCOUNTS_DELETE") {
+      const payload = parseWebhookPayload(req.body);
+      const id = payload.id || (payload.admin_graphql_api_id && payload.admin_graphql_api_id.split("/").pop());
+      if (id) {
+        const { Op } = require("sequelize");
+        const CustomDiscount = require("../customDiscount/model");
+        await CustomDiscount.destroy({
+          where: {
+            shopId: shop.id,
+            shopifyId: { [Op.like]: `%/${id}` }
+          }
+        });
+      }
     }
 
     await syncDiscountsFromShopify(shop);

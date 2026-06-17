@@ -77,6 +77,16 @@ export function useDiscountOperations({
         return;
       }
     }
+    if (type === "Free shipping" && form.excludeShippingRates) {
+      const cleanVal = String(form.excludeShippingRatesValue || "").replace(/,/g, "");
+      const val = parseFloat(cleanVal);
+      if (isNaN(val) || val < 0) {
+        const msg = "Please enter a valid shipping rate threshold";
+        setSaveError(msg);
+        shopify.toast.show(msg, { isError: true });
+        return;
+      }
+    }
 
     isSavingRef.current = true;
     setSaving(true);

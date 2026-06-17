@@ -90,7 +90,19 @@ export default function CompanyList() {
   );
 
   return (
-    <>
+    <s-page heading="Companies">
+      <s-button
+        slot="primary-action"
+        variant="primary"
+        onClick={() =>
+          shopify.toast.show(
+            "Please create companies directly via Shopify Admin B2B settings."
+          )
+        }
+      >
+        Add company
+      </s-button>
+
       {error && (
         <s-section>
           <s-banner tone="critical" heading="Could not load companies">
@@ -182,6 +194,6 @@ export default function CompanyList() {
           </s-table>
         </s-section>
       )}
-    </>
+    </s-page>
   );
 }

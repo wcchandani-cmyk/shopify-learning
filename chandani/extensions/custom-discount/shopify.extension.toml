@@ -1,0 +1,26 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "t:name"
+handle = "custom-discount"
+type = "function"
+uid = "d16ce045-38ab-7862-c121-de2e0576355ce0747963"
+description = "t:description"
+
+  [[extensions.targeting]]
+  target = "cart.lines.discounts.generate.run"
+  input_query = "src/cart_lines_run.graphql"
+  export = "cart-lines-discounts-generate-run"
+
+  [[extensions.targeting]]
+  target = "cart.delivery-options.discounts.generate.run"
+  input_query = "src/cart_delivery_run.graphql"
+  export = "cart-delivery-options-discounts-generate-run"
+
+  [extensions.build]
+  command = ""
+  path = "dist/function.wasm"
+
+  [extensions.ui.paths]
+  create = "/custom-discounts/new"
+  details = "/custom-discounts/:id"

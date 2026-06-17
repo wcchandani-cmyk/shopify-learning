@@ -1,0 +1,58 @@
+query CartLinesInput {
+  cart {
+    cost {
+      subtotalAmount {
+        amount
+        currencyCode
+      }
+    }
+    billingAddress {
+      countryCode
+      provinceCode
+      zip
+      city
+      address1
+      address2
+    }
+    lines {
+      id
+      quantity
+      cost {
+        amountPerQuantity {
+          amount
+          currencyCode
+        }
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          sku
+          weight
+          product {
+            id
+          }
+        }
+      }
+    }
+    buyerIdentity {
+      customer {
+        id
+        numberOfOrders
+        amountSpent {
+          amount
+          currencyCode
+        }
+        metafield(namespace: "custom", key: "tags") {
+          value
+        }
+      }
+    }
+  }
+  discount {
+    discountClasses
+    metafield(namespace: "$app:custom-discount", key: "function-configuration") {
+      value
+    }
+  }
+}

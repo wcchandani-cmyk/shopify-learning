@@ -71,6 +71,8 @@ const serializeSelectedItems = (type, body) => {
   return JSON.stringify({
     ...eligibilityData,
     selectedItems: body.selectedItems || [],
+    excludeShippingRates: type === DISCOUNT_TYPE.FREE_SHIPPING ? Boolean(body.excludeShippingRates) : undefined,
+    excludeShippingRatesValue: type === DISCOUNT_TYPE.FREE_SHIPPING ? body.excludeShippingRatesValue || "" : undefined,
   });
 };
 
