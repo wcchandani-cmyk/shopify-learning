@@ -1,128 +1,27 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getTotalInventory,
   getVariantDisplayName,
   getVariantRowKey,
   findVariantIndex,
+  isNewVariant,
+  variantChildLabel,
+  groupVariantsByKey,
+  commonGroupValue,
+  groupPriceLabel,
+  getOptionValueKey,
 } from "../../utils/productVariants";
 import { getInputEventValue } from "../../utils/fieldEvent";
 import ProductOptionsSection from "./ProductOptionsSection";
+import ProductThumbnail from "./ProductThumbnail";
+import MetafieldsCard from "../shared/metafields/MetafieldsCard";
 import "../../styles/ProductVariants.css";
 
 import { exclusiveFieldLabel } from "../../utils/formFields";
 
-function Chevron({ open }) {
-  return (
-    <svg
-      className={`variant-group__chevron${open ? " variant-group__chevron--open" : ""}`}
-      width="16"
-      height="16"
-      viewBox="0 0 20 20"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M6 8l4 4 4-4"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function VariantThumb({ imageUrl }) {
-  if (imageUrl) {
-    return (
-      <span className="variant-row__thumb">
-        <img src={imageUrl} alt="" />
-      </span>
-    );
-  }
-  return (
-    <span className="variant-row__thumb variant-row__thumb--placeholder">
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <rect
-          x="2.5"
-          y="3.5"
-          width="15"
-          height="13"
-          rx="2"
-          stroke="currentColor"
-          strokeWidth="1.3"
-        />
-        <circle cx="7" cy="8" r="1.4" fill="currentColor" />
-        <path
-          d="M4 15l4-4 3 3 2-2 3 3"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  );
-}
-
 function NewBadge() {
   return <span className="variant-row__badge">New</span>;
-}
-
-const isNewVariant = (variant) =>
-  variant.isNew === true || variant.isNew === "true" || !variant.id;
-
-const optionFieldKey = (option, index) =>
-  `option${option?.position ?? index + 1}`;
-
-/** Label for a variant from every option except the one we grouped by. */
-function variantChildLabel(variant, options, groupByIndex) {
-  const label = (options || [])
-    .map((option, index) => ({ option, index }))
-    .filter(({ index }) => index !== groupByIndex)
-    .map(({ option, index }) =>
-      String(variant[optionFieldKey(option, index)] || "").trim(),
-    )
-    .filter(Boolean)
-    .join(" / ");
-  return label || getVariantDisplayName(variant);
-}
-
-function groupVariantsByKey(variants, key) {
-  const groups = [];
-  const indexByValue = new Map();
-
-  variants.forEach((variant) => {
-    const value = String(variant[key] || "").trim() || "—";
-    if (!indexByValue.has(value)) {
-      indexByValue.set(value, groups.length);
-      groups.push({ value, items: [] });
-    }
-    groups[indexByValue.get(value)].items.push(variant);
-  });
-
-  return groups;
-}
-
-function commonGroupValue(items, field) {
-  if (!items.length) return "";
-  const first = String(items[0][field] ?? "");
-  return items.every((item) => String(item[field] ?? "") === first)
-    ? first
-    : "";
-}
-
-function groupPriceLabel(items) {
-  const prices = items.map((item) =>
-    item.price != null && item.price !== "" ? Number(item.price) : null,
-  );
-  const valid = prices.filter((price) => price != null && !Number.isNaN(price));
-  if (!valid.length) return "—";
-  const min = Math.min(...valid);
-  const max = Math.max(...valid);
-  if (min === max) return `$${min.toFixed(2)}`;
-  return `$${min.toFixed(2)} – $${max.toFixed(2)}`;
 }
 
 export default function ProductVariantSection({
@@ -142,6 +41,21 @@ export default function ProductVariantSection({
   const navigate = useNavigate();
   const [collapsedGroups, setCollapsedGroups] = useState(() => new Set());
   const [groupByIndex, setGroupByIndex] = useState(0);
+
+  const variantMetafieldsModalRef = useRef(null);
+  const [activeVariantId, setActiveVariantId] = useState(null);
+
+  const openVariantMetafields = (variant) => {
+    setActiveVariantId(variant.id || variant.shopifyId || "new");
+    setTimeout(() => {
+      variantMetafieldsModalRef.current?.showOverlay?.();
+    }, 50);
+  };
+
+  const closeVariantMetafields = () => {
+    variantMetafieldsModalRef.current?.hideOverlay?.();
+    setActiveVariantId(null);
+  };
 
   const totalInventory = useMemo(
     () => getTotalInventory(variants),
@@ -164,7 +78,7 @@ export default function ProductVariantSection({
       : 0;
 
   const groupByKey = options?.[safeGroupByIndex]
-    ? optionFieldKey(options[safeGroupByIndex], safeGroupByIndex)
+    ? getOptionValueKey(options[safeGroupByIndex], safeGroupByIndex)
     : "option1";
 
   const groups = useMemo(
@@ -270,8 +184,11 @@ export default function ProductVariantSection({
                       aria-expanded={!isCollapsed}
                       onClick={() => toggleGroup(group.value)}
                     >
-                      <Chevron open={!isCollapsed} />
-                      <VariantThumb imageUrl={imageUrl} />
+                      <s-icon
+                        type="chevron-down"
+                        className={`variant-group__chevron${!isCollapsed ? " variant-group__chevron--open" : ""}`}
+                      />
+                      <ProductThumbnail imageUrl={imageUrl} size={28} title={group.value} />
                       <span className="variant-group__title">
                         <span className="variant-group__name">
                           {group.value}
@@ -329,14 +246,22 @@ export default function ProductVariantSection({
                         const rowKey = getVariantRowKey(variant);
                         return (
                           <div className="variant-row" key={rowKey}>
-                            <VariantThumb imageUrl={imageUrl} />
-                            <span className="variant-row__label">
-                              {variantChildLabel(
-                                variant,
-                                options,
-                                safeGroupByIndex,
-                              )}
+                            <ProductThumbnail imageUrl={imageUrl} size={28} title="Variant" />
+                            <span className="variant-row__label" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                              <span>
+                                {variantChildLabel(
+                                  variant,
+                                  options,
+                                  safeGroupByIndex,
+                                )}
+                              </span>
                               {isNewVariant(variant) ? <NewBadge /> : null}
+                              <s-button
+                                variant="tertiary"
+                                onClick={() => openVariantMetafields(variant)}
+                              >
+                                Metafields
+                              </s-button>
                             </span>
                             <div className="variant-row__price">
                               <s-money-field
@@ -396,10 +321,16 @@ export default function ProductVariantSection({
               const rowKey = getVariantRowKey(variant);
               return (
                 <div className="variant-row variant-row--flat" key={rowKey}>
-                  <VariantThumb imageUrl={imageUrl} />
-                  <span className="variant-row__label">
-                    {getVariantDisplayName(variant)}
+                  <ProductThumbnail imageUrl={imageUrl} size={28} title="Variant" />
+                  <span className="variant-row__label" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <span>{getVariantDisplayName(variant)}</span>
                     {isNewVariant(variant) ? <NewBadge /> : null}
+                    <s-button
+                      variant="tertiary"
+                      onClick={() => openVariantMetafields(variant)}
+                    >
+                      Metafields
+                    </s-button>
                   </span>
                   <div className="variant-row__price">
                     <s-money-field
@@ -446,6 +377,23 @@ export default function ProductVariantSection({
             Total inventory: {totalInventory} available
           </p>
         </>
+      )}
+      {activeVariantId && (
+        <s-modal
+          id="variant-metafields-modal"
+          ref={variantMetafieldsModalRef}
+          heading="Variant Metafields"
+        >
+          <div style={{ padding: "16px 0" }}>
+            <MetafieldsCard
+              entityType="variant"
+              entityId={activeVariantId}
+            />
+          </div>
+          <s-button slot="secondary-actions" onClick={closeVariantMetafields}>
+            Close
+          </s-button>
+        </s-modal>
       )}
     </div>
   );

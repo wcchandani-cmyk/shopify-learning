@@ -10,6 +10,7 @@ const companyRoutes = require("./modules/company/route");
 const discountRoutes = require("./modules/discount/route");
 const discountCustomizationRoutes = require("./modules/customDiscount/route");
 const webhookRoutes = require("./modules/webhook/route");
+const metafieldRoutes = require("./modules/metafields/route");
 const { PORT, BACKEND_URI } = require("./config/constants");
 
 const JSON_BODY_LIMIT = "10mb";
@@ -28,10 +29,11 @@ app.use("/api/customer", customerRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/discount", discountRoutes);
 app.use("/api/custom-discounts", discountCustomizationRoutes);
+app.use("/api/metafields", metafieldRoutes);
 
 app.listen(PORT, () => {
   console.log(
-    `Backend running at ${BACKEND_URI || `http://localhost:${PORT}`}`,
+    `Backend running at ${BACKEND_URI || `http://localhost:${PORT}`}`
   );
   console.log(`JSON body limit: ${JSON_BODY_LIMIT}`);
   console.log("Product list: 10 per request (paginated API)");

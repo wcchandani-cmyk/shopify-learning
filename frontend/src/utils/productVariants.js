@@ -265,3 +265,56 @@ export function findVariantsForOptionValue(
       ({ variant }) => String(variant[optionKey] || "").trim() === needle,
     );
 }
+
+export function isNewVariant(variant) {
+  return variant.isNew === true || variant.isNew === "true" || !variant.id;
+}
+
+export function variantChildLabel(variant, options, groupByIndex) {
+  const label = (options || [])
+    .map((option, index) => ({ option, index }))
+    .filter(({ index }) => index !== groupByIndex)
+    .map(({ option, index }) =>
+      String(variant[getOptionValueKey(option, index)] || "").trim(),
+    )
+    .filter(Boolean)
+    .join(" / ");
+  return label || getVariantDisplayName(variant);
+}
+
+export function groupVariantsByKey(variants, key) {
+  const groups = [];
+  const indexByValue = new Map();
+
+  variants.forEach((variant) => {
+    const value = String(variant[key] || "").trim() || "—";
+    if (!indexByValue.has(value)) {
+      indexByValue.set(value, groups.length);
+      groups.push({ value, items: [] });
+    }
+    groups[indexByValue.get(value)].items.push(variant);
+  });
+
+  return groups;
+}
+
+export function commonGroupValue(items, field) {
+  if (!items.length) return "";
+  const first = String(items[0][field] ?? "");
+  return items.every((item) => String(item[field] ?? "") === first)
+    ? first
+    : "";
+}
+
+export function groupPriceLabel(items) {
+  const prices = items.map((item) =>
+    item.price != null && item.price !== "" ? Number(item.price) : null,
+  );
+  const valid = prices.filter((price) => price != null && !Number.isNaN(price));
+  if (!valid.length) return "—";
+  const min = Math.min(...valid);
+  const max = Math.max(...valid);
+  if (min === max) return `$${min.toFixed(2)}`;
+  return `$${min.toFixed(2)} – $${max.toFixed(2)}`;
+}
+

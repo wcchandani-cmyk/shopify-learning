@@ -4,6 +4,7 @@ import PageLoader from "../PageLoader";
 import CustomerDetail from "./CustomerDetail";
 import CustomerOverview from "./CustomerOverview";
 import { useCustomerDetail } from "../../hooks/customer/useCustomerDetail";
+import { useMetafieldsPrefetch } from "../../hooks/useMetafieldsPrefetch";
 
 export default function CustomerDetailWrapper() {
   const { id } = useParams();
@@ -11,6 +12,11 @@ export default function CustomerDetailWrapper() {
   const navigate = useNavigate();
 
   const { customer, loading, error } = useCustomerDetail(isNew ? null : id);
+
+  const { loading: metafieldsLoading } = useMetafieldsPrefetch(
+    "customer",
+    customer?.id
+  );
 
   const handleCreated = () => {
     navigate("/customers", { replace: true });
@@ -33,7 +39,7 @@ export default function CustomerDetailWrapper() {
     return <CustomerDetail isNew customer={null} onSaved={handleCreated} />;
   }
 
-  if (loading) {
+  if (loading || (customer && metafieldsLoading)) {
     return (
       <s-page heading="Customer">
         {breadcrumb}

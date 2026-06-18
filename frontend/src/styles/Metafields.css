@@ -1,0 +1,778 @@
+/* Metafields styling */
+
+.metafield-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metafield-card-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: box-shadow 0.1s ease, background 0.1s ease;
+}
+
+/* Focused row lifts into a clearly visible card so the value can be entered there. */
+.metafield-card-row.is-active {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+.metafield-card-row__label-container {
+  width: 140px;
+}
+
+.metafield-card-row__actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.metafield-card-row__label {
+  font-weight: 500;
+  font-size: 14px;
+  color: #303030;
+}
+
+.metafield-card-row__desc {
+  font-size: 12px;
+  color: #6d7175;
+  margin-top: 2px;
+}
+
+.metafield-card-row__field {
+  flex: 1;
+}
+
+.metafield-card-row__new-msg {
+  padding: 8px 12px;
+  background: #f1f2f4;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #6d7175;
+}
+
+.metafield-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Modals general */
+.metafield-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.metafield-modal-flex-row {
+  display: flex;
+  gap: 12px;
+}
+
+.metafield-modal-flex-row--align-end {
+  align-items: flex-end;
+}
+
+.metafield-modal-flex-row__item-1 {
+  flex: 1;
+}
+
+.metafield-modal-flex-row__item-2 {
+  flex: 2;
+}
+
+.metafield-modal-switch-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+/* Options (capabilities) list — mirrors Shopify's bordered toggle rows */
+.metafield-options-box {
+  border: 1px solid #e1e3e5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.metafield-options-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border-top: 1px solid #f1f1f1;
+}
+
+.metafield-options-row:first-child {
+  border-top: none;
+}
+
+.metafield-options-row__label {
+  font-size: 13px;
+  color: #303030;
+}
+
+.metafield-options-empty {
+  font-size: 13px;
+  color: #6d7175;
+  margin: 0;
+}
+
+/* View all modal */
+.metafield-view-all-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.metafield-view-all-empty {
+  text-align: center;
+  padding: 24px;
+  color: #6d7175;
+}
+
+.metafield-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e1e3e5;
+}
+
+.metafield-tab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #616161;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.metafield-tab:hover {
+  background: #f1f1f1;
+}
+
+.metafield-tab--active {
+  background: #f1f1f1;
+  color: #303030;
+}
+
+.metafield-view-all-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.metafield-view-all-group-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #303030;
+}
+
+.metafield-view-all-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.metafield-view-all-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border-top: 1px solid #f1f1f1;
+  transition: box-shadow 0.1s ease, background 0.1s ease;
+}
+
+.metafield-view-all-group-list > .metafield-view-all-row:first-child {
+  border-top: none;
+}
+
+/* Focused row elevates into a clearly visible card above the rest. */
+.metafield-view-all-row.is-active {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+.metafield-view-all-row__label-container {
+  flex: 1;
+  min-width: 120px;
+}
+
+.metafield-view-all-row__label {
+  font-weight: 500;
+  font-size: 13px;
+  color: #303030;
+}
+
+.metafield-view-all-row__key {
+  font-size: 12px;
+  color: #6d7175;
+  margin-top: 2px;
+}
+
+.metafield-view-all-row__field {
+  flex: 3;
+}
+
+.metafield-view-all-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  visibility: hidden;
+}
+
+/* Reveal pin/delete on hover; the focused row shows Clear instead. */
+.metafield-view-all-row:hover .metafield-view-all-row__actions,
+.metafield-view-all-row.is-active .metafield-view-all-row__actions {
+  visibility: visible;
+}
+
+.metafield-clear-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  color: #6d7175;
+  padding: 4px 8px;
+}
+
+.metafield-clear-btn:hover:not(:disabled) {
+  color: #303030;
+}
+
+.metafield-clear-btn:disabled {
+  color: #c9cccf;
+  cursor: default;
+}
+
+.metafield-btn-destructive {
+  color: #d82c0d !important;
+}
+
+.metafield-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.metafield-card-empty-msg {
+  padding: 9px 0;
+  color: #6d7175;
+  font-size: 12px;
+}
+
+/* Custom Type Selector styles */
+.metafield-type-selector-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.metafield-type-selector-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #303030;
+  margin-bottom: 4px;
+}
+
+.metafield-type-selector-trigger-container {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid #c9cccf;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 14px;
+  min-height: 36px;
+  overflow: hidden;
+}
+
+.metafield-type-selector-value-type {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  background: #f1f2f4;
+  border: none;
+  border-right: 1px solid #c9cccf;
+  color: #303030;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s ease;
+}
+
+.metafield-type-selector-value-type:hover {
+  background: #e4e6e8;
+}
+
+.metafield-one-list-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: #5c5f62;
+}
+
+.metafield-one-list-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.metafield-type-selector-placeholder-btn {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.metafield-type-selector-placeholder-btn:hover {
+  background: #f9fafb;
+}
+
+.metafield-type-selector-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: #6d7175;
+  text-align: left;
+  font-size: 13px;
+}
+
+.value-type-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.value-type-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.metafield-type-selector-placeholder.has-value {
+  color: #303030;
+}
+
+.metafield-type-selector-chevron {
+  padding-right: 12px;
+  color: #6d7175;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.value-type-icon {
+  margin-right: 8px;
+  color: #6d7175;
+  font-weight: 500;
+}
+
+/* Card layout for modal */
+.metafield-modal-card {
+  background: #fff;
+  border: 1px solid #e1e3e5;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.metafield-modal-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303030;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metafield-add-desc-wrapper {
+  padding: 4px 0;
+}
+
+.metafield-add-desc-link {
+  background: none;
+  border: none;
+  color: #303030;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0;
+  text-decoration: none;
+}
+
+.metafield-add-desc-link:hover {
+  text-decoration: underline;
+}
+
+.metafield-link-btn {
+  background: none;
+  border: none;
+  color: #005bd3;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 0;
+  text-align: left;
+}
+
+.metafield-link-btn:hover {
+  text-decoration: underline;
+}
+
+/* Validation card */
+.metafield-accordion-trigger {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  color: #303030;
+}
+
+.metafield-accordion-icon {
+  font-size: 14px;
+  line-height: 1;
+  color: #6d7175;
+}
+
+.metafield-validation-box {
+  margin-top: 16px;
+  background: #f7f7f7;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.metafield-validation-group {
+  margin-bottom: 16px;
+}
+
+.metafield-validation-group:last-child {
+  margin-bottom: 0;
+}
+
+.metafield-validation-group__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #303030;
+  margin-bottom: 8px;
+}
+
+/* Type picker drill-in submenus (e.g. Measurement) */
+.metafield-submenu-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #303030;
+}
+
+.metafield-submenu-back:hover {
+  background: #f6f6f7;
+}
+
+.metafield-submenu-back__chevron {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #6d7175;
+}
+
+.metafield-submenu-trigger {
+  cursor: pointer;
+}
+
+.metafield-submenu-trigger__chevron {
+  color: #8c9196;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.metafield-submenu-create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  border: none;
+  border-top: 1px solid #e8e8e8;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #005bd3;
+  font-weight: 500;
+}
+
+.metafield-submenu-create:hover {
+  background: #f1f1f1;
+}
+
+.metafield-submenu-create__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Type picker popover */
+.metafield-type-popover__group-title {
+  padding: 0.5rem 0.6rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6d7175;
+}
+
+/* Muted "(Single line text)" base-type annotation on presets */
+.metafield-type-annotation {
+  color: #8a8a8a;
+}
+
+.metafield-type-selector-wrapper .searchable-select__search-wrap {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.metafield-type-selector-wrapper .searchable-select__search {
+  width: 100%;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #c9cccf;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.875rem;
+  background: #fafafa;
+  color: #303030;
+  box-sizing: border-box;
+}
+
+.metafield-type-selector-wrapper .searchable-select__search:focus {
+  outline: 2px solid #005bd3;
+  outline-offset: -1px;
+  border-color: #005bd3;
+  background: #fff;
+}
+
+.metafield-type-selector-wrapper .searchable-select__list {
+  width: 280px;
+  max-width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.metafield-type-selector-wrapper .searchable-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 0.875rem;
+  color: #303030;
+  transition: background 0.08s ease;
+}
+
+.metafield-type-selector-wrapper .searchable-select__option:hover {
+  background: #f1f1f1;
+}
+
+.metafield-type-selector-wrapper .searchable-select__option--selected {
+  background: #f0f5ff;
+  font-weight: 500;
+}
+
+.metafield-type-selector-wrapper .searchable-select__check {
+  color: #005bd3;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.metafield-type-selector-wrapper .searchable-select__empty {
+  padding: 0.75rem 0.6rem;
+  text-align: center;
+  color: #8c9196;
+  font-size: 0.8125rem;
+}
+
+/* ---- Type-aware value inputs (shared between card and View all) ---- */
+
+/* Idle (collapsed) box for rich types — looks like a plain empty text field
+   until the row is clicked, then it swaps to the real type-specific control. */
+.metafield-idle-box {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 32px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #c9cccf;
+  border-radius: 8px;
+  background: #fff;
+  color: #303030;
+  font-size: 14px;
+  cursor: text;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.metafield-native-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 11px;
+  border: 1px solid #8a8a8a;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  color: #303030;
+  background: #fff;
+}
+
+.metafield-native-input:focus {
+  outline: none;
+  border-color: #005bd3;
+  box-shadow: 0 0 0 2px rgba(0, 91, 211, 0.25);
+}
+
+.metafield-native-input:disabled {
+  background: #fafafa;
+  color: #8c9196;
+}
+
+.metafield-measurement-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metafield-measurement-input > :first-child {
+  flex: 1;
+}
+
+.metafield-color-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metafield-color-swatch {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid #c9cccf;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.metafield-file-input {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Selected-file chip: small thumbnail + filename, shown in the field. */
+.metafield-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 2px 8px 2px 2px;
+  background: #f1f1f1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.metafield-file-chip__thumb {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 5px;
+  background: #1a1a1a;
+  display: block;
+}
+
+.metafield-file-chip__thumb--doc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e3e3e3;
+  color: #6d7175;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.metafield-file-chip__name {
+  font-size: 13px;
+  color: #303030;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metafield-file-error {
+  flex-basis: 100%;
+  color: #d72c0d;
+  font-size: 12px;
+}
+

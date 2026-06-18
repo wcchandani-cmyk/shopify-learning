@@ -86,6 +86,41 @@ CustomDiscount.belongsTo(Shop, {
   as: "shop",
 });
 
+const {
+  MetafieldDefinition,
+  Metafield,
+} = require("../modules/metafields/model");
+
+Shop.hasMany(MetafieldDefinition, {
+  foreignKey: "shopId",
+  as: "metafieldDefinitions",
+  onDelete: "CASCADE",
+});
+MetafieldDefinition.belongsTo(Shop, {
+  foreignKey: "shopId",
+  as: "shop",
+});
+
+Shop.hasMany(Metafield, {
+  foreignKey: "shopId",
+  as: "metafields",
+  onDelete: "CASCADE",
+});
+Metafield.belongsTo(Shop, {
+  foreignKey: "shopId",
+  as: "shop",
+});
+
+MetafieldDefinition.hasMany(Metafield, {
+  foreignKey: "definitionId",
+  as: "metafields",
+  onDelete: "CASCADE",
+});
+Metafield.belongsTo(MetafieldDefinition, {
+  foreignKey: "definitionId",
+  as: "definition",
+});
+
 module.exports = {
   Shop,
   Product,
@@ -94,6 +129,9 @@ module.exports = {
   Comment,
   Discount,
   CustomDiscount,
+  MetafieldDefinition,
+  Metafield,
 };
+
 
 

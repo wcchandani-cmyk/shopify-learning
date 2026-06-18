@@ -17,6 +17,7 @@ import ProductMediaUpload from "./ProductMediaUpload";
 import ProductRichTextEditor from "./ProductRichTextEditor";
 import ProductDetailPageHeader from "./ProductDetailPageHeader";
 import ProductVariantSection from "./ProductVariantSection";
+import MetafieldsCard from "../shared/metafields/MetafieldsCard";
 import {
   parseProductOptions,
   syncVariantsWithOptions,
@@ -376,6 +377,8 @@ export default function ProductDetail({
                   />
                 </s-box>
               </s-section>
+
+              <MetafieldsCard entityType="product" entityId={isNew ? "new" : product.id} />
             </s-stack>
           </div>
 

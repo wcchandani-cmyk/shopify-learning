@@ -22,6 +22,7 @@ import CustomerAddressModal from "./CustomerAddressModal";
 import SearchableSelect from "./SearchableSelect";
 import PhoneField from "./PhoneField";
 import TagEditor from "./TagEditor";
+import MetafieldsCard from "../shared/metafields/MetafieldsCard";
 import "../../styles/CustomerDetail.css";
 
 export default function CustomerDetail({ customer, isNew = false, onSaved }) {
@@ -48,7 +49,9 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
       .then((locales) => {
         if (!active) return;
         const options = buildLanguageOptions(locales);
-        setLanguageOptions(options.length > 0 ? options : FALLBACK_LANGUAGE_OPTIONS);
+        setLanguageOptions(
+          options.length > 0 ? options : FALLBACK_LANGUAGE_OPTIONS
+        );
 
         const primary = locales.find((item) => item.primary)?.locale;
         // Default new customers to the store's primary language.
@@ -94,7 +97,7 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
   const hasAddress = customerHasAddress(form.address);
   const addressSummary = formatAddressSummary(
     form.address,
-    `${form.firstName} ${form.lastName}`.trim(),
+    `${form.firstName} ${form.lastName}`.trim()
   );
 
   const handleBack = useCallback(() => {
@@ -271,6 +274,11 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
                   ))}
                 </s-select>
               </s-section>
+
+              <MetafieldsCard
+                entityType="customer"
+                entityId={isNew ? "new" : customer.id}
+              />
             </s-stack>
           </div>
 

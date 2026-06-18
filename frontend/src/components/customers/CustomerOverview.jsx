@@ -31,6 +31,7 @@ import CustomerStats from "./CustomerStats";
 import CustomerSummaryCard from "./CustomerSummaryCard";
 import CustomerTagsCard from "./CustomerTagsCard";
 import CustomerTimeline from "../shared/Timeline";
+import MetafieldsCard from "../shared/metafields/MetafieldsCard";
 
 const EDIT_MODAL_ID = "customer-edit-modal";
 const MANAGE_ADDRESSES_MODAL_ID = "customer-manage-addresses";
@@ -264,6 +265,7 @@ export default function CustomerOverview({ customer }) {
           <div className="product-detail-layout__main">
             <s-stack gap="base">
               <CustomerStats form={form} />
+              <MetafieldsCard entityType="customer" entityId={customer.id} />
               <CustomerTimeline
                 entityId={customer.id}
                 listComments={listCustomerComments}

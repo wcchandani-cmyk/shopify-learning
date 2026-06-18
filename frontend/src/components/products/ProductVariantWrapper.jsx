@@ -4,6 +4,7 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import PageLoader from "../PageLoader";
 import ProductVariantForm from "./ProductVariantForm";
 import ProductVariantSidebar from "./ProductVariantSidebar";
+import MetafieldsCard from "../shared/metafields/MetafieldsCard";
 import { useProduct } from "../../hooks/product/useProduct";
 import {
   createNewVariantDraft,
@@ -190,6 +191,7 @@ export default function ProductVariantWrapper() {
               onSubmit={handleSubmit}
               onCancel={handleCancel}
             />
+            <MetafieldsCard entityType="variant" entityId="new" />
           </div>
         </div>
       </s-query-container>

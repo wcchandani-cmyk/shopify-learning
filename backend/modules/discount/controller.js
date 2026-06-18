@@ -51,11 +51,6 @@ const getShopifyCountryIds = async (client, isoCodes) => {
 const getShopRecord = async (req) =>
   resolveShopForApi(req.shopDomain, req.sessionToken);
 
-// Returns the ISO codes of countries the store can ship to, read from its
-// delivery (shipping) zones via GraphQL. The REST `GET /countries` endpoint is
-// deprecated, so we use `deliveryProfiles` instead. A zone marked
-// `restOfWorld` means every country is effectively shippable, in which case the
-// picker should fall back to showing all countries.
 const SHIPPING_COUNTRIES_QUERY = `
   query shippingZoneCountries {
     deliveryProfiles(first: 50) {
@@ -224,18 +219,14 @@ const mapBxgyFields = (priceRule, body) => {
 
   // 1. Customer buys — quantity vs amount prerequisite
   if (bxgyCustomerBuysType === "amount") {
-    // Amount-based: use subtotal threshold; item prerequisites must be empty.
     priceRule.prerequisite_to_entitlement_subtotal = {
       amount: String(parseFloat(bxgyCustomerBuysAmount || 0)),
     };
     priceRule.prerequisite_to_entitlement_quantity_ratio = null;
-    // Item prerequisites must be empty when using subtotal
     priceRule.prerequisite_product_ids = [];
     priceRule.prerequisite_variant_ids = [];
     priceRule.prerequisite_collection_ids = [];
   } else {
-    // Quantity-based: Shopify requires prerequisite_to_entitlement_quantity_ratio
-    // when item prerequisites (product/variant/collection ids) are present.
     priceRule.prerequisite_to_entitlement_quantity_ratio = {
       prerequisite_quantity: buysQty,
       entitled_quantity: getsQty,
@@ -256,7 +247,10 @@ const mapBxgyFields = (priceRule, body) => {
         if (!pId) continue;
         const variants = item.variants || [];
         const selectedVariants = variants.filter((v) => v.selected);
-        if (selectedVariants.length > 0 && selectedVariants.length < variants.length) {
+        if (
+          selectedVariants.length > 0 &&
+          selectedVariants.length < variants.length
+        ) {
           for (const sv of selectedVariants) {
             const vId = extractNumericId(sv.id);
             if (vId) priceRule.prerequisite_variant_ids.push(vId);
@@ -279,10 +273,14 @@ const mapBxgyFields = (priceRule, body) => {
   // 2. Discounted value on the "gets" items
   if (bxgyCustomerGetsDiscountType === VALUE_TYPE.PERCENTAGE) {
     priceRule.value_type = VALUE_TYPE.PERCENTAGE;
-    priceRule.value = `-${Math.abs(parseFloat(bxgyCustomerGetsDiscountValue || 0))}`;
+    priceRule.value = `-${Math.abs(
+      parseFloat(bxgyCustomerGetsDiscountValue || 0)
+    )}`;
   } else if (bxgyCustomerGetsDiscountType === VALUE_TYPE.FIXED_AMOUNT) {
     priceRule.value_type = VALUE_TYPE.FIXED_AMOUNT;
-    priceRule.value = `-${Math.abs(parseFloat(bxgyCustomerGetsDiscountValue || 0))}`;
+    priceRule.value = `-${Math.abs(
+      parseFloat(bxgyCustomerGetsDiscountValue || 0)
+    )}`;
   } else {
     // Free
     priceRule.value_type = VALUE_TYPE.PERCENTAGE;
@@ -310,7 +308,10 @@ const mapBxgyFields = (priceRule, body) => {
       if (!pId) continue;
       const variants = item.variants || [];
       const selectedVariants = variants.filter((v) => v.selected);
-      if (selectedVariants.length > 0 && selectedVariants.length < variants.length) {
+      if (
+        selectedVariants.length > 0 &&
+        selectedVariants.length < variants.length
+      ) {
         for (const sv of selectedVariants) {
           const vId = extractNumericId(sv.id);
           if (vId) priceRule.entitled_variant_ids.push(vId);
@@ -440,9 +441,6 @@ const createDiscount = async (req, res) => {
           client,
           req.body.selectedCountries
         );
-        // Only restrict to specific countries when at least one resolves to a
-        // shipping-zone country. Otherwise fall back to all countries so the
-        // discount still saves instead of erroring.
         targetSelection =
           entitledCountryIds.length > 0
             ? TARGET_SELECTION.ENTITLED
@@ -460,9 +458,12 @@ const createDiscount = async (req, res) => {
       allocation_method: allocationMethod,
       value_type: shopifyValueType,
       value: shopifyValue,
-      customer_selection: req.body.eligibility === "Specific customers" && Array.isArray(req.body.selectedCustomers) && req.body.selectedCustomers.length > 0
-        ? "prerequisite"
-        : "all",
+      customer_selection:
+        req.body.eligibility === "Specific customers" &&
+        Array.isArray(req.body.selectedCustomers) &&
+        req.body.selectedCustomers.length > 0
+          ? "prerequisite"
+          : "all",
       starts_at: startsAt || new Date().toISOString(),
       ends_at: endsAt || null,
       combines_with: {
@@ -492,7 +493,9 @@ const createDiscount = async (req, res) => {
 
     if (type === DISCOUNT_TYPE.FREE_SHIPPING) {
       if (req.body.excludeShippingRates) {
-        const cleanVal = String(req.body.excludeShippingRatesValue || "").replace(/,/g, "");
+        const cleanVal = String(
+          req.body.excludeShippingRatesValue || ""
+        ).replace(/,/g, "");
         priceRule.prerequisite_shipping_price_range = {
           less_than_or_equal_to: parseFloat(cleanVal || 0),
         };
@@ -842,7 +845,10 @@ const updateDiscount = async (req, res) => {
       return errorResponse(res, 404, "Discount not found.");
     }
 
-    const validationError = validateDiscountPayload({ ...req.body, type: req.body.type || discount.type });
+    const validationError = validateDiscountPayload({
+      ...req.body,
+      type: req.body.type || discount.type,
+    });
     if (validationError) {
       return errorResponse(res, 400, validationError);
     }
@@ -869,9 +875,12 @@ const updateDiscount = async (req, res) => {
         shipping_discounts: Boolean(combinesWithShipping),
       },
       once_per_customer: Boolean(limitOnePerCustomer),
-      customer_selection: req.body.eligibility === "Specific customers" && Array.isArray(req.body.selectedCustomers) && req.body.selectedCustomers.length > 0
-        ? "prerequisite"
-        : "all",
+      customer_selection:
+        req.body.eligibility === "Specific customers" &&
+        Array.isArray(req.body.selectedCustomers) &&
+        req.body.selectedCustomers.length > 0
+          ? "prerequisite"
+          : "all",
     };
 
     if (priceRule.customer_selection === "prerequisite") {
@@ -905,7 +914,9 @@ const updateDiscount = async (req, res) => {
       }
 
       if (req.body.excludeShippingRates) {
-        const cleanVal = String(req.body.excludeShippingRatesValue || "").replace(/,/g, "");
+        const cleanVal = String(
+          req.body.excludeShippingRatesValue || ""
+        ).replace(/,/g, "");
         priceRule.prerequisite_shipping_price_range = {
           less_than_or_equal_to: parseFloat(cleanVal || 0),
         };
@@ -1066,7 +1077,12 @@ const listComments = async (req, res) => {
   } catch (error) {
     console.error("Error listing discount comments:", error.message);
     const status = error.statusCode || 500;
-    errorResponse(res, status, error.message || "Failed to load comments", error);
+    errorResponse(
+      res,
+      status,
+      error.message || "Failed to load comments",
+      error
+    );
   }
 };
 
@@ -1112,7 +1128,12 @@ const deleteComment = async (req, res) => {
   } catch (error) {
     console.error("Error deleting discount comment:", error.message);
     const status = error.statusCode || 500;
-    errorResponse(res, status, error.message || "Failed to delete comment", error);
+    errorResponse(
+      res,
+      status,
+      error.message || "Failed to delete comment",
+      error
+    );
   }
 };
 
@@ -1142,7 +1163,10 @@ const getMarkets = async (req, res) => {
     }));
     successResponse(res, 200, "Markets fetched successfully", { markets });
   } catch (error) {
-    console.warn("GraphQL markets query failed or unsupported, using mock fallback:", error.message);
+    console.warn(
+      "GraphQL markets query failed or unsupported, using mock fallback:",
+      error.message
+    );
     const mockMarkets = [
       { id: "market-us", title: "United States" },
       { id: "market-ca", title: "Canada" },
@@ -1152,7 +1176,9 @@ const getMarkets = async (req, res) => {
       { id: "market-in", title: "India" },
       { id: "market-jp", title: "Japan" },
     ];
-    successResponse(res, 200, "Markets fetched successfully (fallback)", { markets: mockMarkets });
+    successResponse(res, 200, "Markets fetched successfully (fallback)", {
+      markets: mockMarkets,
+    });
   }
 };
 
@@ -1182,7 +1208,10 @@ const getSegments = async (req, res) => {
     }));
     successResponse(res, 200, "Segments fetched successfully", { segments });
   } catch (error) {
-    console.warn("GraphQL segments query failed or unsupported, using mock fallback:", error.message);
+    console.warn(
+      "GraphQL segments query failed or unsupported, using mock fallback:",
+      error.message
+    );
     const mockSegments = [
       { id: "segment-returning", title: "Returning customers" },
       { id: "segment-abandoned", title: "Abandoned checkouts (last 30 days)" },
@@ -1191,7 +1220,9 @@ const getSegments = async (req, res) => {
       { id: "segment-new", title: "New customers (last 30 days)" },
       { id: "segment-inactive", title: "Inactive customers" },
     ];
-    successResponse(res, 200, "Segments fetched successfully (fallback)", { segments: mockSegments });
+    successResponse(res, 200, "Segments fetched successfully (fallback)", {
+      segments: mockSegments,
+    });
   }
 };
 

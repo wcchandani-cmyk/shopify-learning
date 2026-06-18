@@ -20,6 +20,8 @@ const {
   Discount,
   Comment,
   CustomDiscount,
+  MetafieldDefinition,
+  Metafield,
 } = require("../models/associations");
 
 async function ensureDatabase() {
@@ -62,6 +64,12 @@ async function main() {
 
   await CustomDiscount.sync(syncOptions);
   console.log("Table created/verified: customDiscounts");
+
+  await MetafieldDefinition.sync(syncOptions);
+  console.log("Table created/verified: metafieldDefinitions");
+
+  await Metafield.sync(syncOptions);
+  console.log("Table created/verified: metafields");
 
   await sequelize.close();
 }

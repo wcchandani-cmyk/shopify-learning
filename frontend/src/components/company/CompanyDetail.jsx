@@ -9,6 +9,8 @@ import ChangeMainContactModal from "./ChangeMainContactModal";
 import RemoveCustomerModal from "./RemoveCustomerModal";
 import EditAssignedStaffModal from "./EditAssignedStaffModal";
 import ManagePermissionsModal from "../customers/ManagePermissionsModal";
+import MetafieldsCard from "../shared/metafields/MetafieldsCard";
+import { useMetafieldsPrefetch } from "../../hooks/useMetafieldsPrefetch";
 import "../../styles/CompanyDetail.css";
 
 const getCustomerDuration = (createdAt) => {
@@ -35,6 +37,13 @@ export default function CompanyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [token, setToken] = useState(null);
+
+  // Prefetch metafields once the company is loaded so the card renders with the
+  // page instead of a moment later.
+  const { loading: metafieldsLoading } = useMetafieldsPrefetch(
+    "company",
+    company?.id
+  );
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -207,7 +216,7 @@ export default function CompanyDetail() {
     );
   }
 
-  if (loading && !company) {
+  if ((loading && !company) || (company && metafieldsLoading)) {
     return (
       <s-page heading="Loading...">
         <s-section>
@@ -413,6 +422,8 @@ export default function CompanyDetail() {
                   </s-table>
                 </s-stack>
               </s-section>
+
+              <MetafieldsCard entityType="company" entityId={company.id} />
             </s-stack>
           </div>
 
