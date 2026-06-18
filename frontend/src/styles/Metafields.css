@@ -200,12 +200,7 @@
   padding: 8px 12px;
   border-radius: 10px;
   background: transparent;
-  border-top: 1px solid #f1f1f1;
   transition: box-shadow 0.1s ease, background 0.1s ease;
-}
-
-.metafield-view-all-group-list > .metafield-view-all-row:first-child {
-  border-top: none;
 }
 
 /* Focused row elevates into a clearly visible card above the rest. */
