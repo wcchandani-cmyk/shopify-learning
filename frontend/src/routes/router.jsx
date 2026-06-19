@@ -13,6 +13,8 @@ import DiscountEditPage from "../pages/DiscountEditPage";
 import CustomDiscountsPage from "../pages/CustomDiscountsPage";
 import CustomDiscountCreatePage from "../pages/CustomDiscountCreatePage";
 import CustomDiscountEditPage from "../pages/CustomDiscountEditPage";
+import CheckoutUpsellsPage from "../pages/CheckoutUpsellsPage";
+import CheckoutUpsellFormPage from "../pages/CheckoutUpsellFormPage";
 
 export const appRouter = createBrowserRouter([
   { path: "/", element: <HomePage /> },
@@ -29,4 +31,8 @@ export const appRouter = createBrowserRouter([
   { path: "/custom-discounts", element: <CustomDiscountsPage /> },
   { path: "/custom-discounts/new", element: <CustomDiscountCreatePage /> },
   { path: "/custom-discounts/:id", element: <CustomDiscountEditPage /> },
+  // ── Checkout Upsell routes ────────────────────────────────────────────────────────
+  { path: "/checkout-upsells",      element: <CheckoutUpsellsPage /> },
+  { path: "/checkout-upsells/new",  element: <CheckoutUpsellFormPage /> },
+  { path: "/checkout-upsells/:id",  element: <CheckoutUpsellFormPage /> },
 ]);

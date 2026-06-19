@@ -11,6 +11,7 @@ const discountRoutes = require("./modules/discount/route");
 const discountCustomizationRoutes = require("./modules/customDiscount/route");
 const webhookRoutes = require("./modules/webhook/route");
 const metafieldRoutes = require("./modules/metafields/route");
+const checkoutUpsellRoutes = require("./modules/checkoutUpsell/route");
 const { PORT, BACKEND_URI } = require("./config/constants");
 
 const JSON_BODY_LIMIT = "10mb";
@@ -30,6 +31,7 @@ app.use("/api/company", companyRoutes);
 app.use("/api/discount", discountRoutes);
 app.use("/api/custom-discounts", discountCustomizationRoutes);
 app.use("/api/metafields", metafieldRoutes);
+app.use("/api/checkout-upsells", checkoutUpsellRoutes);
 
 app.listen(PORT, () => {
   console.log(

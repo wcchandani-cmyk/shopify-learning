@@ -5,6 +5,11 @@ const Customer = require("../modules/customer/model");
 const Comment = require("../modules/comment/model");
 const Discount = require("../modules/discount/model");
 const CustomDiscount = require("../modules/customDiscount/model");
+const {
+  MetafieldDefinition,
+  Metafield,
+} = require("../modules/metafields/model");
+const CheckoutUpsell = require("../modules/checkoutUpsell/model");
 
 Shop.hasMany(Product, {
   foreignKey: "shopId",
@@ -86,11 +91,6 @@ CustomDiscount.belongsTo(Shop, {
   as: "shop",
 });
 
-const {
-  MetafieldDefinition,
-  Metafield,
-} = require("../modules/metafields/model");
-
 Shop.hasMany(MetafieldDefinition, {
   foreignKey: "shopId",
   as: "metafieldDefinitions",
@@ -131,7 +131,5 @@ module.exports = {
   CustomDiscount,
   MetafieldDefinition,
   Metafield,
+  CheckoutUpsell,
 };
-
-
-

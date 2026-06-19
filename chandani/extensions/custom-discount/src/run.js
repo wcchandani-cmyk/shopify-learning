@@ -241,63 +241,117 @@ function buildValue(config, amount) {
 }
 
 /**
- * cart.lines.discounts.generate.run — handles PRODUCT and ORDER classes.
  * @param {any} input
  * @returns {any}
  */
 export function cartLinesDiscountsGenerateRun(input) {
-  const config = parseConfig(input);
-  if (!config) return NO_CART_OPERATIONS;
-
-  const classes = input?.discount?.discountClasses || [];
-  const hasOrder = classes.includes("ORDER");
-  const hasProduct = classes.includes("PRODUCT");
-  if (!hasOrder && !hasProduct) return NO_CART_OPERATIONS;
-
   const cart = input?.cart;
   if (!cart || !cart.lines || cart.lines.length === 0) {
     return NO_CART_OPERATIONS;
   }
 
-  if (!conditionsPass(config, cart)) return NO_CART_OPERATIONS;
-
-  const computed = resolveAmount(config, cart);
-  if (!computed || computed.value <= 0) return NO_CART_OPERATIONS;
-
-  const value = buildValue(config, computed.value);
   const operations = [];
 
-  if (hasOrder) {
-    operations.push({
-      orderDiscountsAdd: {
-        selectionStrategy: "FIRST",
-        candidates: [
-          {
-            message: computed.message,
-            targets: [{ orderSubtotal: { excludedCartLineIds: [] } }],
-            value,
-          },
-        ],
-      },
-    });
+  // Evaluate custom discount configured on the discount node
+  const config = parseConfig(input);
+  if (config) {
+    const classes = input?.discount?.discountClasses || [];
+    const hasProduct = classes.includes("PRODUCT");
+
+    if (config.campaignType === "checkout_upsell") {
+      if (hasProduct) {
+        const discountPct = parseFloat(config.discountValue);
+        const upsellId = String(config.upsellProductId || "").trim().toLowerCase();
+
+        const triggerProductIds = [];
+        if (Array.isArray(config.triggerProductIds)) {
+          config.triggerProductIds.forEach(id => {
+            if (id) triggerProductIds.push(String(id).trim().toLowerCase());
+          });
+        }
+        if (config.triggerProductId) {
+          triggerProductIds.push(String(config.triggerProductId).trim().toLowerCase());
+        }
+
+        if (triggerProductIds.length > 0 && upsellId && discountPct && discountPct > 0) {
+          // Check if any trigger product is in the cart
+          const hasTrigger = cart.lines.some((line) => {
+            if (line?.merchandise?.__typename === "ProductVariant") {
+              const lineProdId = String(line.merchandise.product?.id || "").toLowerCase();
+              return triggerProductIds.includes(lineProdId);
+            }
+            return false;
+          });
+
+          if (hasTrigger) {
+            // Find all cart lines matching the upsell product
+            const matchingLines = cart.lines.filter((line) => {
+              if (line?.merchandise?.__typename === "ProductVariant") {
+                return String(line.merchandise.product?.id || "").toLowerCase() === upsellId;
+              }
+              return false;
+            });
+
+            if (matchingLines.length > 0) {
+              operations.push({
+                productDiscountsAdd: {
+                  selectionStrategy: "FIRST",
+                  candidates: [
+                    {
+                      message: config.discountMessage || config.title || "Complimentary Offer",
+                      targets: matchingLines.map((line) => ({ cartLine: { id: line.id } })),
+                      value: { percentage: { value: discountPct } },
+                    },
+                  ],
+                },
+              });
+            }
+          }
+        }
+      }
+    } else {
+      const hasOrder = classes.includes("ORDER");
+
+      if ((hasOrder || hasProduct) && conditionsPass(config, cart)) {
+        const computed = resolveAmount(config, cart);
+        if (computed && computed.value > 0) {
+          const value = buildValue(config, computed.value);
+
+          if (hasOrder) {
+            operations.push({
+              orderDiscountsAdd: {
+                selectionStrategy: "FIRST",
+                candidates: [
+                  {
+                    message: computed.message,
+                    targets: [{ orderSubtotal: { excludedCartLineIds: [] } }],
+                    value,
+                  },
+                ],
+              },
+            });
+          }
+
+          if (hasProduct) {
+            operations.push({
+              productDiscountsAdd: {
+                selectionStrategy: "FIRST",
+                candidates: [
+                  {
+                    message: computed.message,
+                    targets: cart.lines.map((line) => ({ cartLine: { id: line.id } })),
+                    value,
+                  },
+                ],
+              },
+            });
+          }
+        }
+      }
+    }
   }
 
-  if (hasProduct) {
-    operations.push({
-      productDiscountsAdd: {
-        selectionStrategy: "FIRST",
-        candidates: [
-          {
-            message: computed.message,
-            targets: cart.lines.map((line) => ({ cartLine: { id: line.id } })),
-            value,
-          },
-        ],
-      },
-    });
-  }
-
-  return { operations };
+  return operations.length > 0 ? { operations } : NO_CART_OPERATIONS;
 }
 
 /**

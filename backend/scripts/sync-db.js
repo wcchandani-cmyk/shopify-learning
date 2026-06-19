@@ -22,6 +22,7 @@ const {
   CustomDiscount,
   MetafieldDefinition,
   Metafield,
+  CheckoutUpsell,
 } = require("../models/associations");
 
 async function ensureDatabase() {
@@ -70,6 +71,9 @@ async function main() {
 
   await Metafield.sync(syncOptions);
   console.log("Table created/verified: metafields");
+
+  await CheckoutUpsell.sync(syncOptions);
+  console.log("Table created/verified: checkoutUpsells");
 
   await sequelize.close();
 }

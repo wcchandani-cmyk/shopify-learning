@@ -1,22 +1,198 @@
-const { MetafieldDefinition, Metafield } = require("../../models/associations");
+const {
+  MetafieldDefinition,
+  Metafield,
+  Product,
+  Variant,
+  Customer,
+} = require("../../models/associations");
 const { successResponse, errorResponse } = require("../../utils/response");
 const { resolveShopForApi } = require("../../utils/shopAccess");
-const { getGraphQLClient } = require("../../utils/shopify");
+const {
+  getGraphQLClient,
+  extractGraphqlError,
+} = require("../../utils/shopify");
+const {
+  DEFINITION_CREATE,
+  DEFINITION_UPDATE,
+  DEFINITION_DELETE,
+  DEFINITION_LOOKUP,
+  METAFIELDS_SET,
+  METAFIELDS_DELETE,
+  METAFEILD_TYPE,
+} = require("./graphqlQuery");
 
 const getShopRecord = (req) =>
   resolveShopForApi(req.shopDomain, req.sessionToken);
+
+const getClient = (shop) =>
+  getGraphQLClient({
+    shopDomain: shop.myshopifyDomain,
+    accessToken: shop.token,
+  }).graphqlClient;
 
 const wrap = (fallback, handler) => async (req, res) => {
   try {
     await handler(req, res);
   } catch (error) {
     console.error(`${fallback}:`, error);
-    errorResponse(res, error.statusCode || 500, error.message || fallback, error);
+    const message = extractGraphqlError(error) || error.message || fallback;
+    errorResponse(res, error.statusCode || 500, message, error);
   }
 };
 
+const OWNER_TYPE = {
+  product: "PRODUCT",
+  variant: "PRODUCTVARIANT",
+  customer: "CUSTOMER",
+  company: "COMPANY",
+};
+
+const throwUserErrors = (errors, fallback) => {
+  if (Array.isArray(errors) && errors.length) {
+    const err = new Error(
+      errors
+        .map((e) => e.message)
+        .filter(Boolean)
+        .join("; ") || fallback
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+};
+
+const parseValidations = (json) => {
+  if (!json) return [];
+  try {
+    const arr = typeof json === "string" ? JSON.parse(json) : json;
+    return Array.isArray(arr) ? arr.filter((r) => r && r.name) : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const resolveOwnerGid = async (shop, entityType, entityId) => {
+  const raw = String(entityId ?? "").trim();
+  if (!raw || raw === "new" || raw === "0") return null;
+  if (raw.startsWith("gid://")) return raw;
+
+  if (entityType === "company") {
+    return `gid://shopify/Company/${raw}`;
+  }
+  if (entityType === "product") {
+    const product = await Product.findOne({
+      where: { id: raw, shopId: shop.id },
+    });
+    return product ? `gid://shopify/Product/${product.shopifyId}` : null;
+  }
+  if (entityType === "variant") {
+    const variant = await Variant.findOne({
+      where: { id: raw },
+      include: [
+        {
+          model: Product,
+          as: "product",
+          where: { shopId: shop.id },
+          attributes: [],
+        },
+      ],
+    });
+    return variant ? `gid://shopify/ProductVariant/${variant.shopifyId}` : null;
+  }
+  if (entityType === "customer") {
+    const customer = await Customer.findOne({
+      where: { id: raw, shopId: shop.id },
+    });
+    return customer ? `gid://shopify/Customer/${customer.shopifyId}` : null;
+  }
+  return null;
+};
+
+const buildDefinitionInput = (def, { includeType }) => {
+  const input = {
+    name: def.name,
+    namespace: def.namespace || "custom",
+    key: def.key,
+    ownerType: OWNER_TYPE[def.entityType],
+    description: def.description || "",
+    pin: !!def.pinned,
+  };
+  if (includeType) input.type = def.type;
+
+  const validations = parseValidations(def.validationRulesJson);
+  const uniqueRule = validations.find((v) => v.name === "unique_values");
+  const realValidations = validations.filter((v) => v.name !== "unique_values");
+  if (realValidations.length) input.validations = realValidations;
+
+  const capabilityByField = {
+    useAsCollectionFilter: "adminFilterable",
+    useAsSmartCollectionCondition: "smartCollectionCondition",
+  };
+  const capabilities = {};
+  let storefrontEligible = false;
+
+  getCapabilityOptions(def.type, def.entityType).forEach((opt) => {
+    if (opt.field === "storefrontApiAccess") {
+      storefrontEligible = true;
+      return;
+    }
+    const capabilityKey = capabilityByField[opt.field];
+    if (capabilityKey)
+      capabilities[capabilityKey] = { enabled: !!def[opt.field] };
+  });
+
+  if (uniqueRule) {
+    capabilities.uniqueValues = {
+      enabled: uniqueRule.value === "true" || uniqueRule.value === true,
+    };
+  }
+  if (Object.keys(capabilities).length) input.capabilities = capabilities;
+  if (storefrontEligible) {
+    input.access = {
+      storefront: def.storefrontApiAccess ? "PUBLIC_READ" : "NONE",
+    };
+  }
+
+  return input;
+};
+
+const lookupDefinitionId = async (client, { entityType, namespace, key }) => {
+  const ownerType = OWNER_TYPE[entityType];
+  if (!ownerType) return null;
+  const response = await client.request(DEFINITION_LOOKUP, {
+    variables: { ownerType, namespace: namespace || "custom", key },
+  });
+  return response?.data?.metafieldDefinitions?.nodes?.[0]?.id || null;
+};
+
+const createShopifyDefinition = async (client, def) => {
+  const response = await client.request(DEFINITION_CREATE, {
+    variables: { definition: buildDefinitionInput(def, { includeType: true }) },
+  });
+  const payload = response?.data?.metafieldDefinitionCreate;
+  throwUserErrors(
+    payload?.userErrors,
+    "Failed to create metafield definition in Shopify"
+  );
+  const id = payload?.createdDefinition?.id;
+  if (!id) throw new Error("Shopify did not return a metafield definition id");
+  return id;
+};
+
+const ensureShopifyDefinition = async (client, definition) => {
+  if (definition.shopifyId) return definition.shopifyId;
+
+  const existingId = await lookupDefinitionId(client, definition);
+  const shopifyId =
+    existingId || (await createShopifyDefinition(client, definition));
+  await definition.update({ shopifyId });
+  return shopifyId;
+};
+
 const toSentenceCase = (str) => {
-  const spaced = String(str || "").replace(/[_-]/g, " ").trim().toLowerCase();
+  const spaced = String(str || "")
+    .replace(/[_-]/g, " ")
+    .trim()
+    .toLowerCase();
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 };
 
@@ -50,7 +226,10 @@ const listDefinitions = wrap("Failed to list definitions", async (req, res) => {
 
   const definitions = await MetafieldDefinition.findAll({
     where: { shopId: shop.id, entityType },
-    order: [["pinned", "DESC"], ["updatedAt", "DESC"]],
+    order: [
+      ["pinned", "DESC"],
+      ["updatedAt", "DESC"],
+    ],
   });
 
   successResponse(res, 200, "Definitions fetched successfully", {
@@ -58,101 +237,155 @@ const listDefinitions = wrap("Failed to list definitions", async (req, res) => {
   });
 });
 
-const createDefinition = wrap("Failed to create definition", async (req, res) => {
-  const shop = await getShopRecord(req);
-  const {
-    entityType,
-    namespace = "custom",
-    key,
-    name,
-    type,
-    description = "",
-    storefrontApiAccess = false,
-    pinned = true,
-    validationRulesJson = null,
-    useAsCollectionFilter = false,
-    useAsAnalyticsFilter = false,
-    useAsSmartCollectionCondition = false,
-  } = req.body;
+const createDefinition = wrap(
+  "Failed to create definition",
+  async (req, res) => {
+    const shop = await getShopRecord(req);
+    const {
+      entityType,
+      namespace = "custom",
+      key,
+      name,
+      type,
+      description = "",
+      storefrontApiAccess = false,
+      pinned = true,
+      validationRulesJson = null,
+      useAsCollectionFilter = false,
+      useAsAnalyticsFilter = false,
+      useAsSmartCollectionCondition = false,
+    } = req.body;
 
-  if (!entityType || !key || !name || !type) {
-    return errorResponse(res, 400, "entityType, key, name, and type are required");
+    if (!entityType || !key || !name || !type) {
+      return errorResponse(
+        res,
+        400,
+        "entityType, key, name, and type are required"
+      );
+    }
+
+    const existing = await MetafieldDefinition.findOne({
+      where: { shopId: shop.id, entityType, namespace, key },
+    });
+    if (existing) {
+      return errorResponse(
+        res,
+        400,
+        `A definition with key '${namespace}.${key}' already exists for ${entityType}`
+      );
+    }
+
+    const defData = {
+      entityType,
+      namespace,
+      key,
+      name,
+      type,
+      description,
+      storefrontApiAccess,
+      pinned,
+      validationRulesJson,
+      useAsCollectionFilter,
+      useAsAnalyticsFilter,
+      useAsSmartCollectionCondition,
+    };
+
+    const client = getClient(shop);
+    const shopifyId =
+      (await lookupDefinitionId(client, defData)) ||
+      (await createShopifyDefinition(client, defData));
+
+    const definition = await MetafieldDefinition.create({
+      shopId: shop.id,
+      shopifyId,
+      ...defData,
+    });
+
+    successResponse(res, 201, "Definition created successfully", {
+      definition,
+    });
   }
+);
 
-  const existing = await MetafieldDefinition.findOne({
-    where: { shopId: shop.id, entityType, namespace, key },
-  });
-  if (existing) {
-    return errorResponse(
-      res,
-      400,
-      `A definition with key '${namespace}.${key}' already exists for ${entityType}`
+const updateDefinition = wrap(
+  "Failed to update definition",
+  async (req, res) => {
+    const shop = await getShopRecord(req);
+    const { id } = req.params;
+
+    const definition = await MetafieldDefinition.findOne({
+      where: { id, shopId: shop.id },
+    });
+    if (!definition) {
+      return errorResponse(res, 404, "Definition not found");
+    }
+
+    const editableFields = [
+      "name",
+      "description",
+      "pinned",
+      "storefrontApiAccess",
+      "validationRulesJson",
+      "useAsCollectionFilter",
+      "useAsAnalyticsFilter",
+      "useAsSmartCollectionCondition",
+    ];
+    const updates = {};
+    editableFields.forEach((field) => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
+
+    const client = getClient(shop);
+    await ensureShopifyDefinition(client, definition);
+
+    const merged = { ...definition.toJSON(), ...updates };
+    const response = await client.request(DEFINITION_UPDATE, {
+      variables: {
+        definition: buildDefinitionInput(merged, { includeType: false }),
+      },
+    });
+    throwUserErrors(
+      response?.data?.metafieldDefinitionUpdate?.userErrors,
+      "Failed to update metafield definition in Shopify"
     );
+
+    await definition.update(updates);
+    successResponse(res, 200, "Definition updated successfully", {
+      definition,
+    });
   }
+);
 
-  const definition = await MetafieldDefinition.create({
-    shopId: shop.id,
-    entityType,
-    namespace,
-    key,
-    name,
-    type,
-    description,
-    storefrontApiAccess,
-    pinned,
-    validationRulesJson,
-    useAsCollectionFilter,
-    useAsAnalyticsFilter,
-    useAsSmartCollectionCondition,
-  });
+const deleteDefinition = wrap(
+  "Failed to delete definition",
+  async (req, res) => {
+    const shop = await getShopRecord(req);
+    const { id } = req.params;
 
-  successResponse(res, 201, "Definition created successfully", { definition });
-});
+    const definition = await MetafieldDefinition.findOne({
+      where: { id, shopId: shop.id },
+    });
+    if (!definition) {
+      return errorResponse(res, 404, "Definition not found");
+    }
 
-const updateDefinition = wrap("Failed to update definition", async (req, res) => {
-  const shop = await getShopRecord(req);
-  const { id } = req.params;
+    const client = getClient(shop);
+    const shopifyId =
+      definition.shopifyId || (await lookupDefinitionId(client, definition));
+    if (shopifyId) {
+      const response = await client.request(DEFINITION_DELETE, {
+        variables: { id: shopifyId, deleteAllAssociatedMetafields: true },
+      });
+      throwUserErrors(
+        response?.data?.metafieldDefinitionDelete?.userErrors,
+        "Failed to delete metafield definition in Shopify"
+      );
+    }
 
-  const definition = await MetafieldDefinition.findOne({
-    where: { id, shopId: shop.id },
-  });
-  if (!definition) {
-    return errorResponse(res, 404, "Definition not found");
+    await definition.destroy();
+    successResponse(res, 200, "Definition deleted successfully", { id });
   }
-
-  const editableFields = [
-    "name",
-    "description",
-    "pinned",
-    "storefrontApiAccess",
-    "validationRulesJson",
-    "useAsCollectionFilter",
-    "useAsAnalyticsFilter",
-    "useAsSmartCollectionCondition",
-  ];
-  const updates = {};
-  editableFields.forEach((field) => {
-    if (req.body[field] !== undefined) updates[field] = req.body[field];
-  });
-
-  await definition.update(updates);
-  successResponse(res, 200, "Definition updated successfully", { definition });
-});
-
-const deleteDefinition = wrap("Failed to delete definition", async (req, res) => {
-  const shop = await getShopRecord(req);
-  const { id } = req.params;
-
-  const definition = await MetafieldDefinition.findOne({
-    where: { id, shopId: shop.id },
-  });
-  if (!definition) {
-    return errorResponse(res, 404, "Definition not found");
-  }
-
-  await definition.destroy();
-  successResponse(res, 200, "Definition deleted successfully", { id });
-});
+);
 
 const getMetafields = wrap("Failed to get metafields", async (req, res) => {
   const shop = await getShopRecord(req);
@@ -163,7 +396,10 @@ const getMetafields = wrap("Failed to get metafields", async (req, res) => {
 
   const definitions = await MetafieldDefinition.findAll({
     where: { shopId: shop.id, entityType },
-    order: [["pinned", "DESC"], ["updatedAt", "DESC"]],
+    order: [
+      ["pinned", "DESC"],
+      ["updatedAt", "DESC"],
+    ],
   });
 
   const values = await Metafield.findAll({
@@ -194,7 +430,20 @@ const saveMetafields = wrap("Failed to save metafields", async (req, res) => {
     );
   }
 
-  const saved = [];
+  const ownerId = await resolveOwnerGid(shop, entityType, entityId);
+  if (!ownerId) {
+    return errorResponse(
+      res,
+      400,
+      "Could not resolve the Shopify owner for this entity. Save the record first."
+    );
+  }
+
+  const client = getClient(shop);
+  const toSet = [];
+  const toDelete = [];
+  const dbOps = [];
+
   for (const [definitionIdStr, val] of Object.entries(values)) {
     const definitionId = parseInt(definitionIdStr, 10);
     const value = val === null || val === undefined ? null : String(val).trim();
@@ -204,13 +453,64 @@ const saveMetafields = wrap("Failed to save metafields", async (req, res) => {
     });
     if (!definition) continue;
 
+    await ensureShopifyDefinition(client, definition);
+
     if (!value) {
+      toDelete.push({
+        ownerId,
+        namespace: definition.namespace,
+        key: definition.key,
+      });
+      dbOps.push({ kind: "delete", definitionId });
+    } else {
+      toSet.push({
+        ownerId,
+        namespace: definition.namespace,
+        key: definition.key,
+        type: definition.type,
+        value,
+      });
+      dbOps.push({ kind: "set", definitionId, value });
+    }
+  }
+
+  if (toSet.length) {
+    const response = await client.request(METAFIELDS_SET, {
+      variables: { metafields: toSet },
+    });
+    throwUserErrors(
+      response?.data?.metafieldsSet?.userErrors,
+      "Failed to save metafields in Shopify"
+    );
+  }
+  if (toDelete.length) {
+    const response = await client.request(METAFIELDS_DELETE, {
+      variables: { metafields: toDelete },
+    });
+    throwUserErrors(
+      response?.data?.metafieldsDelete?.userErrors,
+      "Failed to clear metafields in Shopify"
+    );
+  }
+
+  const saved = [];
+  for (const op of dbOps) {
+    if (op.kind === "delete") {
       await Metafield.destroy({
-        where: { shopId: shop.id, definitionId, entityId: String(entityId) },
+        where: {
+          shopId: shop.id,
+          definitionId: op.definitionId,
+          entityId: String(entityId),
+        },
       });
     } else {
       const [metafield] = await Metafield.upsert(
-        { shopId: shop.id, definitionId, entityId: String(entityId), value },
+        {
+          shopId: shop.id,
+          definitionId: op.definitionId,
+          entityId: String(entityId),
+          value: op.value,
+        },
         { conflictFields: ["shopId", "definitionId", "entityId"] }
       );
       saved.push(metafield);
@@ -224,7 +524,7 @@ const getCapabilityOptions = (typeName, entityType) => {
   const baseType = String(typeName || "").replace(/^list\./, "");
 
   const ENTITY_CAPS = {
-    product: ["adminFilterable", "smartCollectionCondition", "storefront", "analytics"],
+    product: ["adminFilterable", "smartCollectionCondition", "storefront"],
     variant: ["adminFilterable", "smartCollectionCondition", "storefront"],
     company: ["adminFilterable", "storefront"],
     customer: ["storefront"],
@@ -282,7 +582,8 @@ const getIcon = (typeVal, category) => {
   if (t.includes("multi_line_text_field")) return "paragraph";
   if (t.includes("rich_text_field")) return "rich_text";
   if (t.includes("text")) return "text";
-  if (t.includes("integer") || t.includes("decimal") || t === "number") return "number";
+  if (t.includes("integer") || t.includes("decimal") || t === "number")
+    return "number";
   if (t.includes("image") || t.includes("file")) return "file";
   if (t.includes("reference")) return "reference";
   if (c.includes("measurement")) return "number";
@@ -350,75 +651,72 @@ const GROUP_OVERRIDES = {
 
 const SKIPPED_TYPES = ["metaobject_reference", "mixed_reference"];
 
-const getMetafieldTypes = wrap("Failed to fetch metafield types", async (req, res) => {
-  const shop = await getShopRecord(req);
-  const { entityType } = req.query;
-  const { graphqlClient } = getGraphQLClient({
-    shopDomain: shop.myshopifyDomain,
-    accessToken: shop.token,
-  });
-
-  const query = `
-    query {
-      metafieldDefinitionTypes {
-        name
-        category
-        supportedValidations {
-          name
-          type
-        }
-      }
-    }
-  `;
-
-  const response = await graphqlClient.request(query);
-  const types = response?.data?.metafieldDefinitionTypes || [];
-
-  const findType = (name) => types.find((t) => t.name === name);
-  const groupName = (str) => GROUP_OVERRIDES[str] || toSentenceCase(str);
-
-  const buildItem = (cfg) => {
-    const base = findType(cfg.baseType);
-    if (!base) return null;
-    return {
-      value: cfg.value,
-      label: cfg.label || formatLabel(cfg.baseType),
-      annotation: cfg.annotation,
-      baseType: cfg.baseType,
-      icon: cfg.icon || getIcon(cfg.baseType, base.category),
-      validations: base.supportedValidations || [],
-      options: getCapabilityOptions(cfg.baseType, entityType),
-    };
-  };
-
-  const categoriesMap = {};
-  types.forEach(({ name, category }) => {
-    if (name.startsWith("list.") || SKIPPED_TYPES.includes(name)) return;
-    const label = groupName(category || "other");
-    (categoriesMap[label] ||= []).push(buildItem({ value: name, baseType: name }));
-  });
-
-  PRESETS.forEach((preset) => {
-    const item = buildItem(preset);
-    if (item) (categoriesMap[preset.group] ||= []).push(item);
-  });
-
-  const groups = [];
-  const recommended = RECOMMENDED.map(buildItem).filter(Boolean);
-  if (recommended.length > 0) {
-    groups.push({ group: "Recommended", items: recommended });
-  }
-  Object.entries(categoriesMap).forEach(([group, items]) => {
-    groups.push({
-      group,
-      items: items.sort((a, b) => a.label.localeCompare(b.label)),
+const getMetafieldTypes = wrap(
+  "Failed to fetch metafield types",
+  async (req, res) => {
+    const shop = await getShopRecord(req);
+    const { entityType } = req.query;
+    const { graphqlClient } = getGraphQLClient({
+      shopDomain: shop.myshopifyDomain,
+      accessToken: shop.token,
     });
-  });
 
-  successResponse(res, 200, "Metafield types fetched successfully from Shopify", {
-    groups,
-  });
-});
+    const response = await graphqlClient.request(METAFEILD_TYPE);
+    const types = response?.data?.metafieldDefinitionTypes || [];
+
+    const findType = (name) => types.find((t) => t.name === name);
+    const groupName = (str) => GROUP_OVERRIDES[str] || toSentenceCase(str);
+
+    const buildItem = (cfg) => {
+      const base = findType(cfg.baseType);
+      if (!base) return null;
+      return {
+        value: cfg.value,
+        label: cfg.label || formatLabel(cfg.baseType),
+        annotation: cfg.annotation,
+        baseType: cfg.baseType,
+        icon: cfg.icon || getIcon(cfg.baseType, base.category),
+        validations: base.supportedValidations || [],
+        options: getCapabilityOptions(cfg.baseType, entityType),
+      };
+    };
+
+    const categoriesMap = {};
+    types.forEach(({ name, category }) => {
+      if (name.startsWith("list.") || SKIPPED_TYPES.includes(name)) return;
+      const label = groupName(category || "other");
+      (categoriesMap[label] ||= []).push(
+        buildItem({ value: name, baseType: name })
+      );
+    });
+
+    PRESETS.forEach((preset) => {
+      const item = buildItem(preset);
+      if (item) (categoriesMap[preset.group] ||= []).push(item);
+    });
+
+    const groups = [];
+    const recommended = RECOMMENDED.map(buildItem).filter(Boolean);
+    if (recommended.length > 0) {
+      groups.push({ group: "Recommended", items: recommended });
+    }
+    Object.entries(categoriesMap).forEach(([group, items]) => {
+      groups.push({
+        group,
+        items: items.sort((a, b) => a.label.localeCompare(b.label)),
+      });
+    });
+
+    successResponse(
+      res,
+      200,
+      "Metafield types fetched successfully from Shopify",
+      {
+        groups,
+      }
+    );
+  }
+);
 
 module.exports = {
   listDefinitions,

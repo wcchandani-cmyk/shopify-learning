@@ -1,0 +1,87 @@
+{
+  "payload": {
+    "export": "cart-lines-discounts-generate-run",
+    "target": "cart.lines.discounts.generate.run",
+    "input": {
+      "cart": {
+        "lines": [
+          {
+            "id": "gid://shopify/CartLine/0",
+            "quantity": 1,
+            "cost": {
+              "amountPerQuantity": {
+                "amount": "489.0",
+                "currencyCode": "USD"
+              }
+            },
+            "merchandise": {
+              "__typename": "ProductVariant",
+              "id": "gid://shopify/ProductVariant/47959068049712",
+              "sku": "EAR-BLOOM",
+              "product": {
+                "id": "gid://shopify/Product/9864227815728"
+              }
+            }
+          },
+          {
+            "id": "gid://shopify/CartLine/1",
+            "quantity": 1,
+            "cost": {
+              "amountPerQuantity": {
+                "amount": "399.0",
+                "currencyCode": "USD"
+              }
+            },
+            "merchandise": {
+              "__typename": "ProductVariant",
+              "id": "gid://shopify/ProductVariant/47959059726640",
+              "sku": "RING-PEDAL",
+              "product": {
+                "id": "gid://shopify/Product/9864225095984"
+              }
+            }
+          }
+        ],
+        "cost": {
+          "subtotalAmount": {
+            "amount": "888.0",
+            "currencyCode": "USD"
+          }
+        },
+        "buyerIdentity": null
+      },
+      "discount": {
+        "discountClasses": ["PRODUCT"],
+        "metafield": {
+          "value": "{\"title\":\"Upsell - Pedal Ring & Bloom Earring Upsell Bundle\",\"campaignType\":\"checkout_upsell\",\"discountType\":\"percentage\",\"discountValue\":20,\"discountMessage\":\"Complimentary Pedal Ring\",\"triggerProductId\":\"gid://shopify/Product/9864227815728\",\"upsellProductId\":\"gid://shopify/Product/9864225095984\"}"
+        }
+      }
+    },
+    "expectedOutput": {
+      "operations": [
+        {
+          "productDiscountsAdd": {
+            "selectionStrategy": "FIRST",
+            "candidates": [
+              {
+                "message": "Complimentary Pedal Ring",
+                "targets": [
+                  {
+                    "cartLine": {
+                      "id": "gid://shopify/CartLine/1"
+                    }
+                  }
+                ],
+                "value": {
+                  "percentage": {
+                    "value": 20
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

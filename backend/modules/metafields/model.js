@@ -18,6 +18,11 @@ const MetafieldDefinition = sequelize.define(
         key: "id",
       },
     },
+    shopifyId: {
+      type: SEQUELIZE_DATA_TYPE.STRING(255),
+      allowNull: true,
+      comment: "Shopify MetafieldDefinition GID; null until synced to Shopify",
+    },
     entityType: {
       type: SEQUELIZE_DATA_TYPE.STRING(50),
       allowNull: false,
