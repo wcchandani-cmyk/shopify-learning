@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import ProductDetail from "./ProductDetail";
 import { useCatalogProductTypes } from "../../hooks/product/useCatalogProductTypes";
 import { useProduct } from "../../hooks/product/useProduct";

@@ -1,6 +1,6 @@
 import { apiRequest } from "../api";
 
-export async function listDiscounts({ page = 1, limit = 25 } = {}, token) {
+export async function listDiscounts({ page = 1, limit = 25 } = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
@@ -8,137 +8,82 @@ export async function listDiscounts({ page = 1, limit = 25 } = {}, token) {
 
   const response = await apiRequest(`/api/discount/list?${params}`, {
     method: "GET",
-    token,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data;
 }
 
-export async function createDiscount(payload, token) {
+export async function createDiscount(payload) {
   const response = await apiRequest("/api/discount", {
     method: "POST",
-    token,
     body: payload,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data;
 }
 
-export async function getDiscount(id, token) {
+export async function getDiscount(id) {
   const response = await apiRequest(`/api/discount/${id}`, {
     method: "GET",
-    token,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data;
 }
 
-export async function updateDiscount(id, payload, token) {
+export async function updateDiscount(id, payload) {
   const response = await apiRequest(`/api/discount/${id}`, {
     method: "PUT",
-    token,
     body: payload,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data;
 }
 
-export async function deleteDiscounts(ids, token) {
+export async function deleteDiscounts(ids) {
   await apiRequest("/api/discount/delete", {
     method: "POST",
-    token,
     body: { ids },
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
 }
 
-export async function listDiscountComments(discountId, token) {
+export async function listDiscountComments(discountId) {
   const response = await apiRequest(`/api/discount/${discountId}/comments`, {
     method: "GET",
-    token,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data?.comments ?? [];
 }
 
-export async function addDiscountComment(discountId, body, token) {
+export async function addDiscountComment(discountId, body) {
   const response = await apiRequest(`/api/discount/${discountId}/comments`, {
     method: "POST",
-    token,
     body: { body },
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data;
 }
 
-export async function deleteDiscountComment(discountId, commentId, token) {
+export async function deleteDiscountComment(discountId, commentId) {
   const response = await apiRequest(
     `/api/discount/${discountId}/comments/${commentId}`,
     {
       method: "DELETE",
-      token,
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
     }
   );
   return response.data;
 }
 
-export async function listMarkets(token) {
+export async function listMarkets() {
   const response = await apiRequest("/api/discount/markets", {
     method: "GET",
-    token,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data?.markets ?? [];
 }
 
-export async function listSegments(token) {
+export async function listSegments() {
   const response = await apiRequest("/api/discount/segments", {
     method: "GET",
-    token,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data?.segments ?? [];
 }
 
-export async function listShippableCountries(token) {
+export async function listShippableCountries() {
   const response = await apiRequest("/api/discount/countries", {
     method: "GET",
-    token,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
   });
   return response.data ?? { countryCodes: [], includeRestOfWorld: false };
 }

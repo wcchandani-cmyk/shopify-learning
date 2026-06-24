@@ -44,7 +44,7 @@ export default function DiscountValueSection({
 
         <div className="side-by-side-row">
           <div className="column-50">
-            <label className="field-label" style={{ marginBottom: "4px", display: "block" }}>Applies to</label>
+            <label className="field-label field-label--block">Applies to</label>
             <s-select
               label="Applies to"
               labelAccessibilityVisibility="exclusive"
@@ -65,7 +65,7 @@ export default function DiscountValueSection({
             </s-select>
           </div>
           <div className="column-50">
-            <label className="field-label" style={{ marginBottom: "4px", display: "block" }}>Purchase type</label>
+            <label className="field-label field-label--block">Purchase type</label>
             <s-select
               label="Purchase type"
               labelAccessibilityVisibility="exclusive"

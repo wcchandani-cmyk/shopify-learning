@@ -8,7 +8,7 @@ const typeFieldMap = {
   customers: "selectedCustomers",
 };
 
-export function useEligibilitySelection(form, setForm, shopify) {
+export function useEligibilitySelection(form, setForm) {
   const [activeType, setActiveType] = useState(null); // null | "markets" | "segments" | "customers"
   const [searchQuery, setSearchQuery] = useState("");
   const [showOnlySelected, setShowOnlySelected] = useState(false);
@@ -21,15 +21,14 @@ export function useEligibilitySelection(form, setForm, shopify) {
   const fetchData = useCallback(async (type) => {
     setLoading(true);
     try {
-      const token = await shopify.idToken();
       if (type === "markets") {
-        const list = await listMarkets(token);
+        const list = await listMarkets();
         setItemsList(list || []);
       } else if (type === "segments") {
-        const list = await listSegments(token);
+        const list = await listSegments();
         setItemsList(list || []);
       } else if (type === "customers") {
-        const data = await listCustomers({ page: 1, limit: 100 }, token);
+        const data = await listCustomers({ page: 1, limit: 100 });
         if (data && data.customers) {
           setItemsList(
             data.customers.map((c) => ({
@@ -47,7 +46,7 @@ export function useEligibilitySelection(form, setForm, shopify) {
     } finally {
       setLoading(false);
     }
-  }, [shopify]);
+  }, []);
 
   // Handle overlay transitions
   useEffect(() => {

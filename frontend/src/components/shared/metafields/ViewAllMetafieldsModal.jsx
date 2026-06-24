@@ -13,7 +13,6 @@ export default function ViewAllMetafieldsModal({
   entityType,
   entityId,
   metafields,
-  token,
   onClose,
   onReload,
   shopify,
@@ -47,7 +46,7 @@ export default function ViewAllMetafieldsModal({
     }
     setSaving(true);
     try {
-      await saveMetafields(entityType, entityId, localValues, token);
+      await saveMetafields(entityType, entityId, localValues);
       shopify.toast.show("Metafield values saved");
       setHasUnsavedChanges(false);
       onReload();
@@ -64,8 +63,7 @@ export default function ViewAllMetafieldsModal({
     try {
       await updateDefinition(
         definition.id,
-        { pinned: !definition.pinned },
-        token
+        { pinned: !definition.pinned }
       );
       shopify.toast.show(
         definition.pinned ? "Definition unpinned" : "Definition pinned"
@@ -85,7 +83,7 @@ export default function ViewAllMetafieldsModal({
     if (!confirmed) return;
 
     try {
-      await deleteDefinition(definition.id, token);
+      await deleteDefinition(definition.id);
       shopify.toast.show("Definition deleted");
       onReload();
     } catch (err) {

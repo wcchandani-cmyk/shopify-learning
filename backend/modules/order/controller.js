@@ -1,9 +1,6 @@
 const { successResponse, errorResponse } = require("../../utils/response");
-const {
-  resolveShopForApi,
-  isShopifyUnauthorized,
-} = require("../../utils/shopAccess");
 const { getRestClient } = require("../../utils/shopify");
+const { parsePageSize, handleError } = require("../../utils/controllerHelper");
 const Order = require("./model");
 const Customer = require("../customer/model");
 const Comment = require("../comment/model");
@@ -24,30 +21,8 @@ const {
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
 
-const getShopRecord = async (req) =>
-  resolveShopForApi(req.shopDomain, req.sessionToken);
-
-const parsePageSize = (value) =>
-  Math.min(
-    MAX_PAGE_SIZE,
-    Math.max(1, parseInt(value, 10) || DEFAULT_PAGE_SIZE)
-  );
-
-const handleError = (res, error, fallback) => {
-  if (isShopifyUnauthorized(error)) {
-    return errorResponse(
-      res,
-      401,
-      "Shopify session expired. Reload the app from Shopify admin and try again.",
-      error
-    );
-  }
-  const status = error.statusCode || 500;
-  return errorResponse(res, status, error.message || fallback, error);
-};
-
 const resolveShopOrder = async (req) => {
-  const shop = await getShopRecord(req);
+  const shop = req.shop;
   const raw = String(req.params.id ?? "").trim();
   if (!/^\d+$/.test(raw)) {
     return { error: [400, "Invalid order id"] };
@@ -66,7 +41,7 @@ const resolveShopOrder = async (req) => {
 
 const listOrders = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
+    const shop = req.shop;
 
     if (
       req.query.sync === "true" ||
@@ -179,7 +154,7 @@ const getOrder = async (req, res) => {
 
 const createOrder = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
+    const shop = req.shop;
     const created = await createOrderFlow(shop, req.body);
     successResponse(res, 201, "Order created successfully", created);
   } catch (error) {
@@ -190,7 +165,7 @@ const createOrder = async (req, res) => {
 
 const listPaymentTerms = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
+    const shop = req.shop;
     const paymentTerms = await getPaymentTermsTemplates(shop);
     successResponse(res, 200, "Payment terms fetched successfully", {
       paymentTerms,

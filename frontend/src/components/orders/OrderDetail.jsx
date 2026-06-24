@@ -13,7 +13,7 @@ import {
 import { listCustomers } from "../../services/customerService";
 import { formatAddressSummary } from "../../utils/customerForm";
 import { getInputEventValue } from "../../utils/fieldEvent";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import Timeline from "../shared/Timeline";
 import TagsSection from "../shared/TagsSection";
 import NotesCard from "../shared/NotesCard";

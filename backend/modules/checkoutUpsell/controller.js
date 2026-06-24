@@ -1,11 +1,7 @@
 const { successResponse, errorResponse } = require("../../utils/response");
-const {
-  getGraphQLClient,
-  extractGraphqlError,
-} = require("../../utils/shopify");
-const {
-  resolveShopForApi,
-} = require("../../utils/shopAccess");
+const { getGraphQLClient } = require("../../utils/shopify");
+const { handleError } = require("../../utils/controllerHelper");
+
 const CheckoutUpsell = require("./model");
 const {
   CHECKOUT_UPSELL_TYPE,
@@ -32,7 +28,7 @@ const CONFIG_METAFIELD = {
 };
 
 const getShopAndClient = async (req) => {
-  const shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
+  const shop = req.shop;
   const { graphqlClient } = getGraphQLClient({
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
@@ -162,37 +158,27 @@ const toHandle = (title) =>
 
 exports.getAll = async (req, res) => {
   try {
-    const shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
+    const shop = req.shop;
     const upsells = await CheckoutUpsell.findAll({
       where: { shopId: shop.id },
       order: [["createdAt", "DESC"]],
     });
     successResponse(res, 200, "Checkout upsells fetched", { upsells });
   } catch (error) {
-    errorResponse(
-      res,
-      error.statusCode || 500,
-      error.message || "Failed to fetch checkout upsells",
-      error
-    );
+    handleError(res, error, "Failed to fetch checkout upsells");
   }
 };
 
 exports.getById = async (req, res) => {
   try {
-    const shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
+    const shop = req.shop;
     const upsell = await CheckoutUpsell.findOne({
       where: { id: req.params.id, shopId: shop.id },
     });
     if (!upsell) return errorResponse(res, 404, "Checkout upsell not found");
     successResponse(res, 200, "Checkout upsell fetched", { upsell });
   } catch (error) {
-    errorResponse(
-      res,
-      error.statusCode || 500,
-      error.message || "Failed to fetch checkout upsell",
-      error
-    );
+    handleError(res, error, "Failed to fetch checkout upsell");
   }
 };
 
@@ -339,8 +325,7 @@ exports.create = async (req, res) => {
     successResponse(res, 201, "Checkout upsell created successfully", { upsell });
   } catch (error) {
     console.error("Error creating checkout upsell:", error);
-    const message = extractGraphqlError(error) || error.message || "Failed to create checkout upsell";
-    errorResponse(res, error.statusCode || 500, message, error);
+    handleError(res, error, "Failed to create checkout upsell");
   }
 };
 
@@ -532,8 +517,7 @@ exports.update = async (req, res) => {
     successResponse(res, 200, "Checkout upsell updated successfully", { upsell });
   } catch (error) {
     console.error("Error updating checkout upsell:", error);
-    const message = extractGraphqlError(error) || error.message || "Failed to update checkout upsell";
-    errorResponse(res, error.statusCode || 500, message, error);
+    handleError(res, error, "Failed to update checkout upsell");
   }
 };
 
@@ -571,7 +555,6 @@ exports.deleted = async (req, res) => {
     successResponse(res, 200, "Checkout upsell deleted successfully", { deletedId: req.params.id });
   } catch (error) {
     console.error("Error deleting checkout upsell:", error);
-    const message = extractGraphqlError(error) || error.message || "Failed to delete checkout upsell";
-    errorResponse(res, error.statusCode || 500, message, error);
+    handleError(res, error, "Failed to delete checkout upsell");
   }
 };

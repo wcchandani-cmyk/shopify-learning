@@ -20,7 +20,6 @@ const ONE_LIST_OPTIONS = [
 export default function AddMetafieldDefinitionModal({
   modalRef,
   entityType,
-  token,
   onClose,
   onSaved,
   shopify,
@@ -66,9 +65,9 @@ export default function AddMetafieldDefinitionModal({
   }, [type]);
 
   useEffect(() => {
-    if (!token || hasPreloaded) return;
+    if (hasPreloaded) return;
     setLoadingTypes(true);
-    getMetafieldTypes(token, entityType)
+    getMetafieldTypes(entityType)
       .then((groups) => {
         setTypeOptions(groups);
       })
@@ -78,7 +77,7 @@ export default function AddMetafieldDefinitionModal({
       .finally(() => {
         setLoadingTypes(false);
       });
-  }, [token, entityType, hasPreloaded]);
+  }, [entityType, hasPreloaded]);
 
   const selectedTypeObj = findTypeItem(typeOptions, type);
   const baseType = selectedTypeObj?.baseType || type;
@@ -168,7 +167,7 @@ export default function AddMetafieldDefinitionModal({
     };
 
     try {
-      await createDefinition(payload, token);
+      await createDefinition(payload);
       shopify.toast.show("Definition created successfully");
       setName("");
       setNamespace("custom");

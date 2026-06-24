@@ -5,7 +5,6 @@ export default function RemoveCustomerModal({
   open,
   shopify,
   company,
-  token,
   onClose,
   onSaved,
 }) {
@@ -23,7 +22,7 @@ export default function RemoveCustomerModal({
     if (removingId) return;
     setRemovingId(contact.id);
     try {
-      await removeCompanyContact(contact.id, token);
+      await removeCompanyContact(contact.id);
       shopify.toast.show(
         `${contact.customer?.displayName || "Customer"} removed from ${company.name}`
       );

@@ -285,8 +285,8 @@ export default function ProductDetail({
   );
 
   const loadVendors = useCallback(
-    () => shopify.idToken().then((token) => listProductVendors(token)),
-    [shopify]
+    () => listProductVendors(),
+    []
   );
 
   const handleBack = useCallback(() => {

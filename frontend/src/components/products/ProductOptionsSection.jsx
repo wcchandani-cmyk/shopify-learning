@@ -4,39 +4,6 @@ import { MAX_PRODUCT_OPTIONS } from "../../utils/productVariants";
 
 import { exclusiveFieldLabel } from "../../utils/formFields";
 
-function DragGrip() {
-  return (
-    <svg
-      width="10"
-      height="16"
-      viewBox="0 0 10 16"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <circle cx="2" cy="3" r="1.3" />
-      <circle cx="8" cy="3" r="1.3" />
-      <circle cx="2" cy="8" r="1.3" />
-      <circle cx="8" cy="8" r="1.3" />
-      <circle cx="2" cy="13" r="1.3" />
-      <circle cx="8" cy="13" r="1.3" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M7.5 3h5M3.5 5.5h13M6 5.5l.5 10a1.5 1.5 0 0 0 1.5 1.4h4a1.5 1.5 0 0 0 1.5-1.4l.5-10M9 8.5v5M11 8.5v5"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function ProductOptionsSection({
   options,
   onOptionsChange,
@@ -113,7 +80,7 @@ export default function ProductOptionsSection({
             onDragStart={() => setDragOptionIndex(index)}
             onDragEnd={() => setDragOptionIndex(null)}
           >
-            <DragGrip />
+            <s-icon type="drag" />
           </span>
           <div className="product-options__row-body">
             <OptionCard
@@ -208,8 +175,6 @@ function OptionCard({
     ]);
     setDragRowIndex(null);
     setError("");
-    // Initialize the editor only when it opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
   const updateRow = (rowKey, value) => {
@@ -338,7 +303,7 @@ function OptionCard({
                   }}
                   onDragEnd={() => setDragRowIndex(null)}
                 >
-                  <DragGrip />
+                    <s-icon type="drag" />
                 </span>
                 <s-text-field
                   className="product-options__value-input"
@@ -364,7 +329,7 @@ function OptionCard({
                     if (!isAddRow) removeRow(row.key);
                   }}
                 >
-                  <TrashIcon />
+                    <s-icon type="delete" />
                 </button>
               </div>
               );

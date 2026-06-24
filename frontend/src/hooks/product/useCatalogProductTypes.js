@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { listProducts } from "../../services/productService";
 import { normalizeProductTypes } from "../../utils/productTypes";
 
 export function useCatalogProductTypes(seedTypes = []) {
-  const shopify = useAppBridge();
   const [types, setTypes] = useState(() => normalizeProductTypes(seedTypes));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,9 +11,7 @@ export function useCatalogProductTypes(seedTypes = []) {
     setLoading(true);
     setError(null);
 
-    return shopify
-      .idToken()
-      .then((token) => listProducts({ page: 1, limit: 1 }, token))
+    return listProducts({ page: 1, limit: 1 })
       .then((data) => {
         const fromList = data?.productTypes ?? [];
         setTypes((prev) => normalizeProductTypes(seedTypes, fromList, prev));
@@ -25,7 +21,7 @@ export function useCatalogProductTypes(seedTypes = []) {
         setTypes((prev) => normalizeProductTypes(seedTypes, prev));
       })
       .finally(() => setLoading(false));
-  }, [shopify, seedTypes]);
+  }, [seedTypes]);
 
   useEffect(() => {
     load();

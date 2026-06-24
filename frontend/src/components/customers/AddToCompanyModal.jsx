@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { searchCompanies } from "../../services/companyService";
 import { addressLines } from "../../utils/customerForm";
 import { getInputEventValue } from "../../utils/fieldEvent";
@@ -14,7 +13,6 @@ export default function AddToCompanyModal({
   onAssign,
   onClose,
 }) {
-  const shopify = useAppBridge();
   const modalRef = useRef(null);
   const [view, setView] = useState("search");
   const [search, setSearch] = useState("");
@@ -44,8 +42,7 @@ export default function AddToCompanyModal({
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const token = await shopify.idToken();
-        const result = await searchCompanies(search, token);
+        const result = await searchCompanies(search);
         if (active) setCompanies(result);
       } catch {
         if (active) setCompanies([]);
@@ -58,7 +55,7 @@ export default function AddToCompanyModal({
       active = false;
       clearTimeout(timer);
     };
-  }, [open, view, search, shopify]);
+  }, [open, view, search]);
 
   const trimmedSearch = search.trim();
   const trimmedName = newName.trim();

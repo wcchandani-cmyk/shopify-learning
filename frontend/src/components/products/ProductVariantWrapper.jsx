@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import ProductVariantForm from "./ProductVariantForm";
 import ProductVariantSidebar from "./ProductVariantSidebar";
 import MetafieldsCard from "../shared/metafields/MetafieldsCard";

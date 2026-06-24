@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { listCompanies, bulkDeleteCompanies } from "../../services/companyService";
-import { useCompanySelection } from "../../hooks/company/useCompanySelection";
+import { useSelection } from "../../hooks/useSelection";
 import { getInputEventValue, getCheckboxChecked } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import CompanyRow from "./CompanyRow";
 
 export default function CompanyList() {
@@ -18,9 +18,7 @@ export default function CompanyList() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    shopify
-      .idToken()
-      .then((token) => listCompanies(token))
+    listCompanies()
       .then((data) => {
         setCompanies(data);
       })
@@ -28,7 +26,7 @@ export default function CompanyList() {
         setError(err.message || "Failed to load companies");
       })
       .finally(() => setLoading(false));
-  }, [shopify]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -46,12 +44,12 @@ export default function CompanyList() {
     selectedCount,
     allFilteredSelected,
     someFilteredSelected,
-    toggleCompany,
+    toggleItem: toggleCompany,
     toggleSelectAllFiltered,
     clearSelection,
     isSelected,
     getSelectedIds,
-  } = useCompanySelection(filteredCompanies);
+  } = useSelection(filteredCompanies);
 
   const handleDeleteSelected = useCallback(async () => {
     const ids = getSelectedIds();
@@ -59,8 +57,7 @@ export default function CompanyList() {
 
     setDeleting(true);
     try {
-      const token = await shopify.idToken();
-      await bulkDeleteCompanies(ids, token);
+      await bulkDeleteCompanies(ids);
       shopify.toast.show(
         ids.length === 1 ? "Company deleted" : `${ids.length} companies deleted`
       );

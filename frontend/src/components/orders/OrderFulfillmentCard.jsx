@@ -133,19 +133,10 @@ export default function OrderFulfillmentCard({
                       aria-expanded={splitMenuOpen}
                       onClick={toggleSplitMenu}
                     >
-                      <svg
+                      <s-icon
+                        type="chevron-down"
                         className="order-split-button__chevron"
-                        viewBox="0 0 20 20"
-                        width="16"
-                        height="16"
-                        aria-hidden="true"
-                        focusable="false"
-                      >
-                        <path
-                          d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.06l3.71-3.83a.75.75 0 1 1 1.08 1.04l-4.25 4.39a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z"
-                          fill="currentColor"
-                        />
-                      </svg>
+                      />
                     </button>
                     {splitMenuOpen ? (
                       <div

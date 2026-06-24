@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import CustomerDetail from "./CustomerDetail";
 import CustomerOverview from "./CustomerOverview";
 import { useCustomerDetail } from "../../hooks/customer/useCustomerDetail";

@@ -52,18 +52,10 @@ export function useDiscountResources(form, setForm, shopify) {
         });
 
         const newItemsMap = new Map(mergedNewItems.map(item => [item.id, item]));
-        const finalItems = [];
-        for (const item of currentItems) {
-          if (newItemsMap.has(item.id)) {
-            finalItems.push(newItemsMap.get(item.id));
-            newItemsMap.delete(item.id);
-          } else {
-            finalItems.push(item);
-          }
-        }
-        for (const item of newItemsMap.values()) {
-          finalItems.push(item);
-        }
+        const finalItems = [
+          ...currentItems.map(item => newItemsMap.get(item.id) || item),
+          ...mergedNewItems.filter(item => !existingMap.has(item.id))
+        ];
 
         const fieldName = targetSection === "buys"
           ? "bxgyCustomerBuysSelectedItems"

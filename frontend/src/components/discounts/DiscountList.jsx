@@ -5,7 +5,7 @@ import { useDiscounts } from "../../hooks/discount/useDiscounts";
 import { useDiscountMutations } from "../../hooks/discount/useDiscountMutations";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import DiscountListBulkBar from "./DiscountListBulkBar";
 import DiscountRow from "./DiscountRow";
 import "../../styles/ProductList.css";

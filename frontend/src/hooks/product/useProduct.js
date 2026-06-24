@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { getProduct } from "../../services/productService";
 
 const sameProductId = (a, b) => String(a) === String(b);
 
 export function useProduct(productId, initialProduct = null) {
-  const shopify = useAppBridge();
   const hasInitial =
     initialProduct && sameProductId(initialProduct.id, productId);
   const [product, setProduct] = useState(hasInitial ? initialProduct : null);
@@ -30,9 +28,7 @@ export function useProduct(productId, initialProduct = null) {
     setLoading(true);
     setError(null);
 
-    return shopify
-      .idToken()
-      .then((token) => getProduct(productId, token))
+    return getProduct(productId)
       .then((data) => setProduct(data))
       .catch((err) => {
         if (hasInitial) {
@@ -43,7 +39,7 @@ export function useProduct(productId, initialProduct = null) {
         }
       })
       .finally(() => setLoading(false));
-  }, [shopify, productId, hasInitial, initialProduct]);
+  }, [productId, hasInitial, initialProduct]);
 
   useEffect(() => {
     load();

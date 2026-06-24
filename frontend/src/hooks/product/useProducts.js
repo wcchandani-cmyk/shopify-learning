@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { listProducts } from "../../services/productService";
 
 const DEFAULT_PAGE_SIZE = 25;
 
 export function useProducts(pageSize = DEFAULT_PAGE_SIZE) {
-  const shopify = useAppBridge();
   const [page, setPage] = useState(1);
   const [products, setProducts] = useState([]);
   const [productTypes, setProductTypes] = useState([]);
@@ -18,11 +16,7 @@ export function useProducts(pageSize = DEFAULT_PAGE_SIZE) {
       setLoading(true);
       setError(null);
 
-      return shopify
-        .idToken()
-        .then((token) =>
-          listProducts({ page: targetPage, limit: pageSize }, token),
-        )
+      return listProducts({ page: targetPage, limit: pageSize })
         .then((data) => {
           setProducts(data?.products ?? []);
           setProductTypes(data?.productTypes ?? []);
@@ -37,7 +31,7 @@ export function useProducts(pageSize = DEFAULT_PAGE_SIZE) {
         })
         .finally(() => setLoading(false));
     },
-    [shopify, pageSize],
+    [pageSize],
   );
 
   useEffect(() => {

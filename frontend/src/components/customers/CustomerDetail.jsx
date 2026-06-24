@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import {
@@ -21,7 +21,7 @@ import { exclusiveFieldLabel } from "../../utils/formFields";
 import CustomerAddressModal from "./CustomerAddressModal";
 import SearchableSelect from "../shared/SearchableSelect";
 import PhoneField from "./PhoneField";
-import TagEditor from "./TagEditor";
+import TagsSection from "../shared/TagsSection";
 import MetafieldsCard from "../shared/metafields/MetafieldsCard";
 import "../../styles/CustomerDetail.css";
 
@@ -33,7 +33,17 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
   const [saveError, setSaveError] = useState(null);
   const [addressModalOpen, setAddressModalOpen] = useState(false);
   const [languageOptions, setLanguageOptions] = useState([]);
-  const [availableTags, setAvailableTags] = useState([]);
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+
+  const tagList = useMemo(() => {
+    return form.tags
+      ? form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+  }, [form.tags]);
 
   useEffect(() => {
     setForm(customerToFormState(customer));
@@ -42,9 +52,7 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
 
   useEffect(() => {
     let active = true;
-    shopify
-      .idToken()
-      .then((token) => getShopLocales(token))
+    getShopLocales()
       .then((locales) => {
         if (!active) return;
         const options = buildLanguageOptions(locales);
@@ -65,23 +73,7 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
     return () => {
       active = false;
     };
-  }, [shopify]);
-
-  useEffect(() => {
-    let active = true;
-    shopify
-      .idToken()
-      .then((token) => listCustomerTags(token))
-      .then((tags) => {
-        if (active) setAvailableTags(tags);
-      })
-      .catch(() => {
-        if (active) setAvailableTags([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [shopify]);
+  }, []);
 
   const updateField = useCallback((field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -116,10 +108,9 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
 
     try {
       const payload = buildCustomerPayload(form);
-      const token = await shopify.idToken();
       const data = isNew
-        ? await createCustomer(payload, token)
-        : await updateCustomer(customer.id, payload, token);
+        ? await createCustomer(payload)
+        : await updateCustomer(customer.id, payload);
 
       shopify.toast.show(isNew ? "Customer created" : "Customer saved");
       onSaved?.(data);
@@ -298,13 +289,14 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
                 </s-stack>
               </s-section>
 
-              <s-section heading="Tags">
-                <TagEditor
-                  value={form.tags}
-                  available={availableTags}
-                  onChange={(tags) => updateField("tags", tags.join(", "))}
-                />
-              </s-section>
+              <TagsSection
+                isEditingTags={isEditingTags}
+                setIsEditingTags={setIsEditingTags}
+                tagInput={tagInput}
+                setTagInput={setTagInput}
+                tagList={tagList}
+                updateField={updateField}
+              />
             </s-stack>
           </div>
         </div>

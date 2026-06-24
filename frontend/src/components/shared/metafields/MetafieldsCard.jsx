@@ -24,7 +24,6 @@ export default function MetafieldsCard({ entityType, entityId }) {
 
   const cachedBundle = getCachedMetafields(entityType, entityId);
 
-  const [token, setToken] = useState(null);
   const [metafields, setMetafields] = useState(cachedBundle?.metafields || []);
   const [typeOptions, setTypeOptions] = useState(
     cachedBundle?.typeOptions || []
@@ -141,12 +140,9 @@ export default function MetafieldsCard({ entityType, entityId }) {
   const loadMetafields = useCallback(async () => {
     setLoading(true);
     try {
-      const freshToken = await shopify.idToken();
-      setToken(freshToken);
       const bundle = await fetchMetafieldsBundle(
         entityType,
-        entityId,
-        freshToken
+        entityId
       );
       setCachedMetafields(entityType, entityId, bundle);
       applyBundle(bundle);
@@ -155,13 +151,9 @@ export default function MetafieldsCard({ entityType, entityId }) {
     } finally {
       setLoading(false);
     }
-  }, [shopify, entityType, entityId, applyBundle]);
+  }, [entityType, entityId, applyBundle]);
 
   useEffect(() => {
-    shopify
-      .idToken()
-      .then(setToken)
-      .catch(() => {});
     const cached = getCachedMetafields(entityType, entityId);
     if (cached) {
       applyBundle(cached);
@@ -169,7 +161,7 @@ export default function MetafieldsCard({ entityType, entityId }) {
     } else {
       loadMetafields();
     }
-  }, [shopify, entityType, entityId, loadMetafields, applyBundle]);
+  }, [entityType, entityId, loadMetafields, applyBundle]);
 
   const definitionsById = useMemo(
     () => new Map(metafields.map((m) => [m.definition.id, m.definition])),
@@ -217,7 +209,7 @@ export default function MetafieldsCard({ entityType, entityId }) {
 
     setSaving(true);
     try {
-      await saveMetafields(entityType, entityId, localValues, token);
+      await saveMetafields(entityType, entityId, localValues);
       shopify.toast.show("Metafields saved successfully");
       setHasUnsavedChanges(false);
       await loadMetafields();
@@ -386,7 +378,6 @@ export default function MetafieldsCard({ entityType, entityId }) {
         <AddMetafieldDefinitionModal
           modalRef={addDefModalRef}
           entityType={entityType}
-          token={token}
           preloadedTypeOptions={typeOptions}
           onClose={closeModal}
           onSaved={() => {
@@ -403,7 +394,6 @@ export default function MetafieldsCard({ entityType, entityId }) {
           entityType={entityType}
           entityId={entityId}
           metafields={metafields}
-          token={token}
           onClose={closeModal}
           onReload={loadMetafields}
           shopify={shopify}

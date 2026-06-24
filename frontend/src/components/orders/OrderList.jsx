@@ -4,7 +4,7 @@ import { useOrderList } from "../../hooks/order/useOrderList";
 import { getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
 import { matchesOrderSearch } from "../../utils/orderDisplay";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import OrderRow from "./OrderRow";
 
 export default function OrderList() {

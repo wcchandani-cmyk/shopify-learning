@@ -1,12 +1,6 @@
 import { useEffect, useRef } from "react";
 import { getCheckboxChecked } from "../../utils/fieldEvent";
 
-/**
- * Polaris `s-checkbox` treats `checked` as an HTML-style property: the attribute
- * maps to `defaultChecked`, and React may set the value before the web component
- * is upgraded, which silently drops it. Imperatively set the `checked` property
- * once the element is defined so saved values reliably render as checked.
- */
 function useCheckedRef(checked) {
   const ref = useRef(null);
 
@@ -86,8 +80,8 @@ export default function CombinationsSection({ form, updateField, displayType }) 
           )}
         </div>
 
-        <div style={{ backgroundColor: "#f6f6f7", padding: "12px", borderRadius: "8px", border: "1px solid #e1e3e5", marginTop: "12px", fontSize: "13px" }}>
-          <span style={{ fontWeight: 600 }}>{form.title || displayType}</span>{" "}
+        <div className="discount-combinations-summary">
+          <span className="discount-combinations-summary__title">{form.title || displayType}</span>{" "}
           {wonCombine
             ? "won't combine with any other discount at checkout"
             : `will combine with ${[

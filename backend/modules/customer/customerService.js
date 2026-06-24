@@ -16,12 +16,6 @@ const assignFields = (body, mapping, { includeEmpty }) => {
   return body;
 };
 
-const toShopifyId = (value) => {
-  if (value === undefined || value === null) return null;
-  const match = String(value).match(/(\d+)\s*$/);
-  return match ? match[1] : null;
-};
-
 const toAddressRestId = (value) => {
   if (value === undefined || value === null) return null;
   const match = String(value)
@@ -421,7 +415,6 @@ module.exports = {
   upsertCustomer,
   toCustomerDTO,
   toCustomerDetail,
-  toShopifyId,
   createCustomer,
   updateCustomer,
   deleteCustomers,

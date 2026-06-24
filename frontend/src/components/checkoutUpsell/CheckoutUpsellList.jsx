@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { listCheckoutUpsells, deleteCheckoutUpsell } from "../../services/checkoutUpsellService";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import "../../styles/CheckoutUpsell.css";
 
 const parseJsonField = (val) => {
@@ -36,15 +36,14 @@ export default function CheckoutUpsellList() {
     setLoading(true);
     setError(null);
     try {
-      const token = await shopify.idToken();
-      const res = await listCheckoutUpsells(token);
+      const res = await listCheckoutUpsells();
       setRules(res.upsells || []);
     } catch (err) {
       setError(err.message || "Failed to load checkout upsells");
     } finally {
       setLoading(false);
     }
-  }, [shopify]);
+  }, []);
 
   useEffect(() => { fetchRules(); }, [fetchRules]);
 
@@ -66,8 +65,7 @@ export default function CheckoutUpsellList() {
     if (!window.confirm("Delete this upsell rule?")) return;
     setDeleting(true);
     try {
-      const token = await shopify.idToken();
-      await deleteCheckoutUpsell(id, token);
+      await deleteCheckoutUpsell(id);
       shopify.toast.show("Upsell rule deleted");
       fetchRules();
     } catch (err) {

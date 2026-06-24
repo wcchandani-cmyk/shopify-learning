@@ -9,9 +9,10 @@ const {
   getGraphQLClient,
   RequestedTokenType,
 } = require("../../utils/shopify");
-const { resolveShopForApi } = require("../../utils/shopAccess");
+
 const { successResponse, errorResponse } = require("../../utils/response");
 const { FREE_TRIAL_DAYS } = require("../../config/constants");
+const { handleError } = require("../../utils/controllerHelper");
 
 const getShopDetails = async (req, res) => {
   try {
@@ -98,7 +99,7 @@ const getShopDetails = async (req, res) => {
 // The store's enabled languages, used for the customer "Language" field.
 const listLocales = async (req, res) => {
   try {
-    const shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
+    const shop = req.shop;
     const { graphqlClient } = getGraphQLClient({
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
@@ -130,19 +131,13 @@ const listLocales = async (req, res) => {
         }
       );
     }
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to list locales",
-      error
-    );
+    handleError(res, error, "Failed to list locales");
   }
 };
 
 const listCurrencies = async (req, res) => {
   try {
-    const shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
+    const shop = req.shop;
     const { graphqlClient } = getGraphQLClient({
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
@@ -175,13 +170,7 @@ const listCurrencies = async (req, res) => {
         { primary: "USD", enabled: ["USD"] }
       );
     }
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to list currencies",
-      error
-    );
+    handleError(res, error, "Failed to list currencies");
   }
 };
 

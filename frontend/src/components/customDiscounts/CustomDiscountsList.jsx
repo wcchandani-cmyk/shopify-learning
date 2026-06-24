@@ -6,7 +6,7 @@ import {
   deleteCustomDiscounts,
   toggleCustomDiscountStatus,
 } from "../../services/customDiscountService";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import CustomDiscountTable from "./CustomDiscountTable";
 import "../../styles/ProductList.css";
 import "../../styles/CustomDiscountDetail.css";
@@ -30,8 +30,7 @@ export default function CustomDiscountsList() {
     setLoading(true);
     setError(null);
     try {
-      const token = await shopify.idToken();
-      const res = await listCustomDiscounts({ page, limit: PAGE_SIZE }, token);
+      const res = await listCustomDiscounts({ page, limit: PAGE_SIZE });
       setCustomDiscounts(res.customizations || res.customDiscounts || []);
       setPagination(res.pagination || null);
     } catch (err) {
@@ -39,7 +38,7 @@ export default function CustomDiscountsList() {
     } finally {
       setLoading(false);
     }
-  }, [shopify, page]);
+  }, [page]);
 
   useEffect(() => {
     fetchCustomDiscounts();
@@ -75,8 +74,7 @@ export default function CustomDiscountsList() {
 
       setDeleting(true);
       try {
-        const token = await shopify.idToken();
-        await deleteCustomDiscounts([id], token);
+        await deleteCustomDiscounts([id]);
         shopify.toast.show("Custom discount deleted");
         fetchCustomDiscounts();
       } catch (err) {
@@ -101,8 +99,7 @@ export default function CustomDiscountsList() {
         })
       );
       try {
-        const token = await shopify.idToken();
-        await toggleCustomDiscountStatus(id, newStatus, token);
+        await toggleCustomDiscountStatus(id, newStatus);
         shopify.toast.show(
           newStatus === "active" ? "Discount activated" : "Discount deactivated"
         );

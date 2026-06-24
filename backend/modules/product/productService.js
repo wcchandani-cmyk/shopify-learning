@@ -2,14 +2,6 @@ const { Op } = require("sequelize");
 const Product = require("./model");
 const Variant = require("../variant/model");
 
-/**
- * Shared product sync logic used by BOTH the product API (controller.js)
- * and the Shopify webhooks (../webhook/controller.js).
- * Keeping it here (instead of utils/) mirrors how the shop module exposes
- * subscriptionService.js for logic shared across modules.
- */
-
-/** Numeric id from GraphQL gid or legacyResourceId */
 const toShopifyId = (node) => {
   if (node?.legacyResourceId != null) {
     return String(node.legacyResourceId);
@@ -62,39 +54,14 @@ const normalizeInventoryPolicy = (policy) =>
   policy ? String(policy).toLowerCase() : null;
 
 const pickProductImage = (productNode) => {
-  const featured = productNode?.featuredImage;
-  if (featured?.url) {
-    return {
-      imageUrl: featured.url,
-      imageAlt: featured.altText || productNode?.title || null,
-    };
-  }
-
-  const media = productNode?.featuredMedia?.preview?.image;
-  if (media?.url) {
-    return {
-      imageUrl: media.url,
-      imageAlt: media.altText || productNode?.title || null,
-    };
-  }
-
-  const restImage = productNode?.image;
-  if (restImage?.src) {
-    return {
-      imageUrl: restImage.src,
-      imageAlt: restImage.alt || productNode?.title || null,
-    };
-  }
-
-  const firstImage = productNode?.images?.[0];
-  if (firstImage?.src) {
-    return {
-      imageUrl: firstImage.src,
-      imageAlt: firstImage.alt || productNode?.title || null,
-    };
-  }
-
-  return { imageUrl: null, imageAlt: null };
+  const img = productNode?.featuredImage ||
+    productNode?.featuredMedia?.preview?.image ||
+    productNode?.image ||
+    productNode?.images?.[0];
+  return {
+    imageUrl: img?.url || img?.src || null,
+    imageAlt: img?.altText || img?.alt || productNode?.title || null,
+  };
 };
 
 /** Collect the full image gallery from a Shopify product node. */

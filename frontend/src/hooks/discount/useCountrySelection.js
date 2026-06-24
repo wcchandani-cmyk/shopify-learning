@@ -7,7 +7,7 @@ const allCountriesList = Country.getAllCountries().map((country) => ({
   name: country.name,
 }));
 
-export function useCountrySelection(selectedCountries, updateField, shopify) {
+export function useCountrySelection(selectedCountries, updateField) {
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
   const [showOnlySelectedCountries, setShowOnlySelectedCountries] =
@@ -16,20 +16,14 @@ export function useCountrySelection(selectedCountries, updateField, shopify) {
   const countryModalRef = useRef(null);
   const [countrySearchQuery, setCountrySearchQuery] = useState("");
 
-  // The picker only offers countries the store can actually ship to, since the
-  // free-shipping price rule can't target countries outside the shipping zones.
-  // If the store ships to "Rest of world" (or the lookup fails), fall back to
-  // the full country list so we never block a worldwide store.
   const [countryOptions, setCountryOptions] = useState(allCountriesList);
 
   useEffect(() => {
-    if (!shopify) return undefined;
     let cancelled = false;
 
     (async () => {
       try {
-        const token = await shopify.idToken();
-        const data = await listShippableCountries(token);
+        const data = await listShippableCountries();
         if (cancelled) return;
         if (data.includeRestOfWorld) {
           setCountryOptions(allCountriesList);
@@ -49,7 +43,7 @@ export function useCountrySelection(selectedCountries, updateField, shopify) {
     return () => {
       cancelled = true;
     };
-  }, [shopify]);
+  }, []);
 
   useEffect(() => {
     const modal = countryModalRef.current;

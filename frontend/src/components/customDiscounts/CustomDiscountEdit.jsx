@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { getCustomDiscount } from "../../services/customDiscountService";
 import CustomDiscountDetail from "./CustomDiscountDetail";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 
 export default function CustomDiscountEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const shopify = useAppBridge();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,15 +16,14 @@ export default function CustomDiscountEdit() {
     setLoading(true);
     setError(null);
     try {
-      const token = await shopify.idToken();
-      const data = await getCustomDiscount(id, token);
+      const data = await getCustomDiscount(id);
       setCustomDiscountData(data);
     } catch (err) {
       setError(err.message || "Failed to load custom discount details");
     } finally {
       setLoading(false);
     }
-  }, [id, shopify]);
+  }, [id]);
 
   useEffect(() => {
     fetchCustomDiscount();

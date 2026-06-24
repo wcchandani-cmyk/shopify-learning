@@ -2,11 +2,11 @@ import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { useCustomerList } from "../../hooks/customer/useCustomerList";
-import { useCustomerSelection } from "../../hooks/customer/useCustomerSelection";
+import { useSelection } from "../../hooks/useSelection";
 import { bulkDeleteCustomers } from "../../services/customerService";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import CustomerRow from "./CustomerRow";
 
 const SELECT_ALL_ID = "customer-list-select-all";
@@ -46,12 +46,12 @@ export default function CustomerList() {
     selectedCount,
     allFilteredSelected,
     someFilteredSelected,
-    toggleCustomer,
+    toggleItem: toggleCustomer,
     toggleSelectAllFiltered,
     clearSelection,
     isSelected,
     getSelectedIds,
-  } = useCustomerSelection(filteredCustomers);
+  } = useSelection(filteredCustomers);
 
   const handleAddCustomer = useCallback(() => {
     navigate("/customers/new");
@@ -63,8 +63,7 @@ export default function CustomerList() {
 
     setDeleting(true);
     try {
-      const token = await shopify.idToken();
-      await bulkDeleteCustomers(ids, token);
+      await bulkDeleteCustomers(ids);
       shopify.toast.show(
         ids.length === 1 ? "Customer deleted" : `${ids.length} customers deleted`
       );

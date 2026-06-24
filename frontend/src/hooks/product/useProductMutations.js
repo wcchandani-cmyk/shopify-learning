@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import {
   bulkDeleteProducts,
   createProduct,
@@ -7,34 +6,28 @@ import {
 } from "../../services/productService";
 
 export function useProductMutations() {
-  const shopify = useAppBridge();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const saveProduct = useCallback(
     ({ productId, payload, isNew }) => {
       setSaving(true);
-      return shopify
-        .idToken()
-        .then((token) =>
-          isNew
-            ? createProduct(payload, token)
-            : updateProduct(productId, payload, token),
-        )
-        .finally(() => setSaving(false));
+      return (
+        isNew
+          ? createProduct(payload)
+          : updateProduct(productId, payload)
+      ).finally(() => setSaving(false));
     },
-    [shopify],
+    [],
   );
 
   const deleteProducts = useCallback(
     (ids) => {
       setDeleting(true);
-      return shopify
-        .idToken()
-        .then((token) => bulkDeleteProducts(ids, token))
+      return bulkDeleteProducts(ids)
         .finally(() => setDeleting(false));
     },
-    [shopify],
+    [],
   );
 
   return { saveProduct, deleteProducts, saving, deleting };

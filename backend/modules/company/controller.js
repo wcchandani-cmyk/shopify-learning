@@ -1,26 +1,14 @@
 const { successResponse, errorResponse } = require("../../utils/response");
-const {
-  resolveShopForApi,
-  isShopifyUnauthorized,
-} = require("../../utils/shopAccess");
 const Customer = require("../customer/model");
 const companyService = require("./companyService");
+const { handleError: baseHandleError } = require("../../utils/controllerHelper");
 
-const getShopRecord = async (req) =>
-  resolveShopForApi(req.shopDomain, req.sessionToken);
+const getShopRecord = (req) => req.shop;
 
-const handleError = (res, error, fallback) => {
-  if (isShopifyUnauthorized(error)) {
-    return errorResponse(
-      res,
-      401,
-      "Shopify session expired or B2B access not granted. Reload the app and ensure the store has B2B (Companies) enabled.",
-      error
-    );
-  }
-  const status = error.statusCode || 500;
-  return errorResponse(res, status, error.message || fallback, error);
-};
+const COMPANY_UNAUTH_MSG = "Shopify session expired or B2B access not granted. Reload the app and ensure the store has B2B (Companies) enabled.";
+
+const handleError = (res, error, fallback) =>
+  baseHandleError(res, error, fallback, COMPANY_UNAUTH_MSG);
 
 const resolveCustomer = async (shop, rawId) => {
   const id = parseInt(rawId, 10);

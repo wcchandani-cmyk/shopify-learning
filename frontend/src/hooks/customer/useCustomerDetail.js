@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { getCustomer } from "../../services/customerService";
 
 export function useCustomerDetail(customerId) {
-  const shopify = useAppBridge();
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(customerId));
   const [error, setError] = useState(null);
@@ -19,16 +17,14 @@ export function useCustomerDetail(customerId) {
     setLoading(true);
     setError(null);
 
-    return shopify
-      .idToken()
-      .then((token) => getCustomer(customerId, token))
+    return getCustomer(customerId)
       .then((data) => setCustomer(data))
       .catch((err) => {
         setCustomer(null);
         setError(err.message || "Failed to load customer");
       })
       .finally(() => setLoading(false));
-  }, [shopify, customerId]);
+  }, [customerId]);
 
   useEffect(() => {
     load();

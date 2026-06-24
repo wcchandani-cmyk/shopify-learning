@@ -3,10 +3,7 @@ const Product = require("./model");
 const Variant = require("../variant/model");
 const { successResponse, errorResponse } = require("../../utils/response");
 const { getRestClient, getGraphQLClient } = require("../../utils/shopify");
-const {
-  resolveShopForApi,
-  isShopifyUnauthorized,
-} = require("../../utils/shopAccess");
+const { isShopifyUnauthorized } = require("../../utils/shopAccess");
 const {
   upsertProductWithVariants,
   mapWebhookProduct,
@@ -19,23 +16,10 @@ const {
   PRODUCT_VENDORS_QUERY,
 } = require("./queries");
 
-const DEFAULT_PAGE_SIZE = 10;
-const MAX_PAGE_SIZE = 50;
+const { parsePageSize: baseParsePageSize } = require("../../utils/controllerHelper");
+const parsePageSize = (value) => baseParsePageSize(value, 10, 50);
 
-const parsePageSize = (value) =>
-  Math.min(
-    MAX_PAGE_SIZE,
-    Math.max(1, parseInt(value, 10) || DEFAULT_PAGE_SIZE)
-  );
-
-const getShopRecord = async (req) =>
-  resolveShopForApi(req.shopDomain, req.sessionToken);
-
-// ---------------------------------------------------------------------------
-// Product type helpers
-// ---------------------------------------------------------------------------
-
-// Distinct values for a free-text product column from our synced DB (fallback).
+const getShopRecord = (req) => req.shop;
 const fetchDbProductColumn = async (shopId, column) => {
   const rows = await Product.findAll({
     attributes: [column],
@@ -458,17 +442,17 @@ function buildVariantSetInput(variant, optionNames) {
 
   const optionValues = optionNames.length
     ? optionNames.map((name, index) => ({
-        optionName: name,
-        name: String(values[index] || "").trim() || DEFAULT_OPTION_VALUE,
-      }))
+      optionName: name,
+      name: String(values[index] || "").trim() || DEFAULT_OPTION_VALUE,
+    }))
     : [
-        {
-          optionName: DEFAULT_OPTION_NAME,
-          name:
-            String(variant.option1 || variant.title || "").trim() ||
-            DEFAULT_OPTION_VALUE,
-        },
-      ];
+      {
+        optionName: DEFAULT_OPTION_NAME,
+        name:
+          String(variant.option1 || variant.title || "").trim() ||
+          DEFAULT_OPTION_VALUE,
+      },
+    ];
 
   const input = { optionValues };
   if (variant.price != null && variant.price !== "") {
@@ -560,7 +544,7 @@ async function runProductSet(shop, input) {
   if (userErrors.length) {
     const err = new Error(
       userErrors.map((error) => error.message).join("; ") ||
-        "Shopify rejected the product"
+      "Shopify rejected the product"
     );
     err.statusCode = 422;
     throw err;
@@ -660,10 +644,10 @@ async function updateProductFlow(shop, product, payload) {
 async function deleteProductsFlow(shop, productIds) {
   const ids = Array.isArray(productIds)
     ? [
-        ...new Set(
-          productIds.map((id) => parseInt(id, 10)).filter((id) => id > 0)
-        ),
-      ]
+      ...new Set(
+        productIds.map((id) => parseInt(id, 10)).filter((id) => id > 0)
+      ),
+    ]
     : [];
 
   if (!ids.length) {

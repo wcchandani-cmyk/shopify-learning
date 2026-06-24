@@ -90,9 +90,7 @@ export default function Timeline({
 
   useEffect(() => {
     let active = true;
-    shopify
-      .idToken()
-      .then((token) => getShopDetails(token))
+    getShopDetails()
       .then((shop) => {
         if (active) setAuthorName(shop?.name || shop?.shopOwner || "");
       })
@@ -100,16 +98,14 @@ export default function Timeline({
     return () => {
       active = false;
     };
-  }, [shopify]);
+  }, []);
 
   const authorInitial = useMemo(() => initialOf(authorName), [authorName]);
 
   useEffect(() => {
     let active = true;
     if (!entityId || !listComments) return undefined;
-    shopify
-      .idToken()
-      .then((token) => listComments(entityId, token))
+    listComments(entityId)
       .then((data) => {
         if (active) setComments(data);
       })
@@ -119,15 +115,14 @@ export default function Timeline({
     return () => {
       active = false;
     };
-  }, [shopify, entityId, listComments, reloadTrigger]);
+  }, [entityId, listComments, reloadTrigger]);
 
   const handlePost = useCallback(async () => {
     const body = text.trim();
     if (!body || posting || !addComment) return;
     setPosting(true);
     try {
-      const token = await shopify.idToken();
-      const created = await addComment(entityId, body, token);
+      const created = await addComment(entityId, body);
       setComments((prev) => [created, ...prev]);
       setText("");
     } catch (err) {
@@ -143,8 +138,7 @@ export default function Timeline({
     async (commentId) => {
       if (!deleteComment) return;
       try {
-        const token = await shopify.idToken();
-        await deleteComment(entityId, commentId, token);
+        await deleteComment(entityId, commentId);
         setComments((prev) => prev.filter((item) => item.id !== commentId));
       } catch (err) {
         shopify.toast.show(err.message || "Failed to delete comment", {

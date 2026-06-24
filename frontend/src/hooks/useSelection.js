@@ -1,32 +1,31 @@
 import { useCallback, useMemo, useState } from "react";
 
-/** Row-selection state for the customers table (select all / per row). */
-export function useCustomerSelection(filteredCustomers) {
+export function useSelection(filteredItems = []) {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
 
   const selectedCount = selectedIds.size;
 
   const allFilteredSelected = useMemo(
     () =>
-      filteredCustomers.length > 0 &&
-      filteredCustomers.every((customer) => selectedIds.has(customer.id)),
-    [filteredCustomers, selectedIds]
+      filteredItems.length > 0 &&
+      filteredItems.every((item) => selectedIds.has(item.id)),
+    [filteredItems, selectedIds]
   );
 
   const someFilteredSelected = useMemo(
     () =>
-      filteredCustomers.some((customer) => selectedIds.has(customer.id)) &&
+      filteredItems.some((item) => selectedIds.has(item.id)) &&
       !allFilteredSelected,
-    [filteredCustomers, selectedIds, allFilteredSelected]
+    [filteredItems, selectedIds, allFilteredSelected]
   );
 
-  const toggleCustomer = useCallback((customerId, checked) => {
+  const toggleItem = useCallback((itemId, checked) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) {
-        next.add(customerId);
+        next.add(itemId);
       } else {
-        next.delete(customerId);
+        next.delete(itemId);
       }
       return next;
     });
@@ -36,17 +35,17 @@ export function useCustomerSelection(filteredCustomers) {
     (checked) => {
       setSelectedIds((prev) => {
         const next = new Set(prev);
-        filteredCustomers.forEach((customer) => {
+        filteredItems.forEach((item) => {
           if (checked) {
-            next.add(customer.id);
+            next.add(item.id);
           } else {
-            next.delete(customer.id);
+            next.delete(item.id);
           }
         });
         return next;
       });
     },
-    [filteredCustomers]
+    [filteredItems]
   );
 
   const clearSelection = useCallback(() => {
@@ -54,7 +53,7 @@ export function useCustomerSelection(filteredCustomers) {
   }, []);
 
   const isSelected = useCallback(
-    (customerId) => selectedIds.has(customerId),
+    (itemId) => selectedIds.has(itemId),
     [selectedIds]
   );
 
@@ -64,7 +63,7 @@ export function useCustomerSelection(filteredCustomers) {
     selectedCount,
     allFilteredSelected,
     someFilteredSelected,
-    toggleCustomer,
+    toggleItem,
     toggleSelectAllFiltered,
     clearSelection,
     isSelected,

@@ -6,7 +6,7 @@ import {
   getCheckoutUpsell,
   updateCheckoutUpsell,
 } from "../../services/checkoutUpsellService";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import "../../styles/CheckoutUpsell.css";
 
 const parseJsonField = (val) => {
@@ -39,8 +39,7 @@ export default function CheckoutUpsellForm() {
     if (!isEdit) return;
     (async () => {
       try {
-        const token = await shopify.idToken();
-        const data = await getCheckoutUpsell(id, token);
+        const data = await getCheckoutUpsell(id);
         const u = data.upsell;
         if (u) {
           setForm({
@@ -126,12 +125,11 @@ export default function CheckoutUpsellForm() {
     }
     setSubmitting(true);
     try {
-      const token = await shopify.idToken();
       if (isEdit) {
-        await updateCheckoutUpsell(id, form, token);
+        await updateCheckoutUpsell(id, form);
         shopify.toast.show("Campaign updated");
       } else {
-        await createCheckoutUpsell(form, token);
+        await createCheckoutUpsell(form);
         shopify.toast.show("Campaign created");
       }
       navigate("/checkout-upsells");
@@ -328,4 +326,3 @@ export default function CheckoutUpsellForm() {
     </s-page>
   );
 }
-

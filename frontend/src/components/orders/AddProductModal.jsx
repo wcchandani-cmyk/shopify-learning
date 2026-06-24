@@ -4,7 +4,7 @@ import { listProducts } from "../../services/productService";
 import { getInputEventValue, getCheckboxChecked } from "../../utils/fieldEvent";
 import { formatMoney } from "../../utils/customerForm";
 import { useOverlayModal } from "../../hooks/useOverlayModal";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import ProductThumbnail from "../products/ProductThumbnail";
 
 const ADD_PRODUCT_MODAL_ID = "add-product-modal";

@@ -1,14 +1,11 @@
 const { Op } = require("sequelize");
-const { resolveShopForApi } = require("../../utils/shopAccess");
+
 const { successResponse, errorResponse } = require("../../utils/response");
-const {
-  getGraphQLClient,
-  extractGraphqlError,
-} = require("../../utils/shopify");
+const { getGraphQLClient } = require("../../utils/shopify");
+const { parsePageSize, handleError } = require("../../utils/controllerHelper");
 const CustomDiscount = require("./model");
 
-const getShopRecord = async (req) =>
-  resolveShopForApi(req.shopDomain, req.sessionToken);
+const getShopRecord = (req) => req.shop;
 
 const {
   CREATE_AUTOMATIC_MUTATION,
@@ -24,9 +21,6 @@ const {
   DISABLE_CODE_MUTATION,
 } = require("./graphqlQuery");
 
-// Stable handle of the unified Discount API function (matches `handle` in
-// chandani/extensions/custom-discount/shopify.extension.toml). On API version
-// 2025-10+ we reference the function by handle instead of looking up its id.
 const FUNCTION_HANDLE = "custom-discount";
 
 const DISCOUNT_CLASSES_BY_TYPE = {
@@ -152,12 +146,6 @@ const createShopifyDiscount = async ({
   }
 };
 
-// Writes the config metafield directly onto a discount node. The inline
-// `metafields` on the create mutations does not reliably persist on app
-// discount nodes, which left order/shipping discounts with a null metafield
-// (so the function read nothing and applied no discount). Calling
-// `metafieldsSet` explicitly against the returned discount id guarantees the
-// config is attached for every discount type.
 const setConfigMetafield = async ({
   graphqlClient,
   ownerId,
@@ -188,10 +176,7 @@ const listCustomDiscounts = async (req, res) => {
   try {
     const shop = await getShopRecord(req);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(
-      50,
-      Math.max(1, parseInt(req.query.limit, 10) || 10)
-    );
+    const limit = parsePageSize(req.query.limit, 10, 50);
     const offset = (page - 1) * limit;
 
     const { count: total, rows: customizations } =
@@ -217,12 +202,7 @@ const listCustomDiscounts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error listing custom discounts:", error);
-    errorResponse(
-      res,
-      500,
-      error.message || "Failed to list custom discounts",
-      error
-    );
+    handleError(res, error, "Failed to list custom discounts");
   }
 };
 
@@ -252,12 +232,7 @@ const getCustomDiscount = async (req, res) => {
     );
   } catch (error) {
     console.error("Error fetching custom discount:", error);
-    errorResponse(
-      res,
-      500,
-      error.message || "Failed to fetch custom discount",
-      error
-    );
+    handleError(res, error, "Failed to fetch custom discount");
   }
 };
 
@@ -316,8 +291,6 @@ const createCustomDiscount = async (req, res) => {
       discountClasses: getDiscountClasses(functionType),
     });
 
-    // Guarantee the config metafield is attached to the new discount node so
-    // the Shopify Function can read it (applies to product, order, shipping).
     await setConfigMetafield({
       graphqlClient,
       ownerId: shopifyId,
@@ -346,14 +319,8 @@ const createCustomDiscount = async (req, res) => {
       newRecord
     );
   } catch (error) {
-    const detail = extractGraphqlError(error);
-    console.error("Error creating custom discount:", detail, error);
-    errorResponse(
-      res,
-      500,
-      detail || "Failed to create custom discount",
-      error
-    );
+    console.error("Error creating custom discount:", error);
+    handleError(res, error, "Failed to create custom discount");
   }
 };
 
@@ -588,12 +555,7 @@ const updateCustomDiscount = async (req, res) => {
     );
   } catch (error) {
     console.error("Error updating custom discount:", error);
-    errorResponse(
-      res,
-      500,
-      error.message || "Failed to update custom discount",
-      error
-    );
+    handleError(res, error, "Failed to update custom discount");
   }
 };
 
@@ -627,9 +589,6 @@ const deleteCustomDiscounts = async (req, res) => {
         },
       });
       if (customization) {
-        // Delete from Shopify FIRST. Only remove the local record once Shopify
-        // confirms the discount is actually gone, otherwise the DB drifts out of
-        // sync and the (still-live) Shopify title blocks recreating with that name.
         let shopifyDeleted = false;
         try {
           const isAutomatic = customization.method !== "Code";
@@ -675,17 +634,11 @@ const deleteCustomDiscounts = async (req, res) => {
             );
           }
         } catch (shopifyError) {
-          const detail =
-            extractGraphqlError(shopifyError) || shopifyError.message;
           console.error(
             `Could not delete discount ${customization.shopifyId} on Shopify:`,
-            detail
+            shopifyError
           );
-          return errorResponse(
-            res,
-            500,
-            `Failed to delete discount on Shopify: ${detail}`
-          );
+          return handleError(res, shopifyError, "Failed to delete discount on Shopify");
         }
 
         if (shopifyDeleted) {
@@ -700,12 +653,7 @@ const deleteCustomDiscounts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting custom discounts:", error);
-    errorResponse(
-      res,
-      500,
-      error.message || "Failed to delete custom discounts",
-      error
-    );
+    handleError(res, error, "Failed to delete custom discounts");
   }
 };
 
@@ -768,12 +716,7 @@ const toggleDiscountStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Error toggling discount status:", error);
-    errorResponse(
-      res,
-      500,
-      error.message || "Failed to toggle discount status",
-      error
-    );
+    handleError(res, error, "Failed to toggle discount status");
   }
 };
 

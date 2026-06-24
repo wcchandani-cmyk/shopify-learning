@@ -46,10 +46,6 @@ async function syncDiscountsFromShopify(shop) {
       where: { shopId: shop.id, shopifyId }
     });
 
-    // The create/update flow is the source of truth for `type` (Shopify's
-    // price-rule fields can't reliably distinguish product vs order, and BXGY
-    // detection is fragile). Only derive a type for discounts we are seeing for
-    // the first time (e.g. created directly in the Shopify admin).
     let type = existing?.type;
     if (!type) {
       type = DISCOUNT_TYPE.AMOUNT_OFF_PRODUCT;
@@ -70,10 +66,6 @@ async function syncDiscountsFromShopify(shop) {
 
     const status = computeStatus(rule.starts_at, rule.ends_at);
 
-    // Combinations: the Shopify REST price-rule API does NOT support
-    // `combines_with` (it's GraphQL-only), so `rule.combines_with` is always
-    // undefined here. The local DB is the source of truth — keep its values for
-    // known discounts and only fall back to Shopify for first-seen ones.
     const combines = rule.combines_with || {};
     const combinesWithProduct = existing
       ? existing.combinesWithProduct

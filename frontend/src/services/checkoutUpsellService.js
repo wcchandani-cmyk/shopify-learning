@@ -1,43 +1,38 @@
 import { apiRequest } from "../api";
 
-export async function listCheckoutUpsells(token) {
+export async function listCheckoutUpsells() {
   const response = await apiRequest("/api/checkout-upsells", {
     method: "GET",
-    token,
   });
   return response.data;
 }
 
-export async function getCheckoutUpsell(id, token) {
+export async function getCheckoutUpsell(id) {
   const response = await apiRequest(`/api/checkout-upsells/${id}`, {
     method: "GET",
-    token,
   });
   return response.data;
 }
 
-export async function createCheckoutUpsell(payload, token) {
+export async function createCheckoutUpsell(payload) {
   const response = await apiRequest("/api/checkout-upsells", {
     method: "POST",
-    token,
     body: payload,
   });
   return response.data;
 }
 
-export async function updateCheckoutUpsell(id, payload, token) {
+export async function updateCheckoutUpsell(id, payload) {
   const response = await apiRequest(`/api/checkout-upsells/${id}`, {
     method: "PUT",
-    token,
     body: payload,
   });
   return response.data;
 }
 
-export async function deleteCheckoutUpsell(id, token) {
+export async function deleteCheckoutUpsell(id) {
   const response = await apiRequest(`/api/checkout-upsells/${id}`, {
     method: "DELETE",
-    token,
   });
   return response.data;
 }

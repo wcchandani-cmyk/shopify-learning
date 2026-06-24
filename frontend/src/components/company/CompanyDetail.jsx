@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getCompanyDetails, bulkDeleteCompanies } from "../../services/companyService";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import EditCompanyDetailsModal from "./EditCompanyDetailsModal";
 import AddCustomerToCompanyModal from "./AddCustomerToCompanyModal";
 import ChangeMainContactModal from "./ChangeMainContactModal";
@@ -37,7 +37,6 @@ export default function CompanyDetail() {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [token, setToken] = useState(null);
 
   // Prefetch metafields once the company is loaded so the card renders with the
   // page instead of a moment later.
@@ -85,10 +84,10 @@ export default function CompanyDetail() {
   }, [headerMenuOpen]);
 
   const loadDetails = useCallback(() => {
-    if (!token || !id) return;
+    if (!id) return;
     setLoading(true);
     setError(null);
-    getCompanyDetails(id, token)
+    getCompanyDetails(id)
       .then((data) => {
         setCompany(data);
       })
@@ -97,13 +96,7 @@ export default function CompanyDetail() {
         setError(err.message || "Failed to load company details");
       })
       .finally(() => setLoading(false));
-  }, [id, token]);
-
-  useEffect(() => {
-    shopify.idToken().then((t) => {
-      setToken(t);
-    });
-  }, [shopify]);
+  }, [id]);
 
   useEffect(() => {
     loadDetails();
@@ -183,8 +176,7 @@ export default function CompanyDetail() {
     setDeleting(true);
     setHeaderMenuOpen(false);
     try {
-      const token = await shopify.idToken();
-      await bulkDeleteCompanies([company.id], token);
+      await bulkDeleteCompanies([company.id]);
       shopify.toast.show("Company deleted");
       navigate("/companies");
     } catch (err) {
@@ -626,7 +618,6 @@ export default function CompanyDetail() {
         open={activeModal === "edit"}
         shopify={shopify}
         company={company}
-        token={token}
         onClose={closeModal}
         onSaved={loadDetails}
       />
@@ -635,7 +626,6 @@ export default function CompanyDetail() {
         open={activeModal === "add"}
         shopify={shopify}
         company={company}
-        token={token}
         onClose={closeModal}
         onSaved={loadDetails}
         onAddNewCustomer={() => navigate("/customers/new")}
@@ -645,7 +635,6 @@ export default function CompanyDetail() {
         open={activeModal === "main"}
         shopify={shopify}
         company={company}
-        token={token}
         onClose={closeModal}
         onSaved={loadDetails}
       />
@@ -654,7 +643,6 @@ export default function CompanyDetail() {
         open={activeModal === "remove"}
         shopify={shopify}
         company={company}
-        token={token}
         onClose={closeModal}
         onSaved={loadDetails}
       />
@@ -663,7 +651,6 @@ export default function CompanyDetail() {
         open={activeModal === "staff"}
         shopify={shopify}
         company={company}
-        token={token}
         onClose={closeModal}
         onSaved={loadDetails}
       />
@@ -673,7 +660,6 @@ export default function CompanyDetail() {
         shopify={shopify}
         company={company}
         contact={permissionsContact}
-        token={token}
         onClose={closePermissions}
         onSaved={loadDetails}
       />

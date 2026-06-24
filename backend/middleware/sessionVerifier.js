@@ -32,6 +32,24 @@ const sessionVerifier = async (req, res, next) => {
     req.sessionToken = token;
     req.shopDomain = new URL(tokenPayload.dest).hostname;
 
+    const { resolveShopForApi, isShopifyUnauthorized } = require("../utils/shopAccess");
+    try {
+      req.shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
+    } catch (shopError) {
+      if (isShopifyUnauthorized(shopError)) {
+        errorResponse(
+          res,
+          401,
+          "Shopify session expired. Reload the app from Shopify admin and try again.",
+          shopError
+        );
+        return;
+      }
+      const status = shopError.statusCode || 500;
+      errorResponse(res, status, shopError.message || "Failed to resolve shop", shopError);
+      return;
+    }
+
     next();
   } catch (error) {
     if (error.message?.includes("JWT")) {

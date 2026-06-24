@@ -6,7 +6,6 @@ export default function ChangeMainContactModal({
   open,
   shopify,
   company,
-  token,
   onClose,
   onSaved,
 }) {
@@ -45,7 +44,7 @@ export default function ChangeMainContactModal({
     if (saving || selectedId === currentId) return;
     setSaving(true);
     try {
-      await setMainContact(company.id, selectedId || null, token);
+      await setMainContact(company.id, selectedId || null);
       shopify.toast.show("Main contact updated");
       onSaved();
       onClose();

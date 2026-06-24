@@ -6,11 +6,9 @@ const {
   Customer,
 } = require("../../models/associations");
 const { successResponse, errorResponse } = require("../../utils/response");
-const { resolveShopForApi } = require("../../utils/shopAccess");
-const {
-  getGraphQLClient,
-  extractGraphqlError,
-} = require("../../utils/shopify");
+
+const { getGraphQLClient } = require("../../utils/shopify");
+const { handleError } = require("../../utils/controllerHelper");
 const {
   DEFINITION_CREATE,
   DEFINITION_UPDATE,
@@ -21,8 +19,7 @@ const {
   METAFEILD_TYPE,
 } = require("./graphqlQuery");
 
-const getShopRecord = (req) =>
-  resolveShopForApi(req.shopDomain, req.sessionToken);
+const getShopRecord = (req) => req.shop;
 
 const getClient = (shop) =>
   getGraphQLClient({
@@ -35,8 +32,7 @@ const wrap = (fallback, handler) => async (req, res) => {
     await handler(req, res);
   } catch (error) {
     console.error(`${fallback}:`, error);
-    const message = extractGraphqlError(error) || error.message || fallback;
-    errorResponse(res, error.statusCode || 500, message, error);
+    handleError(res, error, fallback);
   }
 };
 

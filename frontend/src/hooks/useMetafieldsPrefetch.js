@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import {
   prefetchMetafields,
   getCachedMetafields,
 } from "../services/metafieldsStore";
 
 export function useMetafieldsPrefetch(entityType, entityId) {
-  const shopify = useAppBridge();
   const [, forceRender] = useState(0);
 
   useEffect(() => {
@@ -14,9 +12,7 @@ export function useMetafieldsPrefetch(entityType, entityId) {
       return undefined;
 
     let active = true;
-    shopify
-      .idToken()
-      .then((token) => prefetchMetafields(entityType, entityId, token))
+    prefetchMetafields(entityType, entityId)
       .catch((err) => console.error("Metafields prefetch failed:", err))
       .finally(() => {
         if (active) forceRender((v) => v + 1);
@@ -25,7 +21,7 @@ export function useMetafieldsPrefetch(entityType, entityId) {
     return () => {
       active = false;
     };
-  }, [shopify, entityType, entityId]);
+  }, [entityType, entityId]);
 
   const ready = !entityId || Boolean(getCachedMetafields(entityType, entityId));
   return { loading: !ready };

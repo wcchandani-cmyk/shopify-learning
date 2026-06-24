@@ -9,7 +9,6 @@ export default function EditAssignedStaffModal({
   open,
   shopify,
   company,
-  token,
   onClose,
   onSaved,
 }) {
@@ -52,7 +51,7 @@ export default function EditAssignedStaffModal({
     if (!open) return undefined;
     let active = true;
     setLoading(true);
-    listStaffMembers(token)
+    listStaffMembers()
       .then((result) => {
         if (active) setStaff(result);
       })
@@ -65,7 +64,7 @@ export default function EditAssignedStaffModal({
     return () => {
       active = false;
     };
-  }, [open, token]);
+  }, [open]);
 
   const filteredStaff = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -86,7 +85,7 @@ export default function EditAssignedStaffModal({
     setSaving(true);
     try {
       const staffMemberIds = Object.keys(selected).filter((id) => selected[id]);
-      await updateAssignedStaff(company.id, staffMemberIds, token);
+      await updateAssignedStaff(company.id, staffMemberIds);
       shopify.toast.show("Assigned staff updated");
       onSaved();
       onClose();

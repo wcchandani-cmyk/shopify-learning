@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { getDiscount } from "../../services/discountService";
 import DiscountDetail from "./DiscountDetail";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 
 export default function DiscountEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const shopify = useAppBridge();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [discount, setDiscount] = useState(null);
@@ -19,8 +17,7 @@ export default function DiscountEdit() {
     async function loadDiscount() {
       try {
         setLoading(true);
-        const token = await shopify.idToken();
-        const data = await getDiscount(id, token);
+        const data = await getDiscount(id);
         if (active) {
           setDiscount(data);
           setError(null);
@@ -41,7 +38,7 @@ export default function DiscountEdit() {
     return () => {
       active = false;
     };
-  }, [id, shopify]);
+  }, [id]);
 
   if (loading) {
     return (

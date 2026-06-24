@@ -55,7 +55,7 @@ export default function DiscountDetail({ type, isNew = true, discountData = null
           <s-button onClick={d.handleDuplicateDiscount}>
             Duplicate
           </s-button>
-          <div style={{ position: "relative", display: "inline-flex" }}>
+          <div className="company-actions">
             <s-button
               data-header-actions-trigger
               onClick={() => d.setHeaderMenuOpen((open) => !open)}
@@ -67,8 +67,7 @@ export default function DiscountDetail({ type, isNew = true, discountData = null
                 <button
                   type="button"
                   role="menuitem"
-                  className="company-actions__item"
-                  style={{ color: "#d82c0d" }}
+                  className="company-actions__item company-actions__item--critical"
                   onClick={d.handleDeleteDiscount}
                 >
                   Delete discount

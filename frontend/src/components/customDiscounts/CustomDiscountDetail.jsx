@@ -25,7 +25,7 @@ import ConditionsSection from "./ConditionsSection";
 import AdditionalOptionsSection from "./AdditionalOptionsSection";
 import CustomDiscountSummaryCard from "./CustomDiscountSummaryCard";
 
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import "../../styles/CustomDiscountDetail.css";
 
 export default function CustomDiscountDetail({
@@ -178,15 +178,14 @@ export default function CustomDiscountDetail({
         functionType: form.functionType,
       };
 
-      const token = await shopify.idToken();
       if (isNew) {
-        await createCustomDiscount(payload, token);
+        await createCustomDiscount(payload);
         shopify.toast.show("Custom discount created successfully");
       } else {
         const shopifyNumericId = activeData.shopifyId
           ? activeData.shopifyId.split("/").pop()
           : activeData.id;
-        await updateCustomDiscount(shopifyNumericId, payload, token);
+        await updateCustomDiscount(shopifyNumericId, payload);
         shopify.toast.show("Custom discount updated successfully");
       }
       navigate("/custom-discounts");

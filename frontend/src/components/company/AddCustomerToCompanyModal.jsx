@@ -9,7 +9,6 @@ export default function AddCustomerToCompanyModal({
   open,
   shopify,
   company,
-  token,
   onClose,
   onSaved,
   onAddNewCustomer,
@@ -41,7 +40,7 @@ export default function AddCustomerToCompanyModal({
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const result = await listEligibleCustomers(search, token);
+        const result = await listEligibleCustomers(search);
         if (active) setCustomers(result);
       } catch {
         if (active) setCustomers([]);
@@ -53,15 +52,14 @@ export default function AddCustomerToCompanyModal({
       active = false;
       clearTimeout(timer);
     };
-  }, [open, search, token]);
+  }, [open, search]);
 
   const handleAssign = async (customer) => {
     if (assigningId) return;
     setAssigningId(customer.id);
     try {
       await addContactToCompany(
-        { companyId: company.id, customerId: customer.id },
-        token
+        { companyId: company.id, customerId: customer.id }
       );
       shopify.toast.show(`${customer.displayName} added to ${company.name}`);
       onSaved();

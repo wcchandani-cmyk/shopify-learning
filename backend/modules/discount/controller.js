@@ -1,6 +1,7 @@
-const { resolveShopForApi } = require("../../utils/shopAccess");
+
 const { successResponse, errorResponse } = require("../../utils/response");
 const { getRestClient, getGraphQLClient } = require("../../utils/shopify");
+const { parsePageSize, handleError } = require("../../utils/controllerHelper");
 const Discount = require("./model");
 const Comment = require("../comment/model");
 const { createCommentHandlers } = require("../comment/controller");
@@ -49,8 +50,7 @@ const getShopifyCountryIds = async (client, isoCodes) => {
   }
 };
 
-const getShopRecord = async (req) =>
-  resolveShopForApi(req.shopDomain, req.sessionToken);
+const getShopRecord = (req) => req.shop;
 
 const SHIPPING_COUNTRIES_QUERY = `
   query shippingZoneCountries {
@@ -113,13 +113,7 @@ const getShippableCountries = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching shippable countries:", error.message);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to fetch shippable countries",
-      error
-    );
+    handleError(res, error, "Failed to fetch shippable countries");
   }
 };
 
@@ -340,10 +334,7 @@ const listDiscounts = async (req, res) => {
     }
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(
-      50,
-      Math.max(1, parseInt(req.query.limit, 10) || 10)
-    );
+    const limit = parsePageSize(req.query.limit, 10, 50);
     const offset = (page - 1) * limit;
 
     const { count: total, rows: discounts } = await Discount.findAndCountAll({
@@ -369,13 +360,7 @@ const listDiscounts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error listing discounts:", error);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to list discounts",
-      error
-    );
+    handleError(res, error, "Failed to list discounts");
   }
 };
 
@@ -585,13 +570,7 @@ const createDiscount = async (req, res) => {
     successResponse(res, 201, "Discount created successfully", discount);
   } catch (error) {
     console.error("Error creating discount:", error);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to create discount",
-      error
-    );
+    handleError(res, error, "Failed to create discount");
   }
 };
 
@@ -797,13 +776,7 @@ const getDiscount = async (req, res) => {
     successResponse(res, 200, "Discount fetched successfully", responseData);
   } catch (error) {
     console.error("Error fetching discount:", error);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to fetch discount",
-      error
-    );
+    handleError(res, error, "Failed to fetch discount");
   }
 };
 
@@ -1023,13 +996,7 @@ const updateDiscount = async (req, res) => {
     successResponse(res, 200, "Discount updated successfully", discount);
   } catch (error) {
     console.error("Error updating discount:", error);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to update discount",
-      error
-    );
+    handleError(res, error, "Failed to update discount");
   }
 };
 
@@ -1047,13 +1014,7 @@ const deleteDiscounts = async (req, res) => {
     successResponse(res, 200, "Discounts deleted successfully", result);
   } catch (error) {
     console.error("Error deleting discounts:", error);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to delete discounts",
-      error
-    );
+    handleError(res, error, "Failed to delete discounts");
   }
 };
 

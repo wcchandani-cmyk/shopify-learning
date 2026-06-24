@@ -6,7 +6,6 @@ export default function EditCompanyDetailsModal({
   open,
   shopify,
   company,
-  token,
   onClose,
   onSaved,
 }) {
@@ -38,8 +37,7 @@ export default function EditCompanyDetailsModal({
     try {
       await updateCompanyDetails(
         company.id,
-        { name: trimmedName, externalId },
-        token
+        { name: trimmedName, externalId }
       );
       shopify.toast.show("Company details updated");
       onSaved();

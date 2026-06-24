@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { searchTaxonomy } from "../../services/productService";
 import "../../styles/ProductCategoryPicker.css";
 
@@ -15,7 +14,6 @@ export default function ProductCategoryPicker({
   categoryName,
   onChange,
 }) {
-  const shopify = useAppBridge();
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
   const requestIdRef = useRef(0);
@@ -100,9 +98,7 @@ export default function ProductCategoryPicker({
     const args = query ? { search: query } : { childrenOf: currentParentId };
 
     const timer = window.setTimeout(() => {
-      shopify
-        .idToken()
-        .then((token) => searchTaxonomy(args, token))
+      searchTaxonomy(args)
         .then((categories) => {
           if (requestIdRef.current !== requestId) return;
           setResults(categories);
@@ -119,7 +115,7 @@ export default function ProductCategoryPicker({
     }, SEARCH_DEBOUNCE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [open, search, currentParentId, shopify]);
+  }, [open, search, currentParentId]);
 
   const handleItemClick = (item) => {
     // While searching we show global matches; pick them directly.

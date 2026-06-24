@@ -7,6 +7,35 @@ const {
   getGraphQLClient,
   extractGraphqlError,
 } = require("../../utils/shopify");
+
+const safeJsonParse = (str, fallback = null) => {
+  if (!str) return fallback;
+  try {
+    return JSON.parse(str);
+  } catch {
+    return fallback;
+  }
+};
+
+const getDraftName = (row) => {
+  const match = (row.tags || "").match(/DraftNumber:(\d+)/);
+  return match
+    ? `D${match[1]}`
+    : (row.tags || "").includes("Draft")
+    ? `D${row.id}`
+    : null;
+};
+
+const fetchFulfillmentOrders = async (graphqlClient, orderGid) => {
+  try {
+    const resp = await graphqlClient.request(ORDER_FULFILLMENT_ORDERS_QUERY, {
+      variables: { id: orderGid },
+    });
+    return resp?.data?.order?.fulfillmentOrders?.nodes || [];
+  } catch (error) {
+    throw new Error(`Failed to fetch Shopify fulfillment orders: ${extractGraphqlError(error)}`);
+  }
+};
 const {
   ORDER_CANCEL_MUTATION,
   ORDER_FULFILLMENT_ORDERS_QUERY,
@@ -169,16 +198,11 @@ const removeLocalOrder = async (shop, shopifyId) => {
 };
 
 const toOrderDTO = (row) => {
-  let itemsCount = 0;
-  try {
-    const items = row.lineItems ? JSON.parse(row.lineItems) : [];
-    itemsCount = items.reduce(
-      (sum, item) => sum + parseInt(item.quantity || 0, 10),
-      0
-    );
-  } catch {
-    itemsCount = 0;
-  }
+  const items = safeJsonParse(row.lineItems, []);
+  const itemsCount = items.reduce(
+    (sum, item) => sum + parseInt(item.quantity || 0, 10),
+    0
+  );
 
   const customer = row.customer;
   const customerName = customer
@@ -186,12 +210,7 @@ const toOrderDTO = (row) => {
       [customer.firstName, customer.lastName].filter(Boolean).join(" ").trim()
     : "";
 
-  const match = (row.tags || "").match(/DraftNumber:(\d+)/);
-  const draftName = match
-    ? `D${match[1]}`
-    : (row.tags || "").includes("Draft")
-    ? `D${row.id}`
-    : null;
+  const draftName = getDraftName(row);
   const displayName = row.name || `#${row.orderNumber}`;
 
   return {
@@ -217,12 +236,7 @@ const toOrderDTO = (row) => {
 };
 
 const toOrderDetail = async (row) => {
-  let lineItems = [];
-  try {
-    lineItems = row.lineItems ? JSON.parse(row.lineItems) : [];
-  } catch {
-    lineItems = [];
-  }
+  let lineItems = safeJsonParse(row.lineItems, []);
 
   const productIds = [
     ...new Set(
@@ -263,21 +277,8 @@ const toOrderDetail = async (row) => {
     };
   });
 
-  let shippingAddress = null;
-  try {
-    shippingAddress = row.shippingAddress
-      ? JSON.parse(row.shippingAddress)
-      : null;
-  } catch {
-    shippingAddress = null;
-  }
-
-  let billingAddress = null;
-  try {
-    billingAddress = row.billingAddress ? JSON.parse(row.billingAddress) : null;
-  } catch {
-    billingAddress = null;
-  }
+  const shippingAddress = safeJsonParse(row.shippingAddress);
+  const billingAddress = safeJsonParse(row.billingAddress);
 
   let customerDetails = null;
   if (row.customerId) {
@@ -303,12 +304,7 @@ const toOrderDetail = async (row) => {
     }
   }
 
-  const match = (row.tags || "").match(/DraftNumber:(\d+)/);
-  const draftName = match
-    ? `D${match[1]}`
-    : (row.tags || "").includes("Draft")
-    ? `D${row.id}`
-    : null;
+  const draftName = getDraftName(row);
   const displayName = row.name || `#${row.orderNumber}`;
 
   return {
@@ -728,14 +724,11 @@ const VALID_CANCEL_REASONS = new Set([
 const clearOutstandingFulfillments = async (graphqlClient, orderGid) => {
   let nodes = [];
   try {
-    const resp = await graphqlClient.request(ORDER_FULFILLMENT_ORDERS_QUERY, {
-      variables: { id: orderGid },
-    });
-    nodes = resp?.data?.order?.fulfillmentOrders?.nodes || [];
+    nodes = await fetchFulfillmentOrders(graphqlClient, orderGid);
   } catch (error) {
     console.warn(
       "Could not read fulfillment orders before cancel:",
-      extractGraphqlError(error)
+      error.message
     );
     return;
   }
@@ -839,20 +832,7 @@ const fulfillOrderOnShopify = async (shop, order) => {
   const orderGid = `gid://shopify/Order/${order.shopifyId}`;
 
   // 1. Fetch fulfillment orders
-  let resp;
-  try {
-    resp = await graphqlClient.request(ORDER_FULFILLMENT_ORDERS_QUERY, {
-      variables: { id: orderGid },
-    });
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch Shopify fulfillment orders: ${extractGraphqlError(
-        error
-      )}`
-    );
-  }
-
-  const nodes = resp?.data?.order?.fulfillmentOrders?.nodes || [];
+  const nodes = await fetchFulfillmentOrders(graphqlClient, orderGid);
   const fulfillmentOrderIdsToFulfill = [];
 
   for (const fo of nodes) {
@@ -957,20 +937,7 @@ const holdOrderOnShopify = async (shop, order, reasonText) => {
 
   const orderGid = `gid://shopify/Order/${order.shopifyId}`;
 
-  let resp;
-  try {
-    resp = await graphqlClient.request(ORDER_FULFILLMENT_ORDERS_QUERY, {
-      variables: { id: orderGid },
-    });
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch Shopify fulfillment orders: ${extractGraphqlError(
-        error
-      )}`
-    );
-  }
-
-  const nodes = resp?.data?.order?.fulfillmentOrders?.nodes || [];
+  const nodes = await fetchFulfillmentOrders(graphqlClient, orderGid);
   const reason = mapHoldReasonToEnum(reasonText);
 
   for (const fo of nodes) {
@@ -1010,20 +977,7 @@ const releaseOrderHoldOnShopify = async (shop, order) => {
 
   const orderGid = `gid://shopify/Order/${order.shopifyId}`;
 
-  let resp;
-  try {
-    resp = await graphqlClient.request(ORDER_FULFILLMENT_ORDERS_QUERY, {
-      variables: { id: orderGid },
-    });
-  } catch (error) {
-    throw new Error(
-      `Failed to fetch Shopify fulfillment orders: ${extractGraphqlError(
-        error
-      )}`
-    );
-  }
-
-  const nodes = resp?.data?.order?.fulfillmentOrders?.nodes || [];
+  const nodes = await fetchFulfillmentOrders(graphqlClient, orderGid);
 
   for (const fo of nodes) {
     if (fo.status === "ON_HOLD") {

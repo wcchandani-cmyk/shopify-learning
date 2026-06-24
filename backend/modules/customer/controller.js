@@ -1,10 +1,9 @@
 const { fn, col } = require("sequelize");
 const { successResponse, errorResponse } = require("../../utils/response");
-const {
-  resolveShopForApi,
-  isShopifyUnauthorized,
-} = require("../../utils/shopAccess");
 const Customer = require("./model");
+const { parsePageSize, handleError } = require("../../utils/controllerHelper");
+
+const CUSTOMER_UNAUTH_MSG = "Shopify session expired or customer access not granted. Reload the app and ensure Protected Customer Data Access is approved.";
 const Comment = require("../comment/model");
 const Order = require("../order/model");
 const { createCommentHandlers } = require("../comment/controller");
@@ -16,33 +15,8 @@ const {
   deleteCustomers: deleteCustomersFlow,
 } = require("./customerService");
 
-const DEFAULT_PAGE_SIZE = 25;
-const MAX_PAGE_SIZE = 100;
-
-const getShopRecord = async (req) =>
-  resolveShopForApi(req.shopDomain, req.sessionToken);
-
-const parsePageSize = (value) =>
-  Math.min(
-    MAX_PAGE_SIZE,
-    Math.max(1, parseInt(value, 10) || DEFAULT_PAGE_SIZE)
-  );
-
-const handleError = (res, error, fallback) => {
-  if (isShopifyUnauthorized(error)) {
-    return errorResponse(
-      res,
-      401,
-      "Shopify session expired or customer access not granted. Reload the app and ensure Protected Customer Data Access is approved.",
-      error
-    );
-  }
-  const status = error.statusCode || 500;
-  return errorResponse(res, status, error.message || fallback, error);
-};
-
 const resolveShopCustomer = async (req) => {
-  const shop = await getShopRecord(req);
+  const shop = req.shop;
   const id = parseInt(req.params.id, 10);
   if (!Number.isInteger(id) || id < 1) {
     return { error: [400, "Invalid customer id"] };
@@ -58,7 +32,7 @@ const resolveShopCustomer = async (req) => {
 
 const listCustomers = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
+    const shop = req.shop;
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = parsePageSize(req.query.limit);
@@ -106,13 +80,13 @@ const listCustomers = async (req, res) => {
     });
   } catch (error) {
     console.error("Error listing customers:", error.message);
-    handleError(res, error, "Failed to list customers");
+    handleError(res, error, "Failed to list customers", CUSTOMER_UNAUTH_MSG);
   }
 };
 
 const listCustomerTags = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
+    const shop = req.shop;
     const rows = await Customer.findAll({
       where: { shopId: shop.id },
       attributes: ["tags"],
@@ -132,7 +106,7 @@ const listCustomerTags = async (req, res) => {
     successResponse(res, 200, "Tags fetched successfully", { tags });
   } catch (error) {
     console.error("Error listing customer tags:", error.message);
-    handleError(res, error, "Failed to list tags");
+    handleError(res, error, "Failed to list tags", CUSTOMER_UNAUTH_MSG);
   }
 };
 
@@ -149,18 +123,18 @@ const getCustomer = async (req, res) => {
     );
   } catch (error) {
     console.error("Error fetching customer:", error.message);
-    handleError(res, error, "Failed to fetch customer");
+    handleError(res, error, "Failed to fetch customer", CUSTOMER_UNAUTH_MSG);
   }
 };
 
 const createCustomer = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
+    const shop = req.shop;
     const created = await createCustomerFlow(shop, req.body);
     successResponse(res, 201, "Customer created successfully", created);
   } catch (error) {
     console.error("Error creating customer:", error.message);
-    handleError(res, error, "Failed to create customer");
+    handleError(res, error, "Failed to create customer", CUSTOMER_UNAUTH_MSG);
   }
 };
 
@@ -173,19 +147,19 @@ const updateCustomer = async (req, res) => {
     successResponse(res, 200, "Customer updated successfully", updated);
   } catch (error) {
     console.error("Error updating customer:", error.message);
-    handleError(res, error, "Failed to update customer");
+    handleError(res, error, "Failed to update customer", CUSTOMER_UNAUTH_MSG);
   }
 };
 
 const deleteCustomers = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
+    const shop = req.shop;
     const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
     const result = await deleteCustomersFlow(shop, ids);
     successResponse(res, 200, "Customers deleted successfully", result);
   } catch (error) {
     console.error("Error deleting customers:", error.message);
-    handleError(res, error, "Failed to delete customers");
+    handleError(res, error, "Failed to delete customers", CUSTOMER_UNAUTH_MSG);
   }
 };
 

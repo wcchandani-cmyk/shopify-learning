@@ -247,7 +247,7 @@ export default function ProductVariantSection({
                         return (
                           <div className="variant-row" key={rowKey}>
                             <ProductThumbnail imageUrl={imageUrl} size={28} title="Variant" />
-                            <span className="variant-row__label" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            <span className="variant-row__label">
                               <span>
                                 {variantChildLabel(
                                   variant,
@@ -322,7 +322,7 @@ export default function ProductVariantSection({
               return (
                 <div className="variant-row variant-row--flat" key={rowKey}>
                   <ProductThumbnail imageUrl={imageUrl} size={28} title="Variant" />
-                  <span className="variant-row__label" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <span className="variant-row__label">
                     <span>{getVariantDisplayName(variant)}</span>
                     {isNewVariant(variant) ? <NewBadge /> : null}
                     <s-button

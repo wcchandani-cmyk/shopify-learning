@@ -12,7 +12,7 @@ export default function DiscountHeaderSection({
       <s-section heading={displayType}>
         <s-stack gap="base">
           <div className="form-group">
-            <label className="field-label" style={{ marginBottom: "8px", display: "block" }}>Method</label>
+            <label className="field-label field-label--method">Method</label>
             <div className="segmented-control">
               <button
                 type="button"
@@ -33,7 +33,7 @@ export default function DiscountHeaderSection({
 
           {form.method === "Code" ? (
             <div className="form-group">
-              <div className="field-header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+              <div className="field-header-row discount-header__field-header">
                 <label className="field-label">Discount code</label>
                 <button
                   type="button"
@@ -50,13 +50,13 @@ export default function DiscountHeaderSection({
                 value={form.title}
                 onInput={(event) => updateField("title", getInputEventValue(event))}
               />
-              <div className="field-subtext" style={{ fontSize: "12px", color: "#6d7175", marginTop: "4px" }}>
+              <div className="field-subtext discount-header__field-subtext">
                 Customers must enter this code at checkout.
               </div>
             </div>
           ) : (
             <div className="form-group">
-              <label className="field-label" style={{ marginBottom: "4px", display: "block" }}>Title</label>
+              <label className="field-label field-label--block">Title</label>
               <s-text-field
                 label="Title"
                 labelAccessibilityVisibility="exclusive"
@@ -64,7 +64,7 @@ export default function DiscountHeaderSection({
                 value={form.title}
                 onInput={(event) => updateField("title", getInputEventValue(event))}
               />
-              <div className="field-subtext" style={{ fontSize: "12px", color: "#6d7175", marginTop: "4px" }}>
+              <div className="field-subtext discount-header__field-subtext">
                 Customers will see this in their cart and at checkout.
               </div>
             </div>
@@ -77,13 +77,13 @@ export default function DiscountHeaderSection({
   if (form.method === "Code") {
     return (
       <s-section heading="Discount code">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div className="discount-header__code-created-row">
           <s-stack gap="extra-tight">
             <s-text fontWeight="bold">1 code created by: chandani</s-text>
-            <div style={{ marginTop: "4px" }}>
+            <div className="discount-header__badge-wrapper">
               <s-badge tone="info">App</s-badge>
             </div>
-            <s-text color="subdued" style={{ marginTop: "8px", display: "block", fontSize: "13px" }}>
+            <s-text color="subdued" className="discount-header__unique-code-subtext">
               Each customer will enter a unique code at checkout.
             </s-text>
           </s-stack>
@@ -97,14 +97,14 @@ export default function DiscountHeaderSection({
     <s-section heading={displayType}>
       <s-stack gap="base">
         <div className="form-group">
-          <label className="field-label" style={{ marginBottom: "4px", display: "block" }}>Title</label>
+          <label className="field-label field-label--block">Title</label>
           <s-text-field
             label="Title"
             labelAccessibilityVisibility="exclusive"
             value={form.title}
             onInput={(event) => updateField("title", getInputEventValue(event))}
           />
-          <div className="field-subtext" style={{ fontSize: "12px", color: "#6d7175", marginTop: "4px" }}>
+          <div className="field-subtext discount-header__field-subtext">
             Customers will see this in their cart and at checkout.
           </div>
         </div>

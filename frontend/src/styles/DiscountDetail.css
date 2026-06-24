@@ -848,3 +848,49 @@
 .discount-combinations-summary__title {
   font-weight: 600;
 }
+
+/* Reusable block labels */
+.field-label--block {
+  margin-bottom: 4px;
+  display: block;
+}
+
+.field-label--method {
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Critical dropdown menu items */
+.company-actions__item--critical {
+  color: #d82c0d !important;
+}
+
+/* Discount Header Section specific classes */
+.discount-header__field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.discount-header__field-subtext {
+  font-size: 12px;
+  color: #6d7175;
+  margin-top: 4px;
+}
+
+.discount-header__code-created-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.discount-header__badge-wrapper {
+  margin-top: 4px;
+}
+
+.discount-header__unique-code-subtext {
+  margin-top: 8px;
+  display: block;
+  font-size: 13px;
+}

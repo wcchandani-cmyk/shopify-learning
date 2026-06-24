@@ -8,7 +8,6 @@ export default function ManagePermissionsModal({
   shopify,
   company,
   contact,
-  token,
   onClose,
   onSaved,
 }) {
@@ -128,14 +127,14 @@ export default function ManagePermissionsModal({
         await revokeContactRoles({
           companyContactId: safeContact.id,
           roleAssignmentIds: roleAssignmentIdsToRevoke,
-        }, token);
+        });
       }
 
       if (rolesToAssign.length > 0) {
         await assignContactRoles({
           companyContactId: safeContact.id,
           rolesToAssign,
-        }, token);
+        });
       }
 
       shopify.toast.show("Permissions updated successfully");
@@ -148,7 +147,7 @@ export default function ManagePermissionsModal({
     } finally {
       setSaving(false);
     }
-  }, [selections, company.locations, contactRoleAssignments, safeContact.id, token, shopify, saving, onSaved, onClose]);
+  }, [selections, company.locations, contactRoleAssignments, safeContact.id, shopify, saving, onSaved, onClose]);
 
   const filteredLocations = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();

@@ -3,14 +3,12 @@ import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import MarketingChannelRow from "./MarketingChannelRow";
 import PhoneField from "./PhoneField";
 import SearchableSelect from "../shared/SearchableSelect";
-import TagEditor from "./TagEditor";
 
 const EDIT_TITLES = {
   contact: "Edit customer",
   address: "Edit default address",
   marketing: "Edit marketing status",
   tax: "Edit tax details",
-  tags: "Add tags",
   notes: "Edit notes",
 };
 
@@ -118,14 +116,6 @@ export default function CustomerEditModal({
               </s-option>
             ))}
           </s-select>
-        );
-      case "tags":
-        return (
-          <TagEditor
-            value={draft.tags}
-            available={availableTags}
-            onChange={(tags) => onChangeDraft({ tags: tags.join(", ") })}
-          />
         );
       case "notes":
         return (

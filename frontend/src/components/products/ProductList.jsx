@@ -2,12 +2,12 @@ import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { useProductMutations } from "../../hooks/product/useProductMutations";
-import { useProductSelection } from "../../hooks/product/useProductSelection";
+import { useSelection } from "../../hooks/useSelection";
 import { useProducts } from "../../hooks/product/useProducts";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
 import { matchesProductSearch } from "../../utils/productDisplay";
-import PageLoader from "../PageLoader";
+import PageLoader from "../shared/PageLoader";
 import ProductListBulkBar from "./ProductListBulkBar";
 import ProductListCard from "./ProductListCard";
 import ProductListPagination from "./ProductListPagination";
@@ -41,12 +41,12 @@ export default function ProductList() {
     selectedCount,
     allFilteredSelected,
     someFilteredSelected,
-    toggleProduct,
+    toggleItem: toggleProduct,
     toggleSelectAllFiltered,
     clearSelection,
     isSelected,
     getSelectedIds,
-  } = useProductSelection(filteredProducts);
+  } = useSelection(filteredProducts);
 
   const handleDeleteSelected = useCallback(async () => {
     const ids = getSelectedIds();

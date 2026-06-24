@@ -15,8 +15,6 @@ export function useOrderDetail(orderId) {
         return Promise.resolve();
       }
 
-      // Silent reloads refresh data in place without flipping the page into the
-      // full-page loader, which would unmount open overlays (modals) mid-teardown.
       if (!silent) setLoading(true);
       setError(null);
 

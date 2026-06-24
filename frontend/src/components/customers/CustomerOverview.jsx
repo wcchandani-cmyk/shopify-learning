@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import {
@@ -29,7 +29,7 @@ import CustomerEditModal from "./CustomerEditModal";
 import NotesCard from "../shared/NotesCard";
 import CustomerStats from "./CustomerStats";
 import CustomerSummaryCard from "./CustomerSummaryCard";
-import CustomerTagsCard from "./CustomerTagsCard";
+import TagsSection from "../shared/TagsSection";
 import CustomerTimeline from "../shared/Timeline";
 import MetafieldsCard from "../shared/metafields/MetafieldsCard";
 
@@ -55,15 +55,25 @@ export default function CustomerOverview({ customer }) {
   const [companyModalOpen, setCompanyModalOpen] = useState(false);
   const [companyAssigning, setCompanyAssigning] = useState(false);
 
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+
+  const tagList = useMemo(() => {
+    return form.tags
+      ? form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+  }, [form.tags]);
+
   useEffect(() => {
     setForm(customerToFormState(customer));
   }, [customer]);
 
   useEffect(() => {
     let active = true;
-    shopify
-      .idToken()
-      .then((token) => getShopLocales(token))
+    getShopLocales()
       .then((locales) => {
         if (active) {
           const opts = buildLanguageOptions(locales);
@@ -78,13 +88,11 @@ export default function CustomerOverview({ customer }) {
     return () => {
       active = false;
     };
-  }, [shopify]);
+  }, []);
 
   useEffect(() => {
     let active = true;
-    shopify
-      .idToken()
-      .then((token) => listCustomerTags(token))
+    listCustomerTags()
       .then((tags) => {
         if (active) setAvailableTags(tags);
       })
@@ -94,13 +102,11 @@ export default function CustomerOverview({ customer }) {
     return () => {
       active = false;
     };
-  }, [shopify]);
+  }, []);
 
   useEffect(() => {
     let active = true;
-    shopify
-      .idToken()
-      .then((token) => getCustomerCompany(customer.id, token))
+    getCustomerCompany(customer.id)
       .then((result) => {
         if (active) setCompany(result);
       })
@@ -110,7 +116,7 @@ export default function CustomerOverview({ customer }) {
     return () => {
       active = false;
     };
-  }, [shopify, customer.id]);
+  }, [customer.id]);
 
   const handleManageCompany = useCallback(() => {
     shopify.toast.show("Location permissions aren't available yet.");
@@ -118,8 +124,7 @@ export default function CustomerOverview({ customer }) {
 
   const handleRemoveCompany = useCallback(async () => {
     try {
-      const token = await shopify.idToken();
-      await removeCustomerFromCompany(customer.id, token);
+      await removeCustomerFromCompany(customer.id);
       setCompany(null);
       shopify.toast.show("Removed from company");
     } catch (err) {
@@ -133,10 +138,8 @@ export default function CustomerOverview({ customer }) {
     async ({ companyId, companyName }) => {
       setCompanyAssigning(true);
       try {
-        const token = await shopify.idToken();
         const assigned = await assignCustomerToCompany(
-          { customerId: customer.id, companyId, companyName },
-          token
+          { customerId: customer.id, companyId, companyName }
         );
         setCompany(assigned);
         shopify.toast.show(`Added to ${assigned?.name || "company"}`);
@@ -180,9 +183,8 @@ export default function CustomerOverview({ customer }) {
     async (address) => {
       setAddressSaving(true);
       try {
-        const token = await shopify.idToken();
         const payload = buildCustomerPayload({ ...form, address });
-        const updated = await updateCustomer(customer.id, payload, token);
+        const updated = await updateCustomer(customer.id, payload);
         setForm(customerToFormState(updated));
         if (updated.warnings?.length) {
           shopify.toast.show(updated.warnings.join(" "), { isError: true });
@@ -215,9 +217,8 @@ export default function CustomerOverview({ customer }) {
     if (!draft) return;
     setSaving(true);
     try {
-      const token = await shopify.idToken();
       const payload = buildCustomerPayload(draft);
-      const updated = await updateCustomer(customer.id, payload, token);
+      const updated = await updateCustomer(customer.id, payload);
       setForm(customerToFormState(updated));
       if (updated.warnings?.length) {
         shopify.toast.show(updated.warnings.join(" "), { isError: true });
@@ -233,6 +234,19 @@ export default function CustomerOverview({ customer }) {
       setSaving(false);
     }
   }, [draft, customer, shopify]);
+
+  const handleUpdateTags = useCallback(async (fieldName, value) => {
+    try {
+      const payload = buildCustomerPayload({ ...form, tags: value });
+      const updated = await updateCustomer(customer.id, payload);
+      setForm(customerToFormState(updated));
+      shopify.toast.show("Tags updated");
+    } catch (err) {
+      shopify.toast.show(err.message || "Failed to update tags", {
+        isError: true,
+      });
+    }
+  }, [form, customer.id, shopify]);
 
   const handleAfterHide = useCallback((event) => {
     if (event.target === event.currentTarget) {
@@ -293,10 +307,13 @@ export default function CustomerOverview({ customer }) {
                   onManage={handleManageCompany}
                 />
               ) : null}
-              <CustomerTagsCard
-                tags={form.tags}
-                editModalId={EDIT_MODAL_ID}
-                onEdit={openEdit}
+              <TagsSection
+                isEditingTags={isEditingTags}
+                setIsEditingTags={setIsEditingTags}
+                tagInput={tagInput}
+                setTagInput={setTagInput}
+                tagList={tagList}
+                updateField={handleUpdateTags}
               />
               <NotesCard
                 note={form.note}

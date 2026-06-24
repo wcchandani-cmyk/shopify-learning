@@ -24,8 +24,7 @@ export function useDiscountOperations({
     isSavingRef.current = true;
     setSaving(true);
     try {
-      const token = await shopify.idToken();
-      await deleteDiscounts([discountData.id], token);
+      await deleteDiscounts([discountData.id]);
       shopify.toast.show("Discount deleted");
       navigate("/discounts");
     } catch (err) {
@@ -114,12 +113,11 @@ export function useDiscountOperations({
         bxgyCustomerGetsSelectedItems: form.bxgyCustomerGetsSelectedItems || [],
       };
 
-      const token = await shopify.idToken();
       if (isNew) {
-        await createDiscount(payload, token);
+        await createDiscount(payload);
         shopify.toast.show("Discount created successfully");
       } else {
-        await updateDiscount(discountData.id, payload, token);
+        await updateDiscount(discountData.id, payload);
         shopify.toast.show("Discount updated successfully");
       }
       navigate("/discounts");

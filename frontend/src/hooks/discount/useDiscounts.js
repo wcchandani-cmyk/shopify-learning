@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { listDiscounts } from "../../services/discountService";
 
 const DEFAULT_PAGE_SIZE = 25;
 
 export function useDiscounts(pageSize = DEFAULT_PAGE_SIZE) {
-  const shopify = useAppBridge();
   const [page, setPage] = useState(1);
   const [discounts, setDiscounts] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -17,11 +15,7 @@ export function useDiscounts(pageSize = DEFAULT_PAGE_SIZE) {
       setLoading(true);
       setError(null);
 
-      return shopify
-        .idToken()
-        .then((token) =>
-          listDiscounts({ page: targetPage, limit: pageSize }, token)
-        )
+      return listDiscounts({ page: targetPage, limit: pageSize })
         .then((data) => {
           setDiscounts(data?.discounts ?? []);
           setPagination(data?.pagination ?? null);
@@ -34,7 +28,7 @@ export function useDiscounts(pageSize = DEFAULT_PAGE_SIZE) {
         })
         .finally(() => setLoading(false));
     },
-    [shopify, pageSize]
+    [pageSize]
   );
 
   useEffect(() => {

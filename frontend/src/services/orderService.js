@@ -1,11 +1,6 @@
 import { apiRequest } from "../api";
 
-const JSON_HEADERS = {
-  Accept: "application/json",
-  "Content-Type": "application/json",
-};
-
-export async function listOrders({ page = 1, limit = 25, sync = false, tab = "" } = {}, token) {
+export async function listOrders({ page = 1, limit = 25, sync = false, tab = "" } = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
@@ -19,87 +14,69 @@ export async function listOrders({ page = 1, limit = 25, sync = false, tab = "" 
 
   const response = await apiRequest(`/api/order/list?${params}`, {
     method: "GET",
-    token,
-    headers: JSON_HEADERS,
   });
   return response.data;
 }
 
-export async function getOrder(orderId, token) {
+export async function getOrder(orderId) {
   const response = await apiRequest(`/api/order/${orderId}`, {
     method: "GET",
-    token,
-    headers: JSON_HEADERS,
   });
   return response.data;
 }
 
-export async function createOrder(payload, token) {
+export async function createOrder(payload) {
   const response = await apiRequest(`/api/order`, {
     method: "POST",
-    token,
     body: payload,
-    headers: JSON_HEADERS,
   });
   return response.data;
 }
 
-export async function getPaymentTermsTemplates(token) {
+export async function getPaymentTermsTemplates() {
   const response = await apiRequest(`/api/order/payment-terms`, {
     method: "GET",
-    token,
-    headers: JSON_HEADERS,
   });
   return response.data?.paymentTerms ?? [];
 }
 
-export async function listOrderComments(orderId, token) {
+export async function listOrderComments(orderId) {
   const response = await apiRequest(`/api/order/${orderId}/comments`, {
     method: "GET",
-    token,
-    headers: JSON_HEADERS,
   });
   return response.data?.comments ?? [];
 }
 
-export async function addOrderComment(orderId, body, token) {
+export async function addOrderComment(orderId, body) {
   const response = await apiRequest(`/api/order/${orderId}/comments`, {
     method: "POST",
-    token,
     body: { body },
-    headers: JSON_HEADERS,
   });
   return response.data;
 }
 
-export async function deleteOrderComment(orderId, commentId, token) {
+export async function deleteOrderComment(orderId, commentId) {
   const response = await apiRequest(
     `/api/order/${orderId}/comments/${commentId}`,
     {
       method: "DELETE",
-      token,
-      headers: JSON_HEADERS,
     }
   );
   return response.data;
 }
 
-export async function cancelOrder(orderId, payload, token) {
+export async function cancelOrder(orderId, payload) {
   const response = await apiRequest(`/api/order/${orderId}/cancel`, {
     method: "POST",
-    token,
     body: payload,
-    headers: JSON_HEADERS,
   });
   return response.data;
 }
 
-export async function updateOrder(orderId, payload, token) {
+export async function updateOrder(orderId, payload) {
   const response = await apiRequest(`/api/order/${orderId}`, {
     method: "PUT",
-    token,
     body: payload,
-    headers: JSON_HEADERS,
   });
   return response.data;
 }
