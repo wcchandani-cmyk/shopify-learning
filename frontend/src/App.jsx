@@ -15,9 +15,9 @@ export default function App() {
         <a href="/" rel="home">
           Home
         </a>
+        <a href="/products">Products</a>
         <a href="/orders">Orders</a>
         <a href="/drafts">Drafts</a>
-        <a href="/products">Products</a>
         <a href="/customers">Customers</a>
         <a href="/companies">Companies</a>
         <a href="/discounts">Discounts</a>
