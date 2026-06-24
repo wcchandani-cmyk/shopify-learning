@@ -4,6 +4,7 @@ import { useShopBootstrap } from "./hooks/useShopBootstrap";
 import "./App.css";
 import "./styles/responsive.css";
 import "./styles/ProductVariantEditor.css";
+import "./styles/Orders.css";
 
 export default function App() {
   useShopBootstrap();
@@ -14,6 +15,8 @@ export default function App() {
         <a href="/" rel="home">
           Home
         </a>
+        <a href="/orders">Orders</a>
+        <a href="/drafts">Drafts</a>
         <a href="/products">Products</a>
         <a href="/customers">Customers</a>
         <a href="/companies">Companies</a>

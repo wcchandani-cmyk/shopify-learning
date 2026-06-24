@@ -37,4 +37,13 @@ const SHOP_LOCALES_QUERY = `
   }
 `;
 
-module.exports = { SHOP_QUERY, SHOP_LOCALES_QUERY };
+const SHOP_CURRENCIES_QUERY = `
+  query ShopCurrencies {
+    shop {
+      currencyCode
+      enabledPresentmentCurrencies
+    }
+  }
+`;
+
+module.exports = { SHOP_QUERY, SHOP_LOCALES_QUERY, SHOP_CURRENCIES_QUERY };

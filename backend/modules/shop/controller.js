@@ -1,5 +1,9 @@
 const Shop = require("./model");
-const { SHOP_QUERY, SHOP_LOCALES_QUERY } = require("./query");
+const {
+  SHOP_QUERY,
+  SHOP_LOCALES_QUERY,
+  SHOP_CURRENCIES_QUERY,
+} = require("./query");
 const {
   auth,
   getGraphQLClient,
@@ -70,7 +74,7 @@ const getShopDetails = async (req, res) => {
       });
 
       console.log(
-        `Shop ${shopDomain} ${wasUninstalled ? "reinstalled" : "new/updated"}`,
+        `Shop ${shopDomain} ${wasUninstalled ? "reinstalled" : "new/updated"}`
       );
 
       shop = upsertedShop.toJSON();
@@ -117,13 +121,68 @@ const listLocales = async (req, res) => {
       error.message?.includes("scope") ||
       error.message?.includes("forbidden")
     ) {
-      return successResponse(res, 200, "Locales fetched successfully (fallback)", {
-        locales: [{ locale: "en", primary: true }],
-      });
+      return successResponse(
+        res,
+        200,
+        "Locales fetched successfully (fallback)",
+        {
+          locales: [{ locale: "en", primary: true }],
+        }
+      );
     }
     const status = error.statusCode || 500;
-    errorResponse(res, status, error.message || "Failed to list locales", error);
+    errorResponse(
+      res,
+      status,
+      error.message || "Failed to list locales",
+      error
+    );
   }
 };
 
-module.exports = { getShopDetails, listLocales };
+const listCurrencies = async (req, res) => {
+  try {
+    const shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
+    const { graphqlClient } = getGraphQLClient({
+      shopDomain: shop.myshopifyDomain,
+      accessToken: shop.token,
+    });
+
+    const response = await graphqlClient.request(SHOP_CURRENCIES_QUERY);
+    const shopInfo = response.data?.shop;
+    const primary = shopInfo?.currencyCode || "USD";
+    const enabled =
+      Array.isArray(shopInfo?.enabledPresentmentCurrencies) &&
+      shopInfo.enabledPresentmentCurrencies.length
+        ? shopInfo.enabledPresentmentCurrencies
+        : [primary];
+
+    successResponse(res, 200, "Currencies fetched successfully", {
+      primary,
+      enabled,
+    });
+  } catch (error) {
+    console.error("Error listing shop currencies:", error.message);
+    if (
+      error.message?.includes("Access denied") ||
+      error.message?.includes("scope") ||
+      error.message?.includes("forbidden")
+    ) {
+      return successResponse(
+        res,
+        200,
+        "Currencies fetched successfully (fallback)",
+        { primary: "USD", enabled: ["USD"] }
+      );
+    }
+    const status = error.statusCode || 500;
+    errorResponse(
+      res,
+      status,
+      error.message || "Failed to list currencies",
+      error
+    );
+  }
+};
+
+module.exports = { getShopDetails, listLocales, listCurrencies };

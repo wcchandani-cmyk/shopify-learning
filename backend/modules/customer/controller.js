@@ -1,3 +1,4 @@
+const { fn, col } = require("sequelize");
 const { successResponse, errorResponse } = require("../../utils/response");
 const {
   resolveShopForApi,
@@ -5,6 +6,8 @@ const {
 } = require("../../utils/shopAccess");
 const Customer = require("./model");
 const Comment = require("../comment/model");
+const Order = require("../order/model");
+const { createCommentHandlers } = require("../comment/controller");
 const {
   toCustomerDTO,
   toCustomerDetail,
@@ -51,12 +54,7 @@ const resolveShopCustomer = async (req) => {
   return { shop, customer };
 };
 
-const toCommentDTO = (row) => ({
-  id: row.id,
-  body: row.body,
-  authorName: row.authorName || "Staff",
-  createdAt: row.createdAt || null,
-});
+
 
 const listCustomers = async (req, res) => {
   try {
@@ -73,7 +71,24 @@ const listCustomers = async (req, res) => {
       offset,
     });
 
-    const customers = rows.map(toCustomerDTO);
+    const customerIds = rows.map((row) => row.id);
+    const localCounts = customerIds.length
+      ? await Order.findAll({
+        attributes: ["customerId", [fn("COUNT", col("id")), "count"]],
+        where: { shopId: shop.id, customerId: customerIds },
+        group: ["customerId"],
+        raw: true,
+      })
+      : [];
+    const localCountMap = new Map(
+      localCounts.map((entry) => [entry.customerId, Number(entry.count)])
+    );
+
+    const customers = rows.map((row) => {
+      const dto = toCustomerDTO(row);
+      dto.ordersCount = Math.max(dto.ordersCount, localCountMap.get(row.id) || 0);
+      return dto;
+    });
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
     successResponse(res, 200, "Customers fetched successfully", {
@@ -174,68 +189,14 @@ const deleteCustomers = async (req, res) => {
   }
 };
 
-const listComments = async (req, res) => {
-  try {
+const { listComments, createComment, deleteComment } = createCommentHandlers({
+  resolveParent: async (req) => {
     const { shop, customer, error } = await resolveShopCustomer(req);
-    if (error) return errorResponse(res, ...error);
-
-    const comments = await Comment.findAll({
-      where: { shopId: shop.id, customerId: customer.id },
-      order: [["createdAt", "DESC"]],
-    });
-
-    successResponse(res, 200, "Comments fetched successfully", {
-      comments: comments.map(toCommentDTO),
-    });
-  } catch (error) {
-    console.error("Error listing comments:", error.message);
-    handleError(res, error, "Failed to load comments");
-  }
-};
-
-const createComment = async (req, res) => {
-  try {
-    const { shop, customer, error } = await resolveShopCustomer(req);
-    if (error) return errorResponse(res, ...error);
-
-    const body = String(req.body?.body ?? "").trim();
-    if (!body) return errorResponse(res, 400, "Comment can't be empty");
-
-    const comment = await Comment.create({
-      shopId: shop.id,
-      customerId: customer.id,
-      authorName: shop.shopOwner || shop.name || "Staff",
-      body,
-    });
-
-    successResponse(res, 201, "Comment added", toCommentDTO(comment));
-  } catch (error) {
-    console.error("Error creating comment:", error.message);
-    handleError(res, error, "Failed to add comment");
-  }
-};
-
-const deleteComment = async (req, res) => {
-  try {
-    const { shop, customer, error } = await resolveShopCustomer(req);
-    if (error) return errorResponse(res, ...error);
-
-    const commentId = parseInt(req.params.commentId, 10);
-    if (!Number.isInteger(commentId) || commentId < 1) {
-      return errorResponse(res, 400, "Invalid comment id");
-    }
-
-    const deleted = await Comment.destroy({
-      where: { id: commentId, shopId: shop.id, customerId: customer.id },
-    });
-    if (!deleted) return errorResponse(res, 404, "Comment not found");
-
-    successResponse(res, 200, "Comment deleted", { id: commentId });
-  } catch (error) {
-    console.error("Error deleting comment:", error.message);
-    handleError(res, error, "Failed to delete comment");
-  }
-};
+    return { shop, parent: customer, error };
+  },
+  foreignKey: "customerId",
+  entityName: "customer",
+});
 
 module.exports = {
   listCustomers,

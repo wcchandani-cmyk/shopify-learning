@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Country, State } from "country-state-city";
 import { getInputEventValue } from "../../utils/fieldEvent";
-import SearchableSelect from "./SearchableSelect";
+import SearchableSelect from "../shared/SearchableSelect";
 import PhoneField from "./PhoneField";
 
 export default function AddressFields({ value, onChange }) {

@@ -3,6 +3,7 @@ const { PROCESS_WEBHOOKS } = require("../../config/constants");
 const Shop = require("../shop/model");
 const Product = require("../product/model");
 const Customer = require("../customer/model");
+const Order = require("../order/model");
 const {
   upsertProductWithVariants,
   mapWebhookProduct,
@@ -11,6 +12,10 @@ const {
   mapRestCustomer,
   upsertCustomer,
 } = require("../customer/customerService");
+const {
+  mapRestOrder,
+  upsertOrder,
+} = require("../order/orderService");
 const { syncDiscountsFromShopify } = require("../discount/discountService");
 
 const parseWebhookPayload = (body) => {
@@ -52,8 +57,6 @@ exports.handleAppUninstalled = async (req, res) => {
           chargeId: null,
           planType: "0",
           planInterval: "1",
-          // Keep appInstall as "1" so that products/customers remain visible/accessible when reinstalled
-          // appInstall: "0",
         },
         {
           where: { id: shop.id },
@@ -233,3 +236,62 @@ const handleDiscountChange = (label) => async (req, res) => {
 exports.discountCreate = handleDiscountChange("DISCOUNTS_CREATE");
 exports.discountUpdate = handleDiscountChange("DISCOUNTS_UPDATE");
 exports.discountDelete = handleDiscountChange("DISCOUNTS_DELETE");
+
+const handleOrderUpsert = (label) => async (req, res) => {
+  try {
+    if (skipWebhookProcessing()) {
+      return res.status(200).send({ message: "webhooks disabled" });
+    }
+
+    const { shopDomain, shop } = await resolveInstalledShop(req);
+    if (!shopDomain || !shop) {
+      return res.status(200).send({ message: "ignored" });
+    }
+
+    const payload = parseWebhookPayload(req.body);
+    const mapped = await mapRestOrder(shop, payload);
+    if (mapped) {
+      await upsertOrder(shop, mapped);
+      console.log(
+        `${label}: upserted order ${payload.id} (${shopDomain})`
+      );
+    }
+
+    return res.status(200).send({ message: "ok" });
+  } catch (error) {
+    console.error(`Webhooks ${label}:`, error);
+    return res.status(200).send({ message: "ok" });
+  }
+};
+
+exports.orderCreate = handleOrderUpsert("ORDERS_CREATE");
+exports.orderUpdate = handleOrderUpsert("ORDERS_UPDATE");
+
+exports.orderDelete = async (req, res) => {
+  try {
+    if (skipWebhookProcessing()) {
+      return res.status(200).send({ message: "webhooks disabled" });
+    }
+
+    const { shopDomain, shop } = await resolveInstalledShop(req);
+    if (!shopDomain || !shop) {
+      return res.status(200).send({ message: "ignored" });
+    }
+
+    const payload = parseWebhookPayload(req.body);
+    const orderId = String(payload.id);
+    const deleted = await Order.destroy({
+      where: { shopId: shop.id, shopifyId: orderId },
+    });
+
+    console.log(
+      `ORDERS_DELETE: order ${orderId} (${shopDomain}) rows=${deleted}`
+    );
+
+    return res.status(200).send({ message: "ok" });
+  } catch (error) {
+    console.error("Webhooks orderDelete:", error);
+    return res.status(200).send({ message: "ok" });
+  }
+};
+

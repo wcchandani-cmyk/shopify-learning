@@ -1,6 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getInputEventValue } from "../../utils/fieldEvent";
+import { getShopDetails } from "../../services/shopService";
+
+function initialOf(name) {
+  const trimmed = (name || "").trim();
+  return trimmed ? trimmed.charAt(0).toUpperCase() : "";
+}
 
 function relativeOrTime(value) {
   if (!value) return "";
@@ -39,7 +45,6 @@ function dayLabel(value) {
   }).format(date);
 }
 
-// Preserve incoming order (newest first) while bucketing by day.
 function groupByDay(comments) {
   const groups = [];
   const byKey = new Map();
@@ -55,70 +60,8 @@ function groupByDay(comments) {
   return groups;
 }
 
-const UserIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    width="18"
-    height="18"
-    fill="currentColor"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7z" />
-  </svg>
-);
-
-const FaceIcon = () => (
-  <svg
-    viewBox="0 0 20 20"
-    width="18"
-    height="18"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    aria-hidden="true"
-  >
-    <circle cx="10" cy="10" r="7.25" />
-    <circle cx="7.5" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
-    <circle cx="12.5" cy="8.5" r="0.9" fill="currentColor" stroke="none" />
-    <path d="M6.8 12.2c.9 1 5.5 1 6.4 0" strokeLinecap="round" />
-  </svg>
-);
-
-const LinkIcon = () => (
-  <svg
-    viewBox="0 0 20 20"
-    width="18"
-    height="18"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <path d="M8.5 11.5a3 3 0 0 0 4.3.1l2-2a3 3 0 0 0-4.2-4.2l-1 1" />
-    <path d="M11.5 8.5a3 3 0 0 0-4.3-.1l-2 2a3 3 0 0 0 4.2 4.2l1-1" />
-  </svg>
-);
-
-const LogIcon = () => (
-  <svg
-    viewBox="0 0 20 20"
-    width="14"
-    height="14"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <rect x="3" y="4" width="14" height="12" rx="2" />
-    <path d="M6 8h8M6 11h5" />
-  </svg>
-);
-
 const TOOLBAR_ICONS = [
-  { id: "emoji", node: <FaceIcon />, label: "Emoji" },
+  { id: "emoji", node: <s-icon type="emoji" />, label: "Emoji" },
   {
     id: "mention",
     node: <span className="cust-timeline__tool-text">@</span>,
@@ -129,7 +72,7 @@ const TOOLBAR_ICONS = [
     node: <span className="cust-timeline__tool-text">#</span>,
     label: "Hashtag",
   },
-  { id: "link", node: <LinkIcon />, label: "Link" },
+  { id: "link", node: <s-icon type="link" />, label: "Link" },
 ];
 
 export default function Timeline({
@@ -137,11 +80,29 @@ export default function Timeline({
   listComments,
   addComment,
   deleteComment,
+  reloadTrigger,
 }) {
   const shopify = useAppBridge();
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
+  const [authorName, setAuthorName] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    shopify
+      .idToken()
+      .then((token) => getShopDetails(token))
+      .then((shop) => {
+        if (active) setAuthorName(shop?.name || shop?.shopOwner || "");
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [shopify]);
+
+  const authorInitial = useMemo(() => initialOf(authorName), [authorName]);
 
   useEffect(() => {
     let active = true;
@@ -158,7 +119,7 @@ export default function Timeline({
     return () => {
       active = false;
     };
-  }, [shopify, entityId, listComments]);
+  }, [shopify, entityId, listComments, reloadTrigger]);
 
   const handlePost = useCallback(async () => {
     const body = text.trim();
@@ -201,8 +162,11 @@ export default function Timeline({
       <div className="cust-timeline">
         <div className="cust-timeline__composer">
           <div className="cust-timeline__composer-top">
-            <span className="cust-timeline__avatar">
-              <UserIcon />
+            <span
+              className="cust-timeline__avatar"
+              title={authorName || undefined}
+            >
+              {authorInitial || <s-icon type="customers" />}
             </span>
             <textarea
               className="cust-timeline__input"
@@ -255,20 +219,29 @@ export default function Timeline({
                   <div className="cust-timeline__item" key={item.id}>
                     <span className="cust-timeline__dot" />
                     <span className="cust-timeline__item-icon">
-                      <LogIcon />
+                      <s-icon type="note" />
                     </span>
-                    <div className="cust-timeline__item-body">{item.body}</div>
+                    {item.isSystemEvent ? (
+                      <div
+                        className="cust-timeline__item-body"
+                        dangerouslySetInnerHTML={{ __html: item.body }}
+                      />
+                    ) : (
+                      <div className="cust-timeline__item-body">{item.body}</div>
+                    )}
                     <span className="cust-timeline__item-time">
                       {relativeOrTime(item.createdAt)}
                     </span>
-                    <button
-                      type="button"
-                      className="cust-timeline__delete"
-                      aria-label="Delete comment"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      ×
-                    </button>
+                    {!item.isSystemEvent && (
+                      <button
+                        type="button"
+                        className="cust-timeline__delete"
+                        aria-label="Delete comment"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

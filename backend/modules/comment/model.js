@@ -34,6 +34,14 @@ const Comment = sequelize.define(
         key: "id",
       },
     },
+    orderId: {
+      type: SEQUELIZE_DATA_TYPE.INTEGER,
+      allowNull: true,
+      references: {
+        model: "orders",
+        key: "id",
+      },
+    },
     authorName: {
       type: SEQUELIZE_DATA_TYPE.STRING(255),
       allowNull: true,
@@ -48,6 +56,7 @@ const Comment = sequelize.define(
     indexes: [
       { fields: ["shopId", "customerId"] },
       { fields: ["shopId", "discountId"] },
+      { fields: ["shopId", "orderId"] },
     ],
   }
 );

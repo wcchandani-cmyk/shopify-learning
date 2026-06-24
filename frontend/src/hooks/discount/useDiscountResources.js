@@ -37,9 +37,9 @@ export function useDiscountResources(form, setForm, shopify) {
           return mapped;
         });
 
-        const currentItems = targetSection === "buys" ? form.bxgyCustomerBuysSelectedItems : (targetSection === "gets" ? form.bxgyCustomerGetsSelectedItems : form.selectedItems);
-        const existingMap = new Map((currentItems || []).map(item => [item.id, item]));
-        const finalItems = newItems.map(item => {
+        const currentItems = (targetSection === "buys" ? form.bxgyCustomerBuysSelectedItems : (targetSection === "gets" ? form.bxgyCustomerGetsSelectedItems : form.selectedItems)) || [];
+        const existingMap = new Map(currentItems.map(item => [item.id, item]));
+        const mergedNewItems = newItems.map(item => {
           const matched = existingMap.get(item.id);
           if (matched && matched.variants && item.variants) {
             const matchedVariantsMap = new Map(matched.variants.map(v => [v.id, v]));
@@ -50,6 +50,20 @@ export function useDiscountResources(form, setForm, shopify) {
           }
           return item;
         });
+
+        const newItemsMap = new Map(mergedNewItems.map(item => [item.id, item]));
+        const finalItems = [];
+        for (const item of currentItems) {
+          if (newItemsMap.has(item.id)) {
+            finalItems.push(newItemsMap.get(item.id));
+            newItemsMap.delete(item.id);
+          } else {
+            finalItems.push(item);
+          }
+        }
+        for (const item of newItemsMap.values()) {
+          finalItems.push(item);
+        }
 
         const fieldName = targetSection === "buys"
           ? "bxgyCustomerBuysSelectedItems"

@@ -10,6 +10,7 @@ import RemoveCustomerModal from "./RemoveCustomerModal";
 import EditAssignedStaffModal from "./EditAssignedStaffModal";
 import ManagePermissionsModal from "../customers/ManagePermissionsModal";
 import MetafieldsCard from "../shared/metafields/MetafieldsCard";
+import NotesCard from "../shared/NotesCard";
 import { useMetafieldsPrefetch } from "../../hooks/useMetafieldsPrefetch";
 import "../../styles/CompanyDetail.css";
 
@@ -343,12 +344,15 @@ export default function CompanyDetail() {
                       <s-stack direction="inline" justifyContent="end">
                         <s-button
                           variant="primary"
-                          href="shopify://admin/draft_orders/new"
-                          target="_top"
+                          onClick={() => {
+                            const numericId = mainContact?.customer?.id?.split("/").pop() || "";
+                            navigate(`/orders/new?customerShopifyId=${numericId}`);
+                          }}
                         >
                           Create order
                         </s-button>
                       </s-stack>
+
                     </s-stack>
                   ) : (
                     <s-stack gap="base">
@@ -605,28 +609,12 @@ export default function CompanyDetail() {
                 </s-stack>
               </s-section>
 
-              <s-section>
-                <s-stack gap="small-200">
-                  <s-stack
-                    direction="inline"
-                    gap="base"
-                    alignItems="center"
-                    justifyContent="space-between"
-                  >
-                    <s-heading>Notes</s-heading>
-                    <s-button
-                      variant="tertiary"
-                      icon="edit"
-                      accessibilityLabel="Edit notes"
-                      href={adminCompanyUrl}
-                      target="_top"
-                    />
-                  </s-stack>
-                  <s-paragraph color="subdued">
-                    No notes
-                  </s-paragraph>
-                </s-stack>
-              </s-section>
+              <NotesCard
+                note={company.notes}
+                placeholder="No notes"
+                href={adminCompanyUrl}
+                target="_top"
+              />
 
             </s-stack>
           </div>

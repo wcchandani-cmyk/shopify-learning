@@ -23,3 +23,15 @@ export async function getShopLocales(token) {
   });
   return response.data?.locales || [];
 }
+
+export async function getShopCurrencies(token) {
+  const response = await apiRequest("/api/shop/currencies", {
+    method: "GET",
+    token,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+  return response.data || { primary: "USD", enabled: ["USD"] };
+}

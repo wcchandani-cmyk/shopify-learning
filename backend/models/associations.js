@@ -10,6 +10,7 @@ const {
   Metafield,
 } = require("../modules/metafields/model");
 const CheckoutUpsell = require("../modules/checkoutUpsell/model");
+const Order = require("../modules/order/model");
 
 Shop.hasMany(Product, {
   foreignKey: "shopId",
@@ -121,6 +122,36 @@ Metafield.belongsTo(MetafieldDefinition, {
   as: "definition",
 });
 
+Shop.hasMany(Order, {
+  foreignKey: "shopId",
+  as: "orders",
+  onDelete: "CASCADE",
+});
+Order.belongsTo(Shop, {
+  foreignKey: "shopId",
+  as: "shop",
+});
+
+Customer.hasMany(Order, {
+  foreignKey: "customerId",
+  as: "orders",
+  onDelete: "SET NULL",
+});
+Order.belongsTo(Customer, {
+  foreignKey: "customerId",
+  as: "customer",
+});
+
+Order.hasMany(Comment, {
+  foreignKey: "orderId",
+  as: "comments",
+  onDelete: "CASCADE",
+});
+Comment.belongsTo(Order, {
+  foreignKey: "orderId",
+  as: "order",
+});
+
 module.exports = {
   Shop,
   Product,
@@ -132,4 +163,5 @@ module.exports = {
   MetafieldDefinition,
   Metafield,
   CheckoutUpsell,
+  Order,
 };

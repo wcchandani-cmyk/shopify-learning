@@ -2,9 +2,6 @@ import { useEffect, useRef } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { getShopDetails } from "../services/shopService";
 
-/**
- * Exchanges the session token for a stored offline token on app load.
- */
 export function useShopBootstrap() {
   const shopify = useAppBridge();
   const ran = useRef(false);

@@ -1,7 +1,5 @@
 import { getMetafields, getMetafieldTypes } from "./metafieldService";
 
-// In-memory cache so a page can prefetch an entity's metafields and the card
-// renders instantly. Keyed by `${entityType}:${entityId}`.
 const cache = new Map();
 const inflight = new Map();
 

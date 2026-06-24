@@ -51,9 +51,21 @@ api_version = "2026-07"
   topics = [ "products/update" ]
   uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/products/update"
 
+  [[webhooks.subscriptions]]
+  topics = [ "orders/create" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/orders/create"
+
+  [[webhooks.subscriptions]]
+  topics = [ "orders/updated" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/orders/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "orders/delete" ]
+  uri = "https://wfldb5t2-5000.inc1.devtunnels.ms/webhooks/orders/delete"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_companies,read_customers,read_discounts,read_inventory,read_locales,read_orders,read_price_rules,read_products,write_companies,write_customers,write_discounts,write_inventory,write_price_rules,write_products,read_metaobject_definitions,write_metaobject_definitions,read_metaobjects,write_metaobjects"
+scopes = "read_companies,read_customers,read_discounts,read_draft_orders,read_inventory,read_locales,read_orders,read_payment_terms,read_price_rules,read_products,write_companies,write_customers,write_discounts,write_draft_orders,write_inventory,write_orders,write_payment_terms,write_price_rules,write_products,read_metaobject_definitions,write_metaobject_definitions,read_metaobjects,write_metaobjects,read_fulfillments,write_fulfillments,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders"
 
 [auth]
 redirect_urls = [ "https://example.com/api/auth" ]

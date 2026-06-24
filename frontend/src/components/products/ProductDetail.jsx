@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { useProductMutations } from "../../hooks/product/useProductMutations";
-import { useUnsavedProductGuard } from "../../hooks/product/useUnsavedProductGuard";
+import { useUnsavedChangesGuard } from "../../hooks/useUnsavedChangesGuard";
 import { getInputEventValue } from "../../utils/fieldEvent";
 import {
   buildUpdatePayload,
   productToFormState,
   variantsToFormState,
+  snapshotFormState,
 } from "../../utils/productForm";
 import { normalizeProductTypes } from "../../utils/productTypes";
 import { listProductVendors } from "../../services/productService";
@@ -55,14 +56,29 @@ export default function ProductDetail({
   });
   const [saveError, setSaveError] = useState(null);
 
+  const [baseline, setBaseline] = useState(null);
+
+  const currentSnapshot = useMemo(
+    () => snapshotFormState(form, variants, options),
+    [form, variants, options]
+  );
+
+  const isDirty = baseline !== null && currentSnapshot !== baseline;
+
   const warnUnsavedLeave = useCallback(() => {
     shopify.toast.show("Save changes before leaving", { isError: true });
   }, [shopify]);
 
-  const { resetBaseline, allowLeaveAfterSave, requestLeave } =
-    useUnsavedProductGuard(form, variants, options, {
-      onBlockLeave: warnUnsavedLeave,
-    });
+  const { allowLeaveAfterSave: allowLeaveAfterSaveGlobal } = useUnsavedChangesGuard(isDirty, warnUnsavedLeave);
+
+  const resetBaseline = useCallback((nextForm, nextVariants, nextOptions = []) => {
+    setBaseline(snapshotFormState(nextForm, nextVariants, nextOptions));
+  }, []);
+
+  const allowLeaveAfterSave = useCallback(() => {
+    setBaseline(currentSnapshot);
+    allowLeaveAfterSaveGlobal();
+  }, [currentSnapshot, allowLeaveAfterSaveGlobal]);
 
   useEffect(() => {
     const nextForm = productToFormState(product);
@@ -274,8 +290,8 @@ export default function ProductDetail({
   );
 
   const handleBack = useCallback(() => {
-    requestLeave(onBack);
-  }, [requestLeave, onBack]);
+    onBack();
+  }, [onBack]);
 
   return (
     <s-page heading={pageHeading}>

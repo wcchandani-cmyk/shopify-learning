@@ -26,7 +26,7 @@ import CustomerAddressesModal from "./CustomerAddressesModal";
 import CustomerAddressModal from "./CustomerAddressModal";
 import CustomerCompanyCard from "./CustomerCompanyCard";
 import CustomerEditModal from "./CustomerEditModal";
-import CustomerNotesCard from "./CustomerNotesCard";
+import NotesCard from "../shared/NotesCard";
 import CustomerStats from "./CustomerStats";
 import CustomerSummaryCard from "./CustomerSummaryCard";
 import CustomerTagsCard from "./CustomerTagsCard";
@@ -298,10 +298,10 @@ export default function CustomerOverview({ customer }) {
                 editModalId={EDIT_MODAL_ID}
                 onEdit={openEdit}
               />
-              <CustomerNotesCard
+              <NotesCard
                 note={form.note}
                 editModalId={EDIT_MODAL_ID}
-                onEdit={openEdit}
+                onEdit={() => openEdit("notes")}
               />
             </s-stack>
           </div>

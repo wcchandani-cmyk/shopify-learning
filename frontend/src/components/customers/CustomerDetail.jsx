@@ -19,7 +19,7 @@ import { getShopLocales } from "../../services/shopService";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";
 import CustomerAddressModal from "./CustomerAddressModal";
-import SearchableSelect from "./SearchableSelect";
+import SearchableSelect from "../shared/SearchableSelect";
 import PhoneField from "./PhoneField";
 import TagEditor from "./TagEditor";
 import MetafieldsCard from "../shared/metafields/MetafieldsCard";
@@ -40,7 +40,6 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
     setSaveError(null);
   }, [customer]);
 
-  // Load the store's enabled languages (live from Shopify) for the dropdown.
   useEffect(() => {
     let active = true;
     shopify
@@ -54,7 +53,6 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
         );
 
         const primary = locales.find((item) => item.primary)?.locale;
-        // Default new customers to the store's primary language.
         setForm((prev) => {
           const known = options.some((opt) => opt.value === prev.locale);
           if (known || !primary) return prev;

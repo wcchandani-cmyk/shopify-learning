@@ -3,6 +3,7 @@ const { successResponse, errorResponse } = require("../../utils/response");
 const { getRestClient, getGraphQLClient } = require("../../utils/shopify");
 const Discount = require("./model");
 const Comment = require("../comment/model");
+const { createCommentHandlers } = require("../comment/controller");
 const {
   syncDiscountsFromShopify,
   removeDiscounts,
@@ -135,12 +136,7 @@ const resolveShopDiscount = async (req) => {
   return { shop, discount };
 };
 
-const toCommentDTO = (row) => ({
-  id: row.id,
-  body: row.body,
-  authorName: row.authorName || "Staff",
-  createdAt: row.createdAt || null,
-});
+
 
 const extractNumericId = (gid) => {
   if (!gid) return null;
@@ -1061,81 +1057,14 @@ const deleteDiscounts = async (req, res) => {
   }
 };
 
-const listComments = async (req, res) => {
-  try {
+const { listComments, createComment, deleteComment } = createCommentHandlers({
+  resolveParent: async (req) => {
     const { shop, discount, error } = await resolveShopDiscount(req);
-    if (error) return errorResponse(res, ...error);
-
-    const comments = await Comment.findAll({
-      where: { shopId: shop.id, discountId: discount.id },
-      order: [["createdAt", "DESC"]],
-    });
-
-    successResponse(res, 200, "Comments fetched successfully", {
-      comments: comments.map(toCommentDTO),
-    });
-  } catch (error) {
-    console.error("Error listing discount comments:", error.message);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to load comments",
-      error
-    );
-  }
-};
-
-const createComment = async (req, res) => {
-  try {
-    const { shop, discount, error } = await resolveShopDiscount(req);
-    if (error) return errorResponse(res, ...error);
-
-    const body = String(req.body?.body ?? "").trim();
-    if (!body) return errorResponse(res, 400, "Comment can't be empty");
-
-    const comment = await Comment.create({
-      shopId: shop.id,
-      discountId: discount.id,
-      authorName: shop.shopOwner || shop.name || "Staff",
-      body,
-    });
-
-    successResponse(res, 201, "Comment added", toCommentDTO(comment));
-  } catch (error) {
-    console.error("Error creating discount comment:", error.message);
-    const status = error.statusCode || 500;
-    errorResponse(res, status, error.message || "Failed to add comment", error);
-  }
-};
-
-const deleteComment = async (req, res) => {
-  try {
-    const { shop, discount, error } = await resolveShopDiscount(req);
-    if (error) return errorResponse(res, ...error);
-
-    const commentId = parseInt(req.params.commentId, 10);
-    if (!Number.isInteger(commentId) || commentId < 1) {
-      return errorResponse(res, 400, "Invalid comment id");
-    }
-
-    const deleted = await Comment.destroy({
-      where: { id: commentId, shopId: shop.id, discountId: discount.id },
-    });
-    if (!deleted) return errorResponse(res, 404, "Comment not found");
-
-    successResponse(res, 200, "Comment deleted", { id: commentId });
-  } catch (error) {
-    console.error("Error deleting discount comment:", error.message);
-    const status = error.statusCode || 500;
-    errorResponse(
-      res,
-      status,
-      error.message || "Failed to delete comment",
-      error
-    );
-  }
-};
+    return { shop, parent: discount, error };
+  },
+  foreignKey: "discountId",
+  entityName: "discount",
+});
 
 const getMarkets = async (req, res) => {
   try {

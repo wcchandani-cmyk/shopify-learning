@@ -2,7 +2,7 @@ import { TAX_SETTING_OPTIONS } from "../../utils/customerForm";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import MarketingChannelRow from "./MarketingChannelRow";
 import PhoneField from "./PhoneField";
-import SearchableSelect from "./SearchableSelect";
+import SearchableSelect from "../shared/SearchableSelect";
 import TagEditor from "./TagEditor";
 
 const EDIT_TITLES = {

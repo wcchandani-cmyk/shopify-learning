@@ -1,7 +1,3 @@
-/**
- * Creates/updates shops, products, and variants tables from Sequelize models.
- * Run: npm run db:sync
- */
 require("dotenv").config();
 const mysql = require("mysql2/promise");
 const {
@@ -23,6 +19,7 @@ const {
   MetafieldDefinition,
   Metafield,
   CheckoutUpsell,
+  Order,
 } = require("../models/associations");
 
 async function ensureDatabase() {
@@ -59,6 +56,9 @@ async function main() {
 
   await Discount.sync(syncOptions);
   console.log("Table created/verified: discounts");
+
+  await Order.sync(syncOptions);
+  console.log("Table created/verified: orders");
 
   await Comment.sync(syncOptions);
   console.log("Table created/verified: comments");
