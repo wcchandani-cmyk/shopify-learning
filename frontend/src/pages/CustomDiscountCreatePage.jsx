@@ -1,4 +1,3 @@
-import React from "react";
 import CustomDiscountCreate from "../components/customDiscounts/CustomDiscountCreate";
 
 export default function CustomDiscountCreatePage() {

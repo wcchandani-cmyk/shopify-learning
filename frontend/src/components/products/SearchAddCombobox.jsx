@@ -2,14 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "../../styles/ProductCategoryPicker.css";
 
-/**
- * Shopify-style "search or add" combobox used for free-text fields like
- * product Type and Vendor. Lists existing values, filters as you type, and lets
- * you commit a brand-new value.
- *
- * Pass either a static `options` array or an async `loadOptions` function
- * (fetched once on first open) for live values from Shopify.
- */
 export default function SearchAddCombobox({
   label,
   placeholder,
@@ -24,8 +16,6 @@ export default function SearchAddCombobox({
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState(value || "");
-  // Tracks whether the user has typed since opening. Until they do, we show the
-  // full list (instead of filtering by the already-selected value).
   const [typed, setTyped] = useState(false);
   const [menuPosition, setMenuPosition] = useState(null);
   const [loadedOptions, setLoadedOptions] = useState([]);
@@ -41,7 +31,7 @@ export default function SearchAddCombobox({
       setSearch(trimmed);
       if (trimmed !== (value || "")) onChange(trimmed);
     },
-    [value, onChange],
+    [value, onChange]
   );
 
   const close = useCallback(
@@ -49,7 +39,7 @@ export default function SearchAddCombobox({
       setOpen(false);
       commit(next ?? search);
     },
-    [commit, search],
+    [commit, search]
   );
 
   const updateMenuPosition = useCallback(() => {
@@ -112,7 +102,7 @@ export default function SearchAddCombobox({
     ? allOptions.filter((option) => option.toLowerCase().includes(query))
     : allOptions;
   const exactMatch = allOptions.some(
-    (option) => option.toLowerCase() === query && query.length > 0,
+    (option) => option.toLowerCase() === query && query.length > 0
   );
   const canAdd = query.length > 0 && !exactMatch;
 
@@ -172,13 +162,15 @@ export default function SearchAddCombobox({
               ) : null}
             </div>
           </div>,
-          document.body,
+          document.body
         )
       : null;
 
   return (
     <div className="category-picker" ref={wrapperRef}>
-      {label ? <span className="product-type-field__label">{label}</span> : null}
+      {label ? (
+        <span className="product-type-field__label">{label}</span>
+      ) : null}
       <div className="category-picker__search product-type-field__control">
         <input
           type="text"
