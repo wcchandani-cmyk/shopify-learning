@@ -3,8 +3,8 @@ const { successResponse, errorResponse } = require("../../utils/response");
 const Customer = require("./model");
 const { parsePageSize, handleError } = require("../../utils/controllerHelper");
 
-const CUSTOMER_UNAUTH_MSG = "Shopify session expired or customer access not granted. Reload the app and ensure Protected Customer Data Access is approved.";
-const Comment = require("../comment/model");
+const CUSTOMER_UNAUTH_MSG =
+  "Shopify session expired or customer access not granted. Reload the app and ensure Protected Customer Data Access is approved.";
 const Order = require("../order/model");
 const { createCommentHandlers } = require("../comment/controller");
 const {
@@ -28,8 +28,6 @@ const resolveShopCustomer = async (req) => {
   return { shop, customer };
 };
 
-
-
 const listCustomers = async (req, res) => {
   try {
     const shop = req.shop;
@@ -48,11 +46,11 @@ const listCustomers = async (req, res) => {
     const customerIds = rows.map((row) => row.id);
     const localCounts = customerIds.length
       ? await Order.findAll({
-        attributes: ["customerId", [fn("COUNT", col("id")), "count"]],
-        where: { shopId: shop.id, customerId: customerIds },
-        group: ["customerId"],
-        raw: true,
-      })
+          attributes: ["customerId", [fn("COUNT", col("id")), "count"]],
+          where: { shopId: shop.id, customerId: customerIds },
+          group: ["customerId"],
+          raw: true,
+        })
       : [];
     const localCountMap = new Map(
       localCounts.map((entry) => [entry.customerId, Number(entry.count)])
@@ -60,7 +58,10 @@ const listCustomers = async (req, res) => {
 
     const customers = rows.map((row) => {
       const dto = toCustomerDTO(row);
-      dto.ordersCount = Math.max(dto.ordersCount, localCountMap.get(row.id) || 0);
+      dto.ordersCount = Math.max(
+        dto.ordersCount,
+        localCountMap.get(row.id) || 0
+      );
       return dto;
     });
     const totalPages = Math.max(1, Math.ceil(total / limit));
