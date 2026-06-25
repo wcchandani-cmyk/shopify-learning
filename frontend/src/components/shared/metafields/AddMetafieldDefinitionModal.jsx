@@ -59,10 +59,16 @@ export default function AddMetafieldDefinitionModal({
 
   const searchInputRef = useRef(null);
 
+  const selectedTypeObj = findTypeItem(typeOptions, type);
+  const baseType = selectedTypeObj?.baseType || type;
+
   useEffect(() => {
     setVValues({});
     setUniqueValues(false);
-  }, [type]);
+    if (selectedTypeObj && !selectedTypeObj.supportsList) {
+      setIsList(false);
+    }
+  }, [type, selectedTypeObj]);
 
   useEffect(() => {
     if (hasPreloaded) return;
@@ -78,9 +84,6 @@ export default function AddMetafieldDefinitionModal({
         setLoadingTypes(false);
       });
   }, [entityType, hasPreloaded]);
-
-  const selectedTypeObj = findTypeItem(typeOptions, type);
-  const baseType = selectedTypeObj?.baseType || type;
 
   const handleSave = async () => {
     const trimmedName = name.trim();
@@ -276,14 +279,23 @@ export default function AddMetafieldDefinitionModal({
               <button
                 type="button"
                 className="metafield-type-selector-value-type"
-                commandFor="one-list-popover"
-                command="--toggle"
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                commandFor={selectedTypeObj?.supportsList ? "one-list-popover" : undefined}
+                command={selectedTypeObj?.supportsList ? "--toggle" : undefined}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: selectedTypeObj?.supportsList ? "pointer" : "default",
+                  opacity: selectedTypeObj?.supportsList ? 1 : 0.6
+                }}
+                title={selectedTypeObj && !selectedTypeObj.supportsList ? "This type does not support list of values" : undefined}
               >
                 <span>{isList ? "List" : "One"}</span>
-                <span className="metafield-one-list-chevron" aria-hidden="true">
-                  <s-icon type="chevron-down" />
-                </span>
+                {selectedTypeObj?.supportsList && (
+                  <span className="metafield-one-list-chevron" aria-hidden="true">
+                    <s-icon type="chevron-down" />
+                  </span>
+                )}
               </button>
 
               <button

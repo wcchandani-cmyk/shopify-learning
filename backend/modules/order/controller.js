@@ -4,7 +4,10 @@ const { parsePageSize, handleError } = require("../../utils/controllerHelper");
 const Order = require("./model");
 const Customer = require("../customer/model");
 const Comment = require("../comment/model");
-const { toCommentDTO, createCommentHandlers } = require("../comment/controller");
+const {
+  toCommentDTO,
+  createCommentHandlers,
+} = require("../comment/controller");
 const {
   toOrderDTO,
   toOrderDetail,
@@ -18,31 +21,21 @@ const {
   releaseOrderHoldOnShopify,
 } = require("./orderService");
 
-const DEFAULT_PAGE_SIZE = 25;
-const MAX_PAGE_SIZE = 100;
-
 const resolveShopOrder = async (req) => {
   const shop = req.shop;
   const raw = String(req.params.id ?? "").trim();
-  if (!/^\d+$/.test(raw)) {
-    return { error: [400, "Invalid order id"] };
-  }
-  let order = await Order.findOne({
-    where: { shopifyId: raw, shopId: shop.id },
-  });
-  if (!order) {
-    order = await Order.findOne({ where: { id: raw, shopId: shop.id } });
-  }
-  if (!order) {
-    return { error: [404, "Order not found"] };
-  }
-  return { shop, order };
+  if (!/^\d+$/.test(raw)) return { error: [400, "Invalid order id"] };
+
+  const order =
+    (await Order.findOne({ where: { shopifyId: raw, shopId: shop.id } })) ||
+    (await Order.findOne({ where: { id: raw, shopId: shop.id } }));
+
+  return order ? { shop, order } : { error: [404, "Order not found"] };
 };
 
 const listOrders = async (req, res) => {
   try {
     const shop = req.shop;
-
     if (
       req.query.sync === "true" ||
       req.query.page === "1" ||
@@ -57,8 +50,8 @@ const listOrders = async (req, res) => {
 
     const { Op } = require("sequelize");
     const tab = req.query.tab || "orders";
-
     const where = { shopId: shop.id };
+
     if (tab === "drafts") {
       where.tags = { [Op.like]: "%Draft%" };
     } else {
@@ -109,12 +102,8 @@ const listOrders = async (req, res) => {
     });
 
     const draftsCount = await Order.count({
-      where: {
-        shopId: shop.id,
-        tags: { [Op.like]: "%Draft%" },
-      },
+      where: { shopId: shop.id, tags: { [Op.like]: "%Draft%" } },
     });
-
     const orders = rows.map(toOrderDTO);
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -154,8 +143,7 @@ const getOrder = async (req, res) => {
 
 const createOrder = async (req, res) => {
   try {
-    const shop = req.shop;
-    const created = await createOrderFlow(shop, req.body);
+    const created = await createOrderFlow(req.shop, req.body);
     successResponse(res, 201, "Order created successfully", created);
   } catch (error) {
     console.error("Error creating order:", error.message);
@@ -165,8 +153,7 @@ const createOrder = async (req, res) => {
 
 const listPaymentTerms = async (req, res) => {
   try {
-    const shop = req.shop;
-    const paymentTerms = await getPaymentTermsTemplates(shop);
+    const paymentTerms = await getPaymentTermsTemplates(req.shop);
     successResponse(res, 200, "Payment terms fetched successfully", {
       paymentTerms,
     });
@@ -209,24 +196,20 @@ const listComments = async (req, res) => {
     });
 
     const commentsList = localComments.map(toCommentDTO);
-
     let shopifyEvents = [];
+
     try {
       const { getGraphQLClient } = require("../../utils/shopify");
       const { graphqlClient } = getGraphQLClient({
         shopDomain: shop.myshopifyDomain,
         accessToken: shop.token,
       });
-
       const { ORDER_EVENTS_QUERY } = require("./query");
-      const orderGid = `gid://shopify/Order/${order.shopifyId}`;
 
       const resp = await graphqlClient.request(ORDER_EVENTS_QUERY, {
-        variables: { id: orderGid },
+        variables: { id: `gid://shopify/Order/${order.shopifyId}` },
       });
-
-      const nodes = resp?.data?.order?.events?.nodes || [];
-      shopifyEvents = nodes.map((evt) => ({
+      shopifyEvents = (resp?.data?.order?.events?.nodes || []).map((evt) => ({
         id: evt.id,
         body: evt.message,
         authorName: "Shopify",
@@ -237,19 +220,15 @@ const listComments = async (req, res) => {
       console.warn("Failed to fetch order events from Shopify:", err.message);
     }
 
-    const merged = [...commentsList, ...shopifyEvents].sort((a, b) => {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-      return dateB - dateA;
-    });
-
+    const merged = [...commentsList, ...shopifyEvents].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
     successResponse(res, 200, "Comments fetched successfully", {
       comments: merged,
     });
   } catch (err) {
     console.error("Error listing order timeline:", err.message);
-    const status = err.statusCode || 500;
-    errorResponse(res, status, err.message || "Failed to load timeline", err);
+    handleError(res, err, "Failed to load timeline");
   }
 };
 
@@ -261,6 +240,7 @@ const updateOrder = async (req, res) => {
     const { note, tags, customerId, fulfillmentStatus, financialStatus } =
       req.body;
     if (note !== undefined) order.note = note;
+
     if (tags !== undefined) {
       const existingTags = (order.tags || "")
         .split(",")
@@ -271,30 +251,28 @@ const updateOrder = async (req, res) => {
         .map((t) => t.trim())
         .filter(Boolean);
       if (existingTags.includes("Draft")) {
-        if (!incomingTags.includes("Draft")) {
-          incomingTags.push("Draft");
-        }
+        if (!incomingTags.includes("Draft")) incomingTags.push("Draft");
         const draftNumTag = existingTags.find((t) =>
           t.startsWith("DraftNumber:")
         );
         if (
           draftNumTag &&
           !incomingTags.some((t) => t.startsWith("DraftNumber:"))
-        ) {
+        )
           incomingTags.push(draftNumTag);
-        }
       }
       order.tags = incomingTags.join(", ");
     }
+
     let customerChanged = false;
-    let oldCustomerId = order.customerId;
+    const oldCustomerId = order.customerId;
     if (customerId !== undefined && customerId !== oldCustomerId) {
       customerChanged = true;
       order.customerId = customerId || null;
     }
 
     let fulfillmentStatusChanged = false;
-    let oldFulfillmentStatus = order.fulfillmentStatus;
+    const oldFulfillmentStatus = order.fulfillmentStatus;
     if (
       fulfillmentStatus !== undefined &&
       fulfillmentStatus !== order.fulfillmentStatus
@@ -316,17 +294,12 @@ const updateOrder = async (req, res) => {
       if (!tagsList.some((t) => t.startsWith("DraftNumber:"))) {
         const { Op } = require("sequelize");
         const draftCount = await Order.count({
-          where: {
-            shopId: shop.id,
-            tags: { [Op.like]: "%Draft%" },
-          },
+          where: { shopId: shop.id, tags: { [Op.like]: "%Draft%" } },
         });
         tagsList.push(`DraftNumber:${draftCount + 1}`);
         tagsUpdated = true;
       }
-      if (tagsUpdated) {
-        order.tags = tagsList.join(", ");
-      }
+      if (tagsUpdated) order.tags = tagsList.join(", ");
     }
 
     if (financialStatus === "paid" && order.financialStatus !== "paid") {
@@ -351,40 +324,27 @@ const updateOrder = async (req, res) => {
     await order.save();
 
     if (customerChanged) {
-      let oldCustName = "";
-      if (oldCustomerId) {
-        const oldCust = await Customer.findByPk(oldCustomerId);
-        if (oldCust) {
-          oldCustName =
-            oldCust.displayName ||
-            `${oldCust.firstName || ""} ${oldCust.lastName || ""}`.trim() ||
-            oldCust.email ||
-            "";
-        }
-      }
+      const getCustName = async (id) => {
+        if (!id) return "";
+        const c = await Customer.findByPk(id);
+        return c
+          ? c.displayName ||
+              `${c.firstName || ""} ${c.lastName || ""}`.trim() ||
+              c.email ||
+              ""
+          : "";
+      };
+      const oldCustName = await getCustName(oldCustomerId);
+      const newCustName = await getCustName(order.customerId);
 
-      let newCustName = "";
-      if (order.customerId) {
-        const newCust = await Customer.findByPk(order.customerId);
-        if (newCust) {
-          newCustName =
-            newCust.displayName ||
-            `${newCust.firstName || ""} ${newCust.lastName || ""}`.trim() ||
-            newCust.email ||
-            "";
-        }
-      }
-
-      let bodyText = "";
-      if (oldCustName && newCustName) {
-        bodyText = `Customer was changed from ${oldCustName} to ${newCustName}.`;
-      } else if (newCustName) {
-        bodyText = `Customer was set to ${newCustName}.`;
-      } else if (oldCustName) {
-        bodyText = `Customer ${oldCustName} was removed from this order.`;
-      } else {
-        bodyText = "Customer details updated.";
-      }
+      const bodyText =
+        oldCustName && newCustName
+          ? `Customer was changed from ${oldCustName} to ${newCustName}.`
+          : newCustName
+          ? `Customer was set to ${newCustName}.`
+          : oldCustName
+          ? `Customer ${oldCustName} was removed from this order.`
+          : "Customer details updated.";
 
       try {
         await Comment.create({
@@ -399,8 +359,7 @@ const updateOrder = async (req, res) => {
     }
 
     try {
-      const client = getRestClient(shop);
-      await client.put({
+      await getRestClient(shop).put({
         path: `orders/${order.shopifyId}`,
         type: "application/json",
         data: {

@@ -7,6 +7,19 @@ const {
   getGraphQLClient,
   extractGraphqlError,
 } = require("../../utils/shopify");
+const {
+  ORDER_CANCEL_MUTATION,
+  ORDER_FULFILLMENT_ORDERS_QUERY,
+  FULFILLMENT_ORDER_RELEASE_HOLD_MUTATION,
+  FULFILLMENT_ORDER_CANCEL_MUTATION,
+  JOB_STATUS_QUERY,
+  PAYMENT_TERMS_TEMPLATES_QUERY,
+  DRAFT_ORDER_CREATE_MUTATION,
+  DRAFT_ORDER_COMPLETE_MUTATION,
+  ORDER_MARK_AS_PAID_MUTATION,
+  FULFILLMENT_CREATE_MUTATION,
+  FULFILLMENT_ORDER_HOLD_MUTATION,
+} = require("./query");
 
 const safeJsonParse = (str, fallback = null) => {
   if (!str) return fallback;
@@ -26,6 +39,14 @@ const getDraftName = (row) => {
     : null;
 };
 
+const throwUserErrors = (errors, fallback) => {
+  if (errors?.length) {
+    const err = new Error(errors.map((e) => e.message).join("; ") || fallback);
+    err.statusCode = 422;
+    throw err;
+  }
+};
+
 const fetchFulfillmentOrders = async (graphqlClient, orderGid) => {
   try {
     const resp = await graphqlClient.request(ORDER_FULFILLMENT_ORDERS_QUERY, {
@@ -33,22 +54,13 @@ const fetchFulfillmentOrders = async (graphqlClient, orderGid) => {
     });
     return resp?.data?.order?.fulfillmentOrders?.nodes || [];
   } catch (error) {
-    throw new Error(`Failed to fetch Shopify fulfillment orders: ${extractGraphqlError(error)}`);
+    throw new Error(
+      `Failed to fetch Shopify fulfillment orders: ${extractGraphqlError(
+        error
+      )}`
+    );
   }
 };
-const {
-  ORDER_CANCEL_MUTATION,
-  ORDER_FULFILLMENT_ORDERS_QUERY,
-  FULFILLMENT_ORDER_RELEASE_HOLD_MUTATION,
-  FULFILLMENT_ORDER_CANCEL_MUTATION,
-  JOB_STATUS_QUERY,
-  PAYMENT_TERMS_TEMPLATES_QUERY,
-  DRAFT_ORDER_CREATE_MUTATION,
-  DRAFT_ORDER_COMPLETE_MUTATION,
-  ORDER_MARK_AS_PAID_MUTATION,
-  FULFILLMENT_CREATE_MUTATION,
-  FULFILLMENT_ORDER_HOLD_MUTATION,
-} = require("./query");
 
 const waitForJob = async (
   graphqlClient,
@@ -79,26 +91,22 @@ const mapRestOrder = async (shop, node) => {
     const cust = await Customer.findOne({
       where: { shopId: shop.id, shopifyId: String(node.customer.id) },
     });
-    if (cust) {
-      customerId = cust.id;
-    }
+    if (cust) customerId = cust.id;
   }
 
-  let totalShipping = 0;
-  if (Array.isArray(node.shipping_lines)) {
-    totalShipping = node.shipping_lines.reduce(
-      (sum, line) => sum + parseFloat(line.price || 0),
-      0
-    );
-  }
+  const totalShipping = Array.isArray(node.shipping_lines)
+    ? node.shipping_lines.reduce(
+        (sum, line) => sum + parseFloat(line.price || 0),
+        0
+      )
+    : 0;
 
-  let itemsCount = 0;
-  if (Array.isArray(node.line_items)) {
-    itemsCount = node.line_items.reduce(
-      (sum, item) => sum + parseInt(item.quantity || 0, 10),
-      0
-    );
-  }
+  const itemsCount = Array.isArray(node.line_items)
+    ? node.line_items.reduce(
+        (sum, item) => sum + parseInt(item.quantity || 0, 10),
+        0
+      )
+    : 0;
 
   return {
     shopifyId,
@@ -138,7 +146,7 @@ const mapRestOrder = async (shop, node) => {
           ? "POS"
           : shop.name || shop.shopOwner || "Admin"
         : "Online Store",
-    testOrder: Boolean(node.test),
+    testOrder: !!node.test,
   };
 };
 
@@ -155,7 +163,6 @@ const upsertOrder = async (shop, mappedNode) => {
       updates.customerId = existing.customerId;
     }
 
-    // Preserve the Draft tag and DraftNumber:X tag if they exist locally
     const existingTags = (existing.tags || "")
       .split(",")
       .map((t) => t.trim())
@@ -165,9 +172,7 @@ const upsertOrder = async (shop, mappedNode) => {
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean);
-      if (!incomingTags.includes("Draft")) {
-        incomingTags.push("Draft");
-      }
+      if (!incomingTags.includes("Draft")) incomingTags.push("Draft");
       const draftNumTag = existingTags.find((t) =>
         t.startsWith("DraftNumber:")
       );
@@ -188,9 +193,7 @@ const upsertOrder = async (shop, mappedNode) => {
 };
 
 const removeLocalOrder = async (shop, shopifyId) => {
-  const local = await Order.findOne({
-    where: { shopId: shop.id, shopifyId },
-  });
+  const local = await Order.findOne({ where: { shopId: shop.id, shopifyId } });
   if (!local) return false;
   await Comment.destroy({ where: { shopId: shop.id, orderId: local.id } });
   await local.destroy();
@@ -203,22 +206,18 @@ const toOrderDTO = (row) => {
     (sum, item) => sum + parseInt(item.quantity || 0, 10),
     0
   );
-
   const customer = row.customer;
   const customerName = customer
     ? customer.displayName ||
       [customer.firstName, customer.lastName].filter(Boolean).join(" ").trim()
     : "";
 
-  const draftName = getDraftName(row);
-  const displayName = row.name || `#${row.orderNumber}`;
-
   return {
     id: row.id,
     shopifyId: String(row.shopifyId),
     orderNumber: row.orderNumber,
-    name: displayName,
-    draftName,
+    name: row.name || `#${row.orderNumber}`,
+    draftName: getDraftName(row),
     createdAt: row.shopifyCreatedAt || row.createdAt,
     email: row.email,
     phone: row.phone,
@@ -227,7 +226,7 @@ const toOrderDTO = (row) => {
     financialStatus: row.financialStatus || "pending",
     fulfillmentStatus: row.fulfillmentStatus || "unfulfilled",
     itemsCount,
-    testOrder: Boolean(row.testOrder),
+    testOrder: !!row.testOrder,
     tags: row.tags || "",
     channel: row.channel || "Online Store",
     customerName: customerName || null,
@@ -237,7 +236,6 @@ const toOrderDTO = (row) => {
 
 const toOrderDetail = async (row) => {
   let lineItems = safeJsonParse(row.lineItems, []);
-
   const productIds = [
     ...new Set(
       lineItems
@@ -277,9 +275,6 @@ const toOrderDetail = async (row) => {
     };
   });
 
-  const shippingAddress = safeJsonParse(row.shippingAddress);
-  const billingAddress = safeJsonParse(row.billingAddress);
-
   let customerDetails = null;
   if (row.customerId) {
     const customer = await Customer.findByPk(row.customerId);
@@ -287,7 +282,6 @@ const toOrderDetail = async (row) => {
       const localOrderCount = await Order.count({
         where: { shopId: row.shopId, customerId: row.customerId },
       });
-
       customerDetails = {
         id: customer.id,
         shopifyId: String(customer.shopifyId),
@@ -304,15 +298,12 @@ const toOrderDetail = async (row) => {
     }
   }
 
-  const draftName = getDraftName(row);
-  const displayName = row.name || `#${row.orderNumber}`;
-
   return {
     id: row.id,
     shopifyId: String(row.shopifyId),
     orderNumber: row.orderNumber,
-    name: displayName,
-    draftName,
+    name: row.name || `#${row.orderNumber}`,
+    draftName: getDraftName(row),
     createdAt: row.shopifyCreatedAt || row.createdAt,
     updatedAt: row.shopifyUpdatedAt || row.updatedAt,
     email: row.email,
@@ -325,11 +316,11 @@ const toOrderDetail = async (row) => {
     financialStatus: row.financialStatus || "pending",
     fulfillmentStatus: row.fulfillmentStatus || "unfulfilled",
     lineItems,
-    shippingAddress,
-    billingAddress,
+    shippingAddress: safeJsonParse(row.shippingAddress),
+    billingAddress: safeJsonParse(row.billingAddress),
     note: row.note || "",
     tags: row.tags || "",
-    testOrder: Boolean(row.testOrder),
+    testOrder: !!row.testOrder,
     channel: row.channel || "Online Store",
     customer: customerDetails,
   };
@@ -342,7 +333,6 @@ const syncOrdersFromShopify = async (shop) => {
       path: "orders",
       query: { status: "any", limit: 50 },
     });
-
     const restOrders = response.body?.orders || [];
     const syncedOrders = [];
 
@@ -351,14 +341,9 @@ const syncOrdersFromShopify = async (shop) => {
         await removeLocalOrder(shop, String(restOrder.id));
         continue;
       }
-
       const mapped = await mapRestOrder(shop, restOrder);
-      if (mapped) {
-        const order = await upsertOrder(shop, mapped);
-        syncedOrders.push(order);
-      }
+      if (mapped) syncedOrders.push(await upsertOrder(shop, mapped));
     }
-
     return syncedOrders;
   } catch (error) {
     console.error("Failed to sync orders from Shopify:", error.message);
@@ -371,10 +356,8 @@ const getPaymentTermsTemplates = async (shop) => {
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
   });
-
   const resp = await graphqlClient.request(PAYMENT_TERMS_TEMPLATES_QUERY);
   const templates = resp?.data?.paymentTermsTemplates || [];
-
   return templates
     .filter((t) => t.paymentTermsType !== "FIXED")
     .map((t) => ({
@@ -403,12 +386,9 @@ const buildDraftLineItems = (lineItems = []) =>
       originalUnitPrice: parseFloat(item.price),
       quantity: parseInt(item.quantity, 10),
     };
-    if (item.requiresShipping !== undefined) {
-      line.requiresShipping = Boolean(item.requiresShipping);
-    }
-    if (item.taxable !== undefined) {
-      line.taxable = Boolean(item.taxable);
-    }
+    if (item.requiresShipping !== undefined)
+      line.requiresShipping = !!item.requiresShipping;
+    if (item.taxable !== undefined) line.taxable = !!item.taxable;
     return line;
   });
 
@@ -417,25 +397,18 @@ const createPendingOrderViaDraft = async (shop, payload) => {
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
   });
-
-  const input = {
-    lineItems: buildDraftLineItems(payload.lineItems),
-  };
+  const input = { lineItems: buildDraftLineItems(payload.lineItems) };
 
   if (payload.note) input.note = payload.note;
-  if (payload.tags) {
+  if (payload.tags)
     input.tags = String(payload.tags)
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-  }
-
-  if (payload.customerShopifyId) {
+  if (payload.customerShopifyId)
     input.purchasingEntity = {
       customerId: `gid://shopify/Customer/${payload.customerShopifyId}`,
     };
-  }
-
   if (payload.shippingAddress) input.shippingAddress = payload.shippingAddress;
   if (payload.billingAddress) input.billingAddress = payload.billingAddress;
 
@@ -461,7 +434,6 @@ const createPendingOrderViaDraft = async (shop, payload) => {
   const paymentTerms = {
     paymentTermsTemplateId: payload.paymentTerms.templateId,
   };
-
   if (payload.paymentTerms.type === "NET") {
     paymentTerms.paymentSchedules = [{ issuedAt: new Date().toISOString() }];
   }
@@ -470,10 +442,10 @@ const createPendingOrderViaDraft = async (shop, payload) => {
   const createResp = await graphqlClient.request(DRAFT_ORDER_CREATE_MUTATION, {
     variables: { input },
   });
-  const createErrors = createResp?.data?.draftOrderCreate?.userErrors || [];
-  if (createErrors.length) {
-    throw new Error(createErrors.map((e) => e.message).join("; "));
-  }
+  throwUserErrors(
+    createResp?.data?.draftOrderCreate?.userErrors,
+    "Failed to create draft order"
+  );
   const draftId = createResp?.data?.draftOrderCreate?.draftOrder?.id;
   if (!draftId) throw new Error("Shopify did not return a draft order");
 
@@ -481,25 +453,21 @@ const createPendingOrderViaDraft = async (shop, payload) => {
     DRAFT_ORDER_COMPLETE_MUTATION,
     { variables: { id: draftId, paymentPending: true } }
   );
-  const completeErrors =
-    completeResp?.data?.draftOrderComplete?.userErrors || [];
-  if (completeErrors.length) {
-    throw new Error(completeErrors.map((e) => e.message).join("; "));
-  }
-  const completedOrder =
-    completeResp?.data?.draftOrderComplete?.draftOrder?.order;
-  const legacyId = completedOrder?.legacyResourceId;
-  if (!legacyId) {
+  throwUserErrors(
+    completeResp?.data?.draftOrderComplete?.userErrors,
+    "Failed to complete draft order"
+  );
+  const legacyId =
+    completeResp?.data?.draftOrderComplete?.draftOrder?.order?.legacyResourceId;
+  if (!legacyId)
     throw new Error("Draft order was completed but no order was returned");
-  }
 
   const client = getRestClient(shop);
   const orderResp = await client.get({ path: `orders/${legacyId}` });
   const node = orderResp?.body?.order;
   if (!node?.id) throw new Error("Could not load the created order");
 
-  const mapped = await mapRestOrder(shop, node);
-  const row = await upsertOrder(shop, mapped);
+  const row = await upsertOrder(shop, await mapRestOrder(shop, node));
 
   try {
     await Comment.create({
@@ -528,19 +496,11 @@ const createOrder = async (shop, payload) => {
   if (isDraft) {
     const { Op } = require("sequelize");
     const draftCount = await Order.count({
-      where: {
-        shopId: shop.id,
-        tags: { [Op.like]: "%Draft%" },
-      },
+      where: { shopId: shop.id, tags: { [Op.like]: "%Draft%" } },
     });
-    const nextDraftNum = draftCount + 1;
-
-    if (!existingTags.includes("Draft")) {
-      existingTags.push("Draft");
-    }
-    if (!existingTags.some((t) => t.startsWith("DraftNumber:"))) {
-      existingTags.push(`DraftNumber:${nextDraftNum}`);
-    }
+    if (!existingTags.includes("Draft")) existingTags.push("Draft");
+    if (!existingTags.some((t) => t.startsWith("DraftNumber:")))
+      existingTags.push(`DraftNumber:${draftCount + 1}`);
     payload.tags = existingTags.join(", ");
   }
 
@@ -549,7 +509,6 @@ const createOrder = async (shop, payload) => {
   }
 
   const client = getRestClient(shop);
-
   const shopifyOrder = {
     line_items: (payload.lineItems || []).map((item) => {
       const line = {
@@ -557,15 +516,10 @@ const createOrder = async (shop, payload) => {
         price: parseFloat(item.price),
         quantity: parseInt(item.quantity, 10),
       };
-      if (item.variantId) {
-        line.variant_id = Number(item.variantId);
-      }
-      if (item.taxable !== undefined) {
-        line.taxable = Boolean(item.taxable);
-      }
-      if (item.requiresShipping !== undefined) {
-        line.requires_shipping = Boolean(item.requiresShipping);
-      }
+      if (item.variantId) line.variant_id = Number(item.variantId);
+      if (item.taxable !== undefined) line.taxable = !!item.taxable;
+      if (item.requiresShipping !== undefined)
+        line.requires_shipping = !!item.requiresShipping;
       if (item.weight !== undefined) {
         line.weight = parseFloat(item.weight);
         line.weight_unit = item.weightUnit || "kg";
@@ -592,10 +546,7 @@ const createOrder = async (shop, payload) => {
     }
   }
 
-  if (payload.currency) {
-    shopifyOrder.currency = payload.currency;
-  }
-
+  if (payload.currency) shopifyOrder.currency = payload.currency;
   if (payload.shipping && Number(payload.shipping.amount) > 0) {
     shopifyOrder.shipping_lines = [
       {
@@ -615,46 +566,38 @@ const createOrder = async (shop, payload) => {
     ];
   }
 
-  if (payload.customerShopifyId) {
-    shopifyOrder.customer = {
-      id: Number(payload.customerShopifyId),
-    };
-  }
-
-  if (payload.shippingAddress) {
+  if (payload.customerShopifyId)
+    shopifyOrder.customer = { id: Number(payload.customerShopifyId) };
+  if (payload.shippingAddress)
     shopifyOrder.shipping_address = payload.shippingAddress;
-  }
-  if (payload.billingAddress) {
+  if (payload.billingAddress)
     shopifyOrder.billing_address = payload.billingAddress;
-  }
 
   const response = await client.post({
     path: "orders",
     type: "application/json",
     data: { order: shopifyOrder },
   });
-
   const node = response?.body?.order;
   if (!node?.id) {
     const errors = response?.body?.errors;
-    let errMsg = "Shopify rejected the order";
-    if (typeof errors === "object") {
-      errMsg = Object.entries(errors)
-        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-        .join("; ");
-    }
+    const errMsg =
+      typeof errors === "object"
+        ? Object.entries(errors)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+            .join("; ")
+        : "Shopify rejected the order";
     throw new Error(errMsg);
   }
 
-  const mapped = await mapRestOrder(shop, node);
-  const row = await upsertOrder(shop, mapped);
+  const row = await upsertOrder(shop, await mapRestOrder(shop, node));
 
   try {
     await Comment.create({
       shopId: shop.id,
       orderId: row.id,
       authorName: shop.shopOwner || shop.name || "Staff",
-      body: `Order was placed on Online Store.`,
+      body: "Order was placed on Online Store.",
     });
     if (row.financialStatus === "paid") {
       await Comment.create({
@@ -676,24 +619,15 @@ const markOrderAsPaid = async (shop, order) => {
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
   });
-
-  let resp;
-  try {
-    resp = await graphqlClient.request(ORDER_MARK_AS_PAID_MUTATION, {
-      variables: { input: { id: `gid://shopify/Order/${order.shopifyId}` } },
-    });
-  } catch (error) {
-    throw new Error(extractGraphqlError(error));
-  }
-
-  const result = resp?.data?.orderMarkAsPaid;
-  const userErrors = result?.userErrors || [];
-  if (userErrors.length) {
-    throw new Error(userErrors.map((e) => e.message).join("; "));
-  }
-
+  const resp = await graphqlClient.request(ORDER_MARK_AS_PAID_MUTATION, {
+    variables: { input: { id: `gid://shopify/Order/${order.shopifyId}` } },
+  });
+  throwUserErrors(
+    resp?.data?.orderMarkAsPaid?.userErrors,
+    "Failed to mark order as paid"
+  );
   const status = (
-    result?.order?.displayFinancialStatus || "PAID"
+    resp?.data?.orderMarkAsPaid?.order?.displayFinancialStatus || "PAID"
   ).toLowerCase();
 
   try {
@@ -708,7 +642,6 @@ const markOrderAsPaid = async (shop, order) => {
   } catch (err) {
     console.error("Failed to seed mark-as-paid comment:", err.message);
   }
-
   return status;
 };
 
@@ -749,7 +682,6 @@ const clearOutstandingFulfillments = async (graphqlClient, orderGid) => {
         );
       }
     }
-
     if (
       fo.requestStatus === "SUBMITTED" ||
       fo.requestStatus === "CANCELLATION_REQUESTED"
@@ -772,35 +704,26 @@ const cancelOrder = async (shop, order, payload = {}) => {
   const reason = VALID_CANCEL_REASONS.has(payload.reason)
     ? payload.reason
     : "OTHER";
-
   const { graphqlClient } = getGraphQLClient({
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
   });
-
   const orderGid = `gid://shopify/Order/${order.shopifyId}`;
 
   await clearOutstandingFulfillments(graphqlClient, orderGid);
 
-  const variables = {
-    orderId: orderGid,
-    reason,
-    refundMethod: { originalPaymentMethodsRefund: Boolean(payload.refund) },
-    restock: payload.restock !== false,
-    notifyCustomer: Boolean(payload.notifyCustomer),
-    staffNote: payload.staffNote
-      ? String(payload.staffNote).slice(0, 255)
-      : null,
-  };
-
-  let response;
-  try {
-    response = await graphqlClient.request(ORDER_CANCEL_MUTATION, {
-      variables,
-    });
-  } catch (error) {
-    throw new Error(extractGraphqlError(error));
-  }
+  const response = await graphqlClient.request(ORDER_CANCEL_MUTATION, {
+    variables: {
+      orderId: orderGid,
+      reason,
+      refundMethod: { originalPaymentMethodsRefund: !!payload.refund },
+      restock: payload.restock !== false,
+      notifyCustomer: !!payload.notifyCustomer,
+      staffNote: payload.staffNote
+        ? String(payload.staffNote).slice(0, 255)
+        : null,
+    },
+  });
 
   const result = response?.data?.orderCancel;
   const userErrors = [
@@ -815,10 +738,7 @@ const cancelOrder = async (shop, order, payload = {}) => {
     throw new Error(friendly);
   }
 
-  if (result?.job?.id) {
-    await waitForJob(graphqlClient, result.job.id);
-  }
-
+  if (result?.job?.id) await waitForJob(graphqlClient, result.job.id);
   await removeLocalOrder(shop, String(order.shopifyId));
   return { id: order.id, deleted: true };
 };
@@ -828,17 +748,12 @@ const fulfillOrderOnShopify = async (shop, order) => {
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
   });
-
   const orderGid = `gid://shopify/Order/${order.shopifyId}`;
-
-  // 1. Fetch fulfillment orders
   const nodes = await fetchFulfillmentOrders(graphqlClient, orderGid);
   const fulfillmentOrderIdsToFulfill = [];
 
   for (const fo of nodes) {
     let currentStatus = fo.status;
-
-    // 2. Release hold if ON_HOLD
     if (currentStatus === "ON_HOLD") {
       const holdIds = (fo.fulfillmentHolds || [])
         .map((hold) => hold.id)
@@ -857,9 +772,7 @@ const fulfillOrderOnShopify = async (shop, order) => {
             `Failed to release hold on ${fo.id}:`,
             releaseErrors.map((e) => e.message).join("; ")
           );
-        } else {
-          currentStatus = "OPEN";
-        }
+        } else currentStatus = "OPEN";
       } catch (error) {
         console.warn(
           `Could not release hold on ${fo.id} before fulfillment:`,
@@ -867,23 +780,12 @@ const fulfillOrderOnShopify = async (shop, order) => {
         );
       }
     }
-
-    // 3. Fulfill if OPEN or IN_PROGRESS
     if (currentStatus === "OPEN" || currentStatus === "IN_PROGRESS") {
       fulfillmentOrderIdsToFulfill.push(fo.id);
     }
   }
 
-  if (fulfillmentOrderIdsToFulfill.length === 0) {
-    return;
-  }
-
-  // 4. Create fulfillment
-  const lineItemsByFulfillmentOrder = fulfillmentOrderIdsToFulfill.map(
-    (id) => ({
-      fulfillmentOrderId: id,
-    })
-  );
+  if (!fulfillmentOrderIdsToFulfill.length) return;
 
   try {
     const fulfillResp = await graphqlClient.request(
@@ -891,16 +793,17 @@ const fulfillOrderOnShopify = async (shop, order) => {
       {
         variables: {
           fulfillment: {
-            lineItemsByFulfillmentOrder,
+            lineItemsByFulfillmentOrder: fulfillmentOrderIdsToFulfill.map(
+              (id) => ({ fulfillmentOrderId: id })
+            ),
           },
         },
       }
     );
-
-    const userErrors = fulfillResp?.data?.fulfillmentCreate?.userErrors || [];
-    if (userErrors.length) {
-      throw new Error(userErrors.map((e) => e.message).join("; "));
-    }
+    throwUserErrors(
+      fulfillResp?.data?.fulfillmentCreate?.userErrors,
+      "Shopify fulfillment failed"
+    );
   } catch (error) {
     throw new Error(
       `Shopify fulfillment failed: ${extractGraphqlError(error)}`
@@ -908,25 +811,19 @@ const fulfillOrderOnShopify = async (shop, order) => {
   }
 };
 
-const mapHoldReasonToEnum = (reason) => {
-  if (!reason) return "OTHER";
-  const normalized = reason.toLowerCase();
-  if (normalized.includes("inventory") || normalized.includes("stock")) {
-    return "INVENTORY";
-  }
-  if (normalized.includes("address") || normalized.includes("location")) {
-    return "INCORRECT_ADDRESS";
-  }
-  if (normalized.includes("risk") || normalized.includes("fraud")) {
-    return "HIGH_RISK";
-  }
-  if (normalized.includes("payment")) {
-    return "AWAITING_PAYMENT";
-  }
-  if (normalized.includes("customer")) {
-    return "CUSTOMER_REQUEST";
-  }
-  return "OTHER";
+const mapHoldReasonToEnum = (reason = "") => {
+  const norm = reason.toLowerCase();
+  return norm.includes("inventory") || norm.includes("stock")
+    ? "INVENTORY"
+    : norm.includes("address") || norm.includes("location")
+    ? "INCORRECT_ADDRESS"
+    : norm.includes("risk") || norm.includes("fraud")
+    ? "HIGH_RISK"
+    : norm.includes("payment")
+    ? "AWAITING_PAYMENT"
+    : norm.includes("customer")
+    ? "CUSTOMER_REQUEST"
+    : "OTHER";
 };
 
 const holdOrderOnShopify = async (shop, order, reasonText) => {
@@ -934,9 +831,7 @@ const holdOrderOnShopify = async (shop, order, reasonText) => {
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
   });
-
   const orderGid = `gid://shopify/Order/${order.shopifyId}`;
-
   const nodes = await fetchFulfillmentOrders(graphqlClient, orderGid);
   const reason = mapHoldReasonToEnum(reasonText);
 
@@ -953,11 +848,10 @@ const holdOrderOnShopify = async (shop, order, reasonText) => {
             },
           }
         );
-        const userErrors =
-          holdResp?.data?.fulfillmentOrderHold?.userErrors || [];
-        if (userErrors.length) {
-          throw new Error(userErrors.map((e) => e.message).join("; "));
-        }
+        throwUserErrors(
+          holdResp?.data?.fulfillmentOrderHold?.userErrors,
+          "Failed to hold order"
+        );
       } catch (error) {
         throw new Error(
           `Could not hold fulfillment order ${fo.id}: ${extractGraphqlError(
@@ -974,9 +868,7 @@ const releaseOrderHoldOnShopify = async (shop, order) => {
     shopDomain: shop.myshopifyDomain,
     accessToken: shop.token,
   });
-
   const orderGid = `gid://shopify/Order/${order.shopifyId}`;
-
   const nodes = await fetchFulfillmentOrders(graphqlClient, orderGid);
 
   for (const fo of nodes) {
@@ -991,11 +883,10 @@ const releaseOrderHoldOnShopify = async (shop, order) => {
             variables: { id: fo.id, holdIds: holdIds.length ? holdIds : null },
           }
         );
-        const userErrors =
-          releaseResp?.data?.fulfillmentOrderReleaseHold?.userErrors || [];
-        if (userErrors.length) {
-          throw new Error(userErrors.map((e) => e.message).join("; "));
-        }
+        throwUserErrors(
+          releaseResp?.data?.fulfillmentOrderReleaseHold?.userErrors,
+          "Failed to release hold"
+        );
       } catch (error) {
         throw new Error(
           `Could not release hold on fulfillment order ${

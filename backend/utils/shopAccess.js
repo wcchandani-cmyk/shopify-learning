@@ -1,7 +1,7 @@
 const Shop = require("../modules/shop/model");
 const { auth, RequestedTokenType } = require("./shopify");
 
-async function resolveShopForApi(shopDomain, sessionToken) {
+const resolveShopForApi = async (shopDomain, sessionToken) => {
   if (!shopDomain) {
     const err = new Error("Missing shop domain");
     err.statusCode = 400;
@@ -9,9 +9,7 @@ async function resolveShopForApi(shopDomain, sessionToken) {
   }
 
   const loadInstalledShop = () =>
-    Shop.findOne({
-      where: { myshopifyDomain: shopDomain, appInstall: "1" },
-    });
+    Shop.findOne({ where: { myshopifyDomain: shopDomain, appInstall: "1" } });
 
   if (!sessionToken) {
     const shop = await loadInstalledShop();
@@ -33,30 +31,21 @@ async function resolveShopForApi(shopDomain, sessionToken) {
       requestedTokenType: RequestedTokenType.OfflineAccessToken,
     }));
   } catch (exchangeError) {
-    // Token exchange can fail even for a locally-valid session token, most
-    // often due to clock skew or a session token that expired in transit
-    // (Shopify returns `invalid_subject_token`). Since the app already holds a
-    // long-lived offline token from install (the same one webhooks use), fall
-    // back to it so reads/writes keep working instead of hard-failing.
     const shop = await loadInstalledShop();
-    if (shop?.token) {
-      return shop;
-    }
+    if (shop?.token) return shop;
     throw exchangeError;
   }
 
   const accessToken = session.accessToken;
   const canonicalDomain = session.shop || shopDomain;
 
-  let shop = await Shop.findOne({
-    where: { myshopifyDomain: canonicalDomain, appInstall: "1" },
-  });
-
-  if (!shop) {
-    shop = await Shop.findOne({
+  const shop =
+    (await Shop.findOne({
+      where: { myshopifyDomain: canonicalDomain, appInstall: "1" },
+    })) ||
+    (await Shop.findOne({
       where: { myshopifyDomain: shopDomain, appInstall: "1" },
-    });
-  }
+    }));
 
   if (!shop) {
     const err = new Error(
@@ -67,28 +56,18 @@ async function resolveShopForApi(shopDomain, sessionToken) {
   }
 
   const updates = {};
-  if (shop.token !== accessToken) {
-    updates.token = accessToken;
-  }
-  if (canonicalDomain && shop.myshopifyDomain !== canonicalDomain) {
+  if (shop.token !== accessToken) updates.token = accessToken;
+  if (canonicalDomain && shop.myshopifyDomain !== canonicalDomain)
     updates.myshopifyDomain = canonicalDomain;
-  }
-
-  if (Object.keys(updates).length > 0) {
-    await shop.update(updates);
-  }
+  if (Object.keys(updates).length > 0) await shop.update(updates);
 
   shop.token = accessToken;
-  if (canonicalDomain) {
-    shop.myshopifyDomain = canonicalDomain;
-  }
+  if (canonicalDomain) shop.myshopifyDomain = canonicalDomain;
 
   return shop;
-}
+};
 
-function isShopifyUnauthorized(error) {
-  return error?.response?.code === 401;
-}
+const isShopifyUnauthorized = (error) => error?.response?.code === 401;
 
 module.exports = {
   resolveShopForApi,

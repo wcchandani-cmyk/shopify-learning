@@ -9,7 +9,6 @@ const {
   getGraphQLClient,
   RequestedTokenType,
 } = require("../../utils/shopify");
-
 const { successResponse, errorResponse } = require("../../utils/response");
 const { FREE_TRIAL_DAYS } = require("../../config/constants");
 const { handleError } = require("../../utils/controllerHelper");
@@ -17,12 +16,10 @@ const { handleError } = require("../../utils/controllerHelper");
 const getShopDetails = async (req, res) => {
   try {
     const { sessionToken, shopDomain } = req;
-
-    // Step 1: Check DB for shop
-    let existingShop = await Shop.findOne({
+    const existingShop = await Shop.findOne({
       where: { myshopifyDomain: shopDomain },
     });
-    let shop = existingShop ? existingShop.toJSON() : null;
+    let shop = existingShop?.toJSON() || null;
     const wasUninstalled = existingShop?.appInstall === "0";
 
     const { session } = await auth.tokenExchange({
@@ -32,19 +29,15 @@ const getShopDetails = async (req, res) => {
     });
     const token = session.accessToken;
 
-    // Refresh shop row + metadata on install, reinstall, or each app open
     if (!existingShop || wasUninstalled) {
       const { graphqlClient: client } = getGraphQLClient({
         shopDomain: session.shop,
         accessToken: token,
       });
-
       const gqlResponse = await client.request(SHOP_QUERY);
       const shopInfo = gqlResponse.data?.shop;
 
-      if (!shopInfo) {
-        throw new Error("Unable to fetch shop info from Shopify");
-      }
+      if (!shopInfo) throw new Error("Unable to fetch shop info from Shopify");
 
       const upsertData = {
         myshopifyDomain: session.shop || existingShop?.myshopifyDomain,
@@ -73,19 +66,16 @@ const getShopDetails = async (req, res) => {
       const [upsertedShop] = await Shop.upsert(upsertData, {
         conflictFields: ["myshopifyDomain"],
       });
-
       console.log(
         `Shop ${shopDomain} ${wasUninstalled ? "reinstalled" : "new/updated"}`
       );
-
       shop = upsertedShop.toJSON();
     } else if (existingShop.token !== token) {
       await existingShop.update({ token });
       shop = { ...existingShop.toJSON(), token };
     }
 
-    delete shop?.token;
-
+    if (shop) delete shop.token;
     successResponse(res, 200, "Shop detail get successfully", {
       ...shop,
       trialDays: FREE_TRIAL_DAYS,
@@ -96,7 +86,6 @@ const getShopDetails = async (req, res) => {
   }
 };
 
-// The store's enabled languages, used for the customer "Language" field.
 const listLocales = async (req, res) => {
   try {
     const shop = req.shop;
@@ -104,31 +93,20 @@ const listLocales = async (req, res) => {
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const response = await graphqlClient.request(SHOP_LOCALES_QUERY);
     const locales = (response.data?.shopLocales || [])
       .filter((item) => item.published || item.primary)
-      .map((item) => ({
-        locale: item.locale,
-        primary: Boolean(item.primary),
-      }));
+      .map((item) => ({ locale: item.locale, primary: !!item.primary }));
 
     successResponse(res, 200, "Locales fetched successfully", { locales });
   } catch (error) {
     console.error("Error listing shop locales:", error.message);
-    // If access is denied (e.g. missing scopes), return a safe fallback locales array instead of crashing with 500
-    if (
-      error.message?.includes("Access denied") ||
-      error.message?.includes("scope") ||
-      error.message?.includes("forbidden")
-    ) {
+    if (/(Access denied|scope|forbidden)/i.test(error.message)) {
       return successResponse(
         res,
         200,
         "Locales fetched successfully (fallback)",
-        {
-          locales: [{ locale: "en", primary: true }],
-        }
+        { locales: [{ locale: "en", primary: true }] }
       );
     }
     handleError(res, error, "Failed to list locales");
@@ -142,15 +120,11 @@ const listCurrencies = async (req, res) => {
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const response = await graphqlClient.request(SHOP_CURRENCIES_QUERY);
-    const shopInfo = response.data?.shop;
-    const primary = shopInfo?.currencyCode || "USD";
-    const enabled =
-      Array.isArray(shopInfo?.enabledPresentmentCurrencies) &&
-      shopInfo.enabledPresentmentCurrencies.length
-        ? shopInfo.enabledPresentmentCurrencies
-        : [primary];
+    const primary = response.data?.shop?.currencyCode || "USD";
+    const enabled = response.data?.shop?.enabledPresentmentCurrencies || [
+      primary,
+    ];
 
     successResponse(res, 200, "Currencies fetched successfully", {
       primary,
@@ -158,11 +132,7 @@ const listCurrencies = async (req, res) => {
     });
   } catch (error) {
     console.error("Error listing shop currencies:", error.message);
-    if (
-      error.message?.includes("Access denied") ||
-      error.message?.includes("scope") ||
-      error.message?.includes("forbidden")
-    ) {
+    if (/(Access denied|scope|forbidden)/i.test(error.message)) {
       return successResponse(
         res,
         200,

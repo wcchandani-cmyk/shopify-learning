@@ -3,80 +3,83 @@ const { errorResponse } = require("../utils/response");
 
 const sessionVerifier = async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  if (!authHeader)
+    return errorResponse(res, 401, "Please provide authorization credentials");
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/);
+  if (!match)
+    return errorResponse(
+      res,
+      401,
+      "Please provide a valid authorization token"
+    );
+
+  const token = match[1].trim();
+  if (!token)
+    return errorResponse(res, 401, "Please provide a valid session token");
 
   try {
-    if (!authHeader) {
-      errorResponse(res, 401, "Please provide authorization credentials");
-      return;
-    }
-
-    const bearerRegex = /^Bearer\s+(.+)$/;
-    const match = authHeader.match(bearerRegex);
-    if (!match) {
-      errorResponse(res, 401, "Please provide a valid authorization token");
-      return;
-    }
-
-    const token = match[1].trim();
-    if (!token) {
-      errorResponse(res, 401, "Please provide a valid session token");
-      return;
-    }
-
     const tokenPayload = await session.decodeSessionToken(token);
-    if (!tokenPayload || !tokenPayload.dest) {
-      errorResponse(res, 401, "Invalid session token. Please try again.");
-      return;
-    }
+    if (!tokenPayload || !tokenPayload.dest)
+      return errorResponse(
+        res,
+        401,
+        "Invalid session token. Please try again."
+      );
 
     req.sessionToken = token;
     req.shopDomain = new URL(tokenPayload.dest).hostname;
 
-    const { resolveShopForApi, isShopifyUnauthorized } = require("../utils/shopAccess");
+    const {
+      resolveShopForApi,
+      isShopifyUnauthorized,
+    } = require("../utils/shopAccess");
     try {
       req.shop = await resolveShopForApi(req.shopDomain, req.sessionToken);
     } catch (shopError) {
       if (isShopifyUnauthorized(shopError)) {
-        errorResponse(
+        return errorResponse(
           res,
           401,
           "Shopify session expired. Reload the app from Shopify admin and try again.",
           shopError
         );
-        return;
       }
-      const status = shopError.statusCode || 500;
-      errorResponse(res, status, shopError.message || "Failed to resolve shop", shopError);
-      return;
+      return errorResponse(
+        res,
+        shopError.statusCode || 500,
+        shopError.message || "Failed to resolve shop",
+        shopError
+      );
     }
-
     next();
   } catch (error) {
-    if (error.message?.includes("JWT")) {
-      errorResponse(res, 401, "Invalid session token. Please log in again.");
-      return;
-    }
-
-    if (
-      error.message?.includes("expired") ||
-      error.message?.includes("exp") ||
-      error.message?.includes("timestamp check failed")
-    ) {
-      errorResponse(
+    const msg = error.message || "";
+    if (msg.includes("JWT") || msg.includes("signature")) {
+      return errorResponse(
         res,
         401,
-        "Your session has expired. Please log in again.",
+        "Invalid session token. Please log in again."
       );
-      return;
     }
-
-    if (error.message?.includes("signature")) {
-      errorResponse(res, 401, "Invalid session token. Please log in again.");
-      return;
+    if (
+      msg.includes("expired") ||
+      msg.includes("exp") ||
+      msg.includes("timestamp check failed")
+    ) {
+      return errorResponse(
+        res,
+        401,
+        "Your session has expired. Please log in again."
+      );
     }
-
     console.error("Session verification error:", error);
-    errorResponse(res, 401, "Unable to verify session. Please try again.", error);
+    errorResponse(
+      res,
+      401,
+      "Unable to verify session. Please try again.",
+      error
+    );
   }
 };
 

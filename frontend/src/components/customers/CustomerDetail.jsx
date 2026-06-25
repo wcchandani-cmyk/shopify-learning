@@ -10,11 +10,7 @@ import {
   customerHasAddress,
   formatAddressSummary,
 } from "../../utils/customerForm";
-import {
-  createCustomer,
-  listCustomerTags,
-  updateCustomer,
-} from "../../services/customerService";
+import { createCustomer, updateCustomer } from "../../services/customerService";
 import { getShopLocales } from "../../services/shopService";
 import { getCheckboxChecked, getInputEventValue } from "../../utils/fieldEvent";
 import { exclusiveFieldLabel } from "../../utils/formFields";

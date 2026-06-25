@@ -2,9 +2,6 @@ const { fn, col } = require("sequelize");
 const { successResponse, errorResponse } = require("../../utils/response");
 const Customer = require("./model");
 const { parsePageSize, handleError } = require("../../utils/controllerHelper");
-
-const CUSTOMER_UNAUTH_MSG = "Shopify session expired or customer access not granted. Reload the app and ensure Protected Customer Data Access is approved.";
-const Comment = require("../comment/model");
 const Order = require("../order/model");
 const { createCommentHandlers } = require("../comment/controller");
 const {
@@ -15,25 +12,22 @@ const {
   deleteCustomers: deleteCustomersFlow,
 } = require("./customerService");
 
+const CUSTOMER_UNAUTH_MSG =
+  "Shopify session expired or customer access not granted. Reload the app and ensure Protected Customer Data Access is approved.";
+
 const resolveShopCustomer = async (req) => {
   const shop = req.shop;
   const id = parseInt(req.params.id, 10);
-  if (!Number.isInteger(id) || id < 1) {
+  if (!Number.isInteger(id) || id < 1)
     return { error: [400, "Invalid customer id"] };
-  }
+
   const customer = await Customer.findOne({ where: { id, shopId: shop.id } });
-  if (!customer) {
-    return { error: [404, "Customer not found"] };
-  }
-  return { shop, customer };
+  return customer ? { shop, customer } : { error: [404, "Customer not found"] };
 };
-
-
 
 const listCustomers = async (req, res) => {
   try {
     const shop = req.shop;
-
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = parsePageSize(req.query.limit);
     const offset = (page - 1) * limit;
@@ -48,11 +42,11 @@ const listCustomers = async (req, res) => {
     const customerIds = rows.map((row) => row.id);
     const localCounts = customerIds.length
       ? await Order.findAll({
-        attributes: ["customerId", [fn("COUNT", col("id")), "count"]],
-        where: { shopId: shop.id, customerId: customerIds },
-        group: ["customerId"],
-        raw: true,
-      })
+          attributes: ["customerId", [fn("COUNT", col("id")), "count"]],
+          where: { shopId: shop.id, customerId: customerIds },
+          group: ["customerId"],
+          raw: true,
+        })
       : [];
     const localCountMap = new Map(
       localCounts.map((entry) => [entry.customerId, Number(entry.count)])
@@ -60,7 +54,10 @@ const listCustomers = async (req, res) => {
 
     const customers = rows.map((row) => {
       const dto = toCustomerDTO(row);
-      dto.ordersCount = Math.max(dto.ordersCount, localCountMap.get(row.id) || 0);
+      dto.ordersCount = Math.max(
+        dto.ordersCount,
+        localCountMap.get(row.id) || 0
+      );
       return dto;
     });
     const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -86,13 +83,11 @@ const listCustomers = async (req, res) => {
 
 const listCustomerTags = async (req, res) => {
   try {
-    const shop = req.shop;
     const rows = await Customer.findAll({
-      where: { shopId: shop.id },
+      where: { shopId: req.shop.id },
       attributes: ["tags"],
       raw: true,
     });
-
     const seen = new Set();
     rows.forEach((row) => {
       String(row.tags || "")
@@ -102,8 +97,9 @@ const listCustomerTags = async (req, res) => {
         .forEach((tag) => seen.add(tag));
     });
 
-    const tags = Array.from(seen).sort((a, b) => a.localeCompare(b));
-    successResponse(res, 200, "Tags fetched successfully", { tags });
+    successResponse(res, 200, "Tags fetched successfully", {
+      tags: Array.from(seen).sort((a, b) => a.localeCompare(b)),
+    });
   } catch (error) {
     console.error("Error listing customer tags:", error.message);
     handleError(res, error, "Failed to list tags", CUSTOMER_UNAUTH_MSG);
@@ -129,8 +125,7 @@ const getCustomer = async (req, res) => {
 
 const createCustomer = async (req, res) => {
   try {
-    const shop = req.shop;
-    const created = await createCustomerFlow(shop, req.body);
+    const created = await createCustomerFlow(req.shop, req.body);
     successResponse(res, 201, "Customer created successfully", created);
   } catch (error) {
     console.error("Error creating customer:", error.message);
@@ -153,9 +148,7 @@ const updateCustomer = async (req, res) => {
 
 const deleteCustomers = async (req, res) => {
   try {
-    const shop = req.shop;
-    const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
-    const result = await deleteCustomersFlow(shop, ids);
+    const result = await deleteCustomersFlow(req.shop, req.body?.ids || []);
     successResponse(res, 200, "Customers deleted successfully", result);
   } catch (error) {
     console.error("Error deleting customers:", error.message);

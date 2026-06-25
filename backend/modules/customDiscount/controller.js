@@ -1,5 +1,4 @@
 const { Op } = require("sequelize");
-
 const { successResponse, errorResponse } = require("../../utils/response");
 const { getGraphQLClient } = require("../../utils/shopify");
 const { parsePageSize, handleError } = require("../../utils/controllerHelper");
@@ -58,10 +57,7 @@ const getCombinesWith = (
 
 const formatShopifyErrors = (errors) => {
   const messages = errors.map((e) => e.message);
-  const titleConflict = messages.some((m) =>
-    /title must be unique/i.test(m || "")
-  );
-  if (titleConflict) {
+  if (messages.some((m) => /title must be unique/i.test(m || ""))) {
     return `A discount with this title already exists in Shopify. Either choose a different title, or remove the existing one from Shopify Admin → Discounts before recreating it.`;
   }
   return `Shopify error: ${messages.join(", ")}`;
@@ -79,71 +75,50 @@ const createShopifyDiscount = async ({
   configuration,
   discountClasses,
 }) => {
-  if (method === "Automatic") {
-    const variables = {
-      automaticAppDiscount: {
-        title,
-        functionHandle: FUNCTION_HANDLE,
-        discountClasses,
-        startsAt: startsAt || new Date().toISOString(),
-        endsAt: endsAt || null,
-        combinesWith,
-        metafields: [
-          {
-            namespace: CONFIG_METAFIELD.namespace,
-            key: CONFIG_METAFIELD.key,
-            type: "json",
-            value: functionConfigValue,
-          },
-        ],
+  const isAutomatic = method === "Automatic";
+  const common = {
+    title,
+    functionHandle: FUNCTION_HANDLE,
+    discountClasses,
+    startsAt: startsAt || new Date().toISOString(),
+    endsAt: endsAt || null,
+    combinesWith,
+    metafields: [
+      {
+        namespace: CONFIG_METAFIELD.namespace,
+        key: CONFIG_METAFIELD.key,
+        type: "json",
+        value: functionConfigValue,
       },
-    };
+    ],
+  };
 
-    const shopifyRes = await graphqlClient.request(CREATE_AUTOMATIC_MUTATION, {
-      variables,
-    });
-    const errors =
-      shopifyRes.data?.discountAutomaticAppCreate?.userErrors || [];
-    if (errors.length > 0) {
-      throw new Error(formatShopifyErrors(errors));
-    }
-    return shopifyRes.data?.discountAutomaticAppCreate?.automaticAppDiscount
-      ?.discountId;
-  } else {
-    const variables = {
-      codeAppDiscount: {
-        title,
-        code,
-        functionHandle: FUNCTION_HANDLE,
-        discountClasses,
-        startsAt: startsAt || new Date().toISOString(),
-        endsAt: endsAt || null,
-        combinesWith,
-        metafields: [
-          {
-            namespace: CONFIG_METAFIELD.namespace,
-            key: CONFIG_METAFIELD.key,
-            type: "json",
-            value: functionConfigValue,
-          },
-        ],
-        usageLimit:
-          configuration?.limitTotalUses && configuration?.limitTotalUsesValue
-            ? parseInt(configuration.limitTotalUsesValue, 10)
-            : null,
-        appliesOncePerCustomer: Boolean(configuration?.limitOnePerCustomer),
-      },
-    };
+  const variables = isAutomatic
+    ? { automaticAppDiscount: common }
+    : {
+        codeAppDiscount: {
+          ...common,
+          code,
+          usageLimit:
+            configuration?.limitTotalUses && configuration?.limitTotalUsesValue
+              ? parseInt(configuration.limitTotalUsesValue, 10)
+              : null,
+          appliesOncePerCustomer: Boolean(configuration?.limitOnePerCustomer),
+        },
+      };
 
-    const shopifyRes = await graphqlClient.request(CREATE_CODE_MUTATION, {
-      variables,
-    });
-    const errors = shopifyRes.data?.discountCodeAppCreate?.userErrors || [];
-    if (errors.length > 0) {
-      throw new Error(formatShopifyErrors(errors));
-    }
-    return shopifyRes.data?.discountCodeAppCreate?.codeAppDiscount?.discountId;
-  }
+  const shopifyRes = await graphqlClient.request(
+    isAutomatic ? CREATE_AUTOMATIC_MUTATION : CREATE_CODE_MUTATION,
+    { variables }
+  );
+  const result = isAutomatic
+    ? shopifyRes.data?.discountAutomaticAppCreate
+    : shopifyRes.data?.discountCodeAppCreate;
+  const errors = result?.userErrors || [];
+  if (errors.length > 0) throw new Error(formatShopifyErrors(errors));
+  return isAutomatic
+    ? result?.automaticAppDiscount?.discountId
+    : result?.codeAppDiscount?.discountId;
 };
 
 const setConfigMetafield = async ({
@@ -165,11 +140,10 @@ const setConfigMetafield = async ({
     },
   });
   const errors = res.data?.metafieldsSet?.userErrors || [];
-  if (errors.length > 0) {
+  if (errors.length > 0)
     throw new Error(
       `Shopify metafield error: ${errors.map((e) => e.message).join(", ")}`
     );
-  }
 };
 
 const listCustomDiscounts = async (req, res) => {
@@ -177,14 +151,13 @@ const listCustomDiscounts = async (req, res) => {
     const shop = await getShopRecord(req);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = parsePageSize(req.query.limit, 10, 50);
-    const offset = (page - 1) * limit;
 
     const { count: total, rows: customizations } =
       await CustomDiscount.findAndCountAll({
         where: { shopId: shop.id },
         order: [["updatedAt", "DESC"]],
         limit,
-        offset,
+        offset: (page - 1) * limit,
       });
 
     const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -201,29 +174,20 @@ const listCustomDiscounts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error listing custom discounts:", error);
     handleError(res, error, "Failed to list custom discounts");
   }
 };
 
 const getCustomDiscount = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const { id } = req.params;
-
     const customization = await CustomDiscount.findOne({
       where: {
-        shopifyId: {
-          [Op.like]: `%/${id}`,
-        },
-        shopId: shop.id,
+        shopifyId: { [Op.like]: `%/${req.params.id}` },
+        shopId: (await getShopRecord(req)).id,
       },
     });
-
-    if (!customization) {
+    if (!customization)
       return errorResponse(res, 404, "Custom discount not found");
-    }
-
     successResponse(
       res,
       200,
@@ -231,7 +195,6 @@ const getCustomDiscount = async (req, res) => {
       customization
     );
   } catch (error) {
-    console.error("Error fetching custom discount:", error);
     handleError(res, error, "Failed to fetch custom discount");
   }
 };
@@ -248,27 +211,23 @@ const createCustomDiscount = async (req, res) => {
       combinesWithProduct,
       combinesWithOrder,
       combinesWithShipping,
-      configuration, // JSON object
+      configuration,
       functionType,
     } = req.body;
 
-    if (!title || !method || !configuration) {
+    if (!title || !method || !configuration)
       return errorResponse(res, 400, "Missing required fields");
-    }
-
-    if (method === "Code" && !code) {
+    if (method === "Code" && !code)
       return errorResponse(
         res,
         400,
         "Discount code is required for Code method"
       );
-    }
 
     const { graphqlClient } = getGraphQLClient({
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const functionConfigValue = JSON.stringify(configuration);
     const combinesWith = getCombinesWith(
       functionType,
@@ -319,7 +278,6 @@ const createCustomDiscount = async (req, res) => {
       newRecord
     );
   } catch (error) {
-    console.error("Error creating custom discount:", error);
     handleError(res, error, "Failed to create custom discount");
   }
 };
@@ -342,59 +300,40 @@ const updateCustomDiscount = async (req, res) => {
     } = req.body;
 
     const customization = await CustomDiscount.findOne({
-      where: {
-        shopifyId: {
-          [Op.like]: `%/${id}`,
-        },
-        shopId: shop.id,
-      },
+      where: { shopifyId: { [Op.like]: `%/${id}` }, shopId: shop.id },
     });
-
-    if (!customization) {
+    if (!customization)
       return errorResponse(res, 404, "Custom discount not found");
-    }
 
     const { graphqlClient } = getGraphQLClient({
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
-    const methodChanged = method && method !== customization.method;
+    const fType = functionType || customization.functionType || "1";
     const combinesWith = getCombinesWith(
-      functionType || customization.functionType,
+      fType,
       combinesWithProduct,
       combinesWithOrder,
       combinesWithShipping,
       configuration
     );
+    const functionConfigValue = JSON.stringify(configuration);
 
-    if (methodChanged) {
-      // 1. Delete old discount on Shopify (use the mutation for its OLD method)
+    if (method && method !== customization.method) {
       try {
         const oldIsAutomatic = customization.method !== "Code";
-        const deleteRes = await graphqlClient.request(
+        await graphqlClient.request(
           oldIsAutomatic ? DELETE_AUTOMATIC_MUTATION : DELETE_CODE_MUTATION,
-          { variables: { id: customization.shopifyId } }
+          {
+            variables: { id: customization.shopifyId },
+          }
         );
-        const deleteErrors =
-          (oldIsAutomatic
-            ? deleteRes.data?.discountAutomaticDelete?.userErrors
-            : deleteRes.data?.discountCodeDelete?.userErrors) || [];
-        if (deleteErrors.length > 0) {
-          console.warn(
-            `Shopify delete warnings for GID ${customization.shopifyId} during method change:`,
-            deleteErrors
-          );
-        }
       } catch (shopifyError) {
         console.error(
-          `Could not delete old discount ${customization.shopifyId} on Shopify during method change:`,
+          `Could not delete old discount during method change:`,
           shopifyError.message
         );
       }
-
-      // 2. Create new discount on Shopify with the new method
-      const functionConfigValue = JSON.stringify(configuration);
 
       const newShopifyId = await createShopifyDiscount({
         graphqlClient,
@@ -406,19 +345,15 @@ const updateCustomDiscount = async (req, res) => {
         combinesWith,
         functionConfigValue,
         configuration,
-        discountClasses: getDiscountClasses(
-          functionType || customization.functionType
-        ),
+        discountClasses: getDiscountClasses(fType),
       });
 
-      // 2b. Attach the config metafield to the newly created discount node.
       await setConfigMetafield({
         graphqlClient,
         ownerId: newShopifyId,
         functionConfigValue,
       });
 
-      // 3. Update database record with new GID and method
       await customization.update({
         shopifyId: newShopifyId,
         method,
@@ -428,113 +363,60 @@ const updateCustomDiscount = async (req, res) => {
         combinesWithProduct: combinesWith.productDiscounts,
         combinesWithOrder: combinesWith.orderDiscounts,
         combinesWithShipping: combinesWith.shippingDiscounts,
-        configuration: JSON.stringify(configuration),
-        functionType: functionType || customization.functionType || "1",
+        configuration: functionConfigValue,
+        functionType: fType,
       });
     } else {
-      // 1. Update fields on Shopify (Method has not changed)
-      const functionConfigValue = JSON.stringify(configuration);
-
-      if (customization.method === "Automatic") {
-        const variables = {
-          id: customization.shopifyId,
-          automaticAppDiscount: {
-            title,
-            discountClasses: getDiscountClasses(
-              functionType || customization.functionType
-            ),
-            startsAt: startsAt || new Date().toISOString(),
-            endsAt: endsAt || null,
-            combinesWith: {
-              productDiscounts: combinesWith.productDiscounts,
-              orderDiscounts: combinesWith.orderDiscounts,
-              shippingDiscounts: combinesWith.shippingDiscounts,
-            },
-          },
-        };
-
-        const shopifyRes = await graphqlClient.request(
-          UPDATE_AUTOMATIC_MUTATION,
-          { variables }
-        );
-        const errors =
-          shopifyRes.data?.discountAutomaticAppUpdate?.userErrors || [];
-        if (errors.length > 0) {
-          return errorResponse(
-            res,
-            400,
-            `Shopify error: ${errors.map((e) => e.message).join(", ")}`
-          );
-        }
-      } else {
-        const variables = {
-          id: customization.shopifyId,
-          codeAppDiscount: {
-            title,
-            code: code || configuration.code,
-            discountClasses: getDiscountClasses(
-              functionType || customization.functionType
-            ),
-            startsAt: startsAt || new Date().toISOString(),
-            endsAt: endsAt || null,
-            combinesWith: {
-              productDiscounts: combinesWith.productDiscounts,
-              orderDiscounts: combinesWith.orderDiscounts,
-              shippingDiscounts: combinesWith.shippingDiscounts,
-            },
-            usageLimit:
-              configuration?.limitTotalUses &&
-              configuration?.limitTotalUsesValue
-                ? parseInt(configuration.limitTotalUsesValue, 10)
-                : null,
-            appliesOncePerCustomer: Boolean(configuration?.limitOnePerCustomer),
-          },
-        };
-
-        const shopifyRes = await graphqlClient.request(UPDATE_CODE_MUTATION, {
-          variables,
-        });
-        const errors = shopifyRes.data?.discountCodeAppUpdate?.userErrors || [];
-        if (errors.length > 0) {
-          return errorResponse(
-            res,
-            400,
-            `Shopify error: ${errors.map((e) => e.message).join(", ")}`
-          );
-        }
-      }
-
-      // 2. Set the Metafield
-      const metafieldVariables = {
-        metafields: [
-          {
-            ownerId: customization.shopifyId,
-            namespace: CONFIG_METAFIELD.namespace,
-            key: CONFIG_METAFIELD.key,
-            type: "json",
-            value: functionConfigValue,
-          },
-        ],
+      const isAutomatic = customization.method === "Automatic";
+      const variables = { id: customization.shopifyId };
+      const commonDetails = {
+        title,
+        discountClasses: getDiscountClasses(fType),
+        startsAt: startsAt || new Date().toISOString(),
+        endsAt: endsAt || null,
+        combinesWith: {
+          productDiscounts: combinesWith.productDiscounts,
+          orderDiscounts: combinesWith.orderDiscounts,
+          shippingDiscounts: combinesWith.shippingDiscounts,
+        },
       };
 
-      const metafieldRes = await graphqlClient.request(
-        METAFIELDS_SET_MUTATION,
-        {
-          variables: metafieldVariables,
-        }
+      if (isAutomatic) {
+        variables.automaticAppDiscount = commonDetails;
+      } else {
+        variables.codeAppDiscount = {
+          ...commonDetails,
+          code: code || configuration.code,
+          usageLimit:
+            configuration?.limitTotalUses && configuration?.limitTotalUsesValue
+              ? parseInt(configuration.limitTotalUsesValue, 10)
+              : null,
+          appliesOncePerCustomer: Boolean(configuration?.limitOnePerCustomer),
+        };
+      }
+
+      const shopifyRes = await graphqlClient.request(
+        isAutomatic ? UPDATE_AUTOMATIC_MUTATION : UPDATE_CODE_MUTATION,
+        { variables }
       );
-      const mfErrors = metafieldRes.data?.metafieldsSet?.userErrors || [];
-      if (mfErrors.length > 0) {
+      const errors =
+        (isAutomatic
+          ? shopifyRes.data?.discountAutomaticAppUpdate
+          : shopifyRes.data?.discountCodeAppUpdate
+        )?.userErrors || [];
+      if (errors.length > 0)
         return errorResponse(
           res,
           400,
-          `Shopify metafield error: ${mfErrors
-            .map((e) => e.message)
-            .join(", ")}`
+          `Shopify error: ${errors.map((e) => e.message).join(", ")}`
         );
-      }
 
-      // 3. Update locally
+      await setConfigMetafield({
+        graphqlClient,
+        ownerId: customization.shopifyId,
+        functionConfigValue,
+      });
+
       await customization.update({
         title,
         startsAt: startsAt || customization.startsAt,
@@ -542,8 +424,8 @@ const updateCustomDiscount = async (req, res) => {
         combinesWithProduct: combinesWith.productDiscounts,
         combinesWithOrder: combinesWith.orderDiscounts,
         combinesWithShipping: combinesWith.shippingDiscounts,
-        configuration: JSON.stringify(configuration),
-        functionType: functionType || customization.functionType || "1",
+        configuration: functionConfigValue,
+        functionType: fType,
       });
     }
 
@@ -554,7 +436,6 @@ const updateCustomDiscount = async (req, res) => {
       customization
     );
   } catch (error) {
-    console.error("Error updating custom discount:", error);
     handleError(res, error, "Failed to update custom discount");
   }
 };
@@ -563,7 +444,6 @@ const deleteCustomDiscounts = async (req, res) => {
   try {
     const shop = await getShopRecord(req);
     const { ids } = req.body;
-
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return errorResponse(
         res,
@@ -576,49 +456,37 @@ const deleteCustomDiscounts = async (req, res) => {
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const deletedLocalIds = [];
 
     for (const id of ids) {
       const customization = await CustomDiscount.findOne({
-        where: {
-          shopifyId: {
-            [Op.like]: `%/${id}`,
-          },
-          shopId: shop.id,
-        },
+        where: { shopifyId: { [Op.like]: `%/${id}` }, shopId: shop.id },
       });
       if (customization) {
         let shopifyDeleted = false;
         try {
           const isAutomatic = customization.method !== "Code";
-          const mutation = isAutomatic
-            ? DELETE_AUTOMATIC_MUTATION
-            : DELETE_CODE_MUTATION;
-
-          const shopifyRes = await graphqlClient.request(mutation, {
-            variables: { id: customization.shopifyId },
-          });
+          const shopifyRes = await graphqlClient.request(
+            isAutomatic ? DELETE_AUTOMATIC_MUTATION : DELETE_CODE_MUTATION,
+            {
+              variables: { id: customization.shopifyId },
+            }
+          );
 
           const result =
             (isAutomatic
               ? shopifyRes.data?.discountAutomaticDelete
               : shopifyRes.data?.discountCodeDelete) || {};
-          const deletedId = isAutomatic
-            ? result.deletedAutomaticDiscountId
-            : result.deletedCodeDiscountId;
           const errors = result.userErrors || [];
-          const alreadyGone = errors.some((e) => {
-            const msg = (e.message || "").toLowerCase();
-            return (
-              msg.includes("not found") ||
-              msg.includes("could not find") ||
-              msg.includes("does not exist") ||
-              msg.includes("doesn't exist")
-            );
-          });
+          const alreadyGone = errors.some((e) =>
+            /(not found|could not find|does not exist)/i.test(e.message || "")
+          );
 
-          if (deletedId || alreadyGone) {
+          if (
+            result.deletedAutomaticDiscountId ||
+            result.deletedCodeDiscountId ||
+            alreadyGone
+          ) {
             shopifyDeleted = true;
           } else if (errors.length > 0) {
             return errorResponse(
@@ -626,19 +494,17 @@ const deleteCustomDiscounts = async (req, res) => {
               400,
               `Shopify error: ${errors.map((e) => e.message).join(", ")}`
             );
-          } else {
-            return errorResponse(
-              res,
-              400,
-              "Shopify did not confirm the discount was deleted. Please try again."
-            );
           }
         } catch (shopifyError) {
           console.error(
             `Could not delete discount ${customization.shopifyId} on Shopify:`,
             shopifyError
           );
-          return handleError(res, shopifyError, "Failed to delete discount on Shopify");
+          return handleError(
+            res,
+            shopifyError,
+            "Failed to delete discount on Shopify"
+          );
         }
 
         if (shopifyDeleted) {
@@ -652,7 +518,6 @@ const deleteCustomDiscounts = async (req, res) => {
       deletedIds: deletedLocalIds,
     });
   } catch (error) {
-    console.error("Error deleting custom discounts:", error);
     handleError(res, error, "Failed to delete custom discounts");
   }
 };
@@ -661,61 +526,52 @@ const toggleDiscountStatus = async (req, res) => {
   try {
     const shop = await getShopRecord(req);
     const { id } = req.params;
-    const { status } = req.body; // "active" | "inactive"
+    const { status } = req.body;
 
     const customization = await CustomDiscount.findOne({
-      where: {
-        shopifyId: {
-          [Op.like]: `%/${id}`,
-        },
-        shopId: shop.id,
-      },
+      where: { shopifyId: { [Op.like]: `%/${id}` }, shopId: shop.id },
     });
-
-    if (!customization) {
+    if (!customization)
       return errorResponse(res, 404, "Custom discount not found");
-    }
 
     const { graphqlClient } = getGraphQLClient({
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const isAutomatic = customization.method === "Automatic";
     const activate = status === "active";
 
-    let mutation;
-    let resultKey;
-    if (isAutomatic) {
-      mutation = activate ? ENABLE_MUTATION : DISABLE_MUTATION;
-      resultKey = activate
+    const mutation = isAutomatic
+      ? activate
+        ? ENABLE_MUTATION
+        : DISABLE_MUTATION
+      : activate
+      ? ENABLE_CODE_MUTATION
+      : DISABLE_CODE_MUTATION;
+    const resultKey = isAutomatic
+      ? activate
         ? "discountAutomaticActivate"
-        : "discountAutomaticDeactivate";
-    } else {
-      mutation = activate ? ENABLE_CODE_MUTATION : DISABLE_CODE_MUTATION;
-      resultKey = activate ? "discountCodeActivate" : "discountCodeDeactivate";
-    }
+        : "discountAutomaticDeactivate"
+      : activate
+      ? "discountCodeActivate"
+      : "discountCodeDeactivate";
 
     const shopifyRes = await graphqlClient.request(mutation, {
       variables: { id: customization.shopifyId },
     });
-
     const errors = shopifyRes.data?.[resultKey]?.userErrors || [];
-    if (errors.length > 0) {
+    if (errors.length > 0)
       return errorResponse(
         res,
         400,
         `Shopify error: ${errors.map((e) => e.message).join(", ")}`
       );
-    }
 
     await customization.update({ status: activate ? "active" : "inactive" });
-
     successResponse(res, 200, "Discount status updated", {
       status: activate ? "active" : "inactive",
     });
   } catch (error) {
-    console.error("Error toggling discount status:", error);
     handleError(res, error, "Failed to toggle discount status");
   }
 };

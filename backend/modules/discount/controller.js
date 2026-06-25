@@ -1,4 +1,3 @@
-
 const { successResponse, errorResponse } = require("../../utils/response");
 const { getRestClient, getGraphQLClient } = require("../../utils/shopify");
 const { parsePageSize, handleError } = require("../../utils/controllerHelper");
@@ -35,15 +34,14 @@ const bxgySummaryInput = (body) => ({
 });
 
 const getShopifyCountryIds = async (client, isoCodes) => {
-  if (!isoCodes || isoCodes.length === 0) return [];
+  if (!isoCodes?.length) return [];
   try {
     const response = await client.get({ path: "countries" });
     const countries = response.body?.countries || [];
-    const upperCodes = isoCodes.map((code) => code.toUpperCase());
-    const matched = countries.filter((c) =>
-      upperCodes.includes(c.code.toUpperCase())
-    );
-    return matched.map((c) => c.id);
+    const upperCodes = new Set(isoCodes.map((code) => code.toUpperCase()));
+    return countries
+      .filter((c) => upperCodes.has(c.code.toUpperCase()))
+      .map((c) => c.id);
   } catch (err) {
     console.error("Error fetching country IDs from Shopify:", err.message);
     return [];
@@ -83,25 +81,19 @@ const getShippableCountries = async (req, res) => {
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const response = await graphqlClient.request(SHIPPING_COUNTRIES_QUERY);
     const profiles = response.data?.deliveryProfiles?.edges || [];
 
     const codeSet = new Set();
     let includeRestOfWorld = false;
 
-    for (const profileEdge of profiles) {
-      const groups = profileEdge.node?.profileLocationGroups || [];
-      for (const group of groups) {
-        const zoneEdges = group.locationGroupZones?.edges || [];
-        for (const zoneEdge of zoneEdges) {
-          const countries = zoneEdge.node?.zone?.countries || [];
-          for (const country of countries) {
-            if (country.code?.restOfWorld) {
-              includeRestOfWorld = true;
-            } else if (country.code?.countryCode) {
+    for (const edge of profiles) {
+      for (const group of edge.node?.profileLocationGroups || []) {
+        for (const zone of group.locationGroupZones?.edges || []) {
+          for (const country of zone.node?.zone?.countries || []) {
+            if (country.code?.restOfWorld) includeRestOfWorld = true;
+            else if (country.code?.countryCode)
               codeSet.add(country.code.countryCode.toLowerCase());
-            }
           }
         }
       }
@@ -118,30 +110,22 @@ const getShippableCountries = async (req, res) => {
 };
 
 const resolveShopDiscount = async (req) => {
-  const shop = await getShopRecord(req);
   const id = parseInt(req.params.id, 10);
-  if (!Number.isInteger(id) || id < 1) {
+  if (!Number.isInteger(id) || id < 1)
     return { error: [400, "Invalid discount id"] };
-  }
-  const discount = await Discount.findOne({ where: { id, shopId: shop.id } });
-  if (!discount) {
-    return { error: [404, "Discount not found"] };
-  }
-  return { shop, discount };
+  const discount = await Discount.findOne({
+    where: { id, shopId: req.shop.id },
+  });
+  return discount
+    ? { shop: req.shop, discount }
+    : { error: [404, "Discount not found"] };
 };
-
-
 
 const extractNumericId = (gid) => {
   if (!gid) return null;
-  let cleanGid = String(gid);
-  if (cleanGid.startsWith("customer-")) {
-    cleanGid = cleanGid.substring("customer-".length);
-  }
-  const parts = cleanGid.split("/");
-  const last = parts[parts.length - 1];
-  const parsed = parseInt(last, 10);
-  return isNaN(parsed) ? null : parsed;
+  const clean = String(gid).replace(/^customer-/, "");
+  const id = parseInt(clean.split("/").pop(), 10);
+  return isNaN(id) ? null : id;
 };
 
 const mapEntitledFields = (priceRule, appliesTo, selectedItems) => {
@@ -152,18 +136,13 @@ const mapEntitledFields = (priceRule, appliesTo, selectedItems) => {
     for (const item of selectedItems) {
       const pId = extractNumericId(item.id);
       if (!pId) continue;
-
       const variants = item.variants || [];
-      const selectedVariants = variants.filter((v) => v.selected);
-
-      if (
-        selectedVariants.length > 0 &&
-        selectedVariants.length < variants.length
-      ) {
-        for (const sv of selectedVariants) {
-          const vId = extractNumericId(sv.id);
+      const selected = variants.filter((v) => v.selected);
+      if (selected.length > 0 && selected.length < variants.length) {
+        selected.forEach((v) => {
+          const vId = extractNumericId(v.id);
           if (vId) priceRule.entitled_variant_ids.push(vId);
-        }
+        });
       } else {
         priceRule.entitled_product_ids.push(pId);
       }
@@ -173,15 +152,11 @@ const mapEntitledFields = (priceRule, appliesTo, selectedItems) => {
     Array.isArray(selectedItems)
   ) {
     priceRule.target_selection = TARGET_SELECTION.ENTITLED;
-    priceRule.entitled_collection_ids = [];
-    for (const item of selectedItems) {
-      const cId = extractNumericId(item.id);
-      if (cId) priceRule.entitled_collection_ids.push(cId);
-    }
-  } else {
-    if (priceRule.target_type !== TARGET_TYPE.SHIPPING_LINE) {
-      priceRule.target_selection = TARGET_SELECTION.ALL;
-    }
+    priceRule.entitled_collection_ids = selectedItems
+      .map((i) => extractNumericId(i.id))
+      .filter(Boolean);
+  } else if (priceRule.target_type !== TARGET_TYPE.SHIPPING_LINE) {
+    priceRule.target_selection = TARGET_SELECTION.ALL;
   }
 };
 
@@ -207,26 +182,21 @@ const mapBxgyFields = (priceRule, body) => {
   const buysQty = parseInt(bxgyCustomerBuysQuantity || 1, 10);
   const getsQty = parseInt(bxgyCustomerGetsQuantity || 1, 10);
 
-  // 1. Customer buys — quantity vs amount prerequisite
+  priceRule.prerequisite_product_ids = [];
+  priceRule.prerequisite_variant_ids = [];
+  priceRule.prerequisite_collection_ids = [];
+
   if (bxgyCustomerBuysType === "amount") {
     priceRule.prerequisite_to_entitlement_subtotal = {
       amount: String(parseFloat(bxgyCustomerBuysAmount || 0)),
     };
     priceRule.prerequisite_to_entitlement_quantity_ratio = null;
-    priceRule.prerequisite_product_ids = [];
-    priceRule.prerequisite_variant_ids = [];
-    priceRule.prerequisite_collection_ids = [];
   } else {
     priceRule.prerequisite_to_entitlement_quantity_ratio = {
       prerequisite_quantity: buysQty,
       entitled_quantity: getsQty,
     };
     priceRule.prerequisite_to_entitlement_subtotal = null;
-
-    // 5. Prerequisite items (what the customer buys)
-    priceRule.prerequisite_product_ids = [];
-    priceRule.prerequisite_variant_ids = [];
-    priceRule.prerequisite_collection_ids = [];
 
     if (
       bxgyCustomerBuysAppliesTo === APPLIES_TO.PRODUCTS &&
@@ -236,15 +206,12 @@ const mapBxgyFields = (priceRule, body) => {
         const pId = extractNumericId(item.id);
         if (!pId) continue;
         const variants = item.variants || [];
-        const selectedVariants = variants.filter((v) => v.selected);
-        if (
-          selectedVariants.length > 0 &&
-          selectedVariants.length < variants.length
-        ) {
-          for (const sv of selectedVariants) {
-            const vId = extractNumericId(sv.id);
+        const selected = variants.filter((v) => v.selected);
+        if (selected.length > 0 && selected.length < variants.length) {
+          selected.forEach((v) => {
+            const vId = extractNumericId(v.id);
             if (vId) priceRule.prerequisite_variant_ids.push(vId);
-          }
+          });
         } else {
           priceRule.prerequisite_product_ids.push(pId);
         }
@@ -253,38 +220,28 @@ const mapBxgyFields = (priceRule, body) => {
       bxgyCustomerBuysAppliesTo === APPLIES_TO.COLLECTIONS &&
       Array.isArray(bxgyCustomerBuysSelectedItems)
     ) {
-      for (const item of bxgyCustomerBuysSelectedItems) {
-        const cId = extractNumericId(item.id);
-        if (cId) priceRule.prerequisite_collection_ids.push(cId);
-      }
+      priceRule.prerequisite_collection_ids = bxgyCustomerBuysSelectedItems
+        .map((i) => extractNumericId(i.id))
+        .filter(Boolean);
     }
   }
 
-  // 2. Discounted value on the "gets" items
-  if (bxgyCustomerGetsDiscountType === VALUE_TYPE.PERCENTAGE) {
-    priceRule.value_type = VALUE_TYPE.PERCENTAGE;
-    priceRule.value = `-${Math.abs(
-      parseFloat(bxgyCustomerGetsDiscountValue || 0)
-    )}`;
-  } else if (bxgyCustomerGetsDiscountType === VALUE_TYPE.FIXED_AMOUNT) {
-    priceRule.value_type = VALUE_TYPE.FIXED_AMOUNT;
-    priceRule.value = `-${Math.abs(
-      parseFloat(bxgyCustomerGetsDiscountValue || 0)
-    )}`;
-  } else {
-    // Free
-    priceRule.value_type = VALUE_TYPE.PERCENTAGE;
-    priceRule.value = "-100.0";
-  }
+  priceRule.value_type =
+    bxgyCustomerGetsDiscountType === VALUE_TYPE.FIXED_AMOUNT
+      ? VALUE_TYPE.FIXED_AMOUNT
+      : VALUE_TYPE.PERCENTAGE;
+  priceRule.value = `-${Math.abs(
+    parseFloat(
+      bxgyCustomerGetsDiscountType === "free"
+        ? 100
+        : bxgyCustomerGetsDiscountValue || 0
+    )
+  )}`;
+  priceRule.allocation_limit =
+    bxgySetMaxUsesPerOrder && bxgyMaxUsesPerOrderValue
+      ? parseInt(bxgyMaxUsesPerOrderValue, 10)
+      : null;
 
-  // 3. Max uses per order
-  if (bxgySetMaxUsesPerOrder && bxgyMaxUsesPerOrderValue) {
-    priceRule.allocation_limit = parseInt(bxgyMaxUsesPerOrderValue, 10);
-  } else {
-    priceRule.allocation_limit = null;
-  }
-
-  // 4. Entitled items (what the customer gets)
   priceRule.entitled_product_ids = [];
   priceRule.entitled_variant_ids = [];
   priceRule.entitled_collection_ids = [];
@@ -297,15 +254,12 @@ const mapBxgyFields = (priceRule, body) => {
       const pId = extractNumericId(item.id);
       if (!pId) continue;
       const variants = item.variants || [];
-      const selectedVariants = variants.filter((v) => v.selected);
-      if (
-        selectedVariants.length > 0 &&
-        selectedVariants.length < variants.length
-      ) {
-        for (const sv of selectedVariants) {
-          const vId = extractNumericId(sv.id);
+      const selected = variants.filter((v) => v.selected);
+      if (selected.length > 0 && selected.length < variants.length) {
+        selected.forEach((v) => {
+          const vId = extractNumericId(v.id);
           if (vId) priceRule.entitled_variant_ids.push(vId);
-        }
+        });
       } else {
         priceRule.entitled_product_ids.push(pId);
       }
@@ -314,10 +268,9 @@ const mapBxgyFields = (priceRule, body) => {
     bxgyCustomerGetsAppliesTo === APPLIES_TO.COLLECTIONS &&
     Array.isArray(bxgyCustomerGetsSelectedItems)
   ) {
-    for (const item of bxgyCustomerGetsSelectedItems) {
-      const cId = extractNumericId(item.id);
-      if (cId) priceRule.entitled_collection_ids.push(cId);
-    }
+    priceRule.entitled_collection_ids = bxgyCustomerGetsSelectedItems
+      .map((i) => extractNumericId(i.id))
+      .filter(Boolean);
   }
 };
 
@@ -335,13 +288,12 @@ const listDiscounts = async (req, res) => {
 
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = parsePageSize(req.query.limit, 10, 50);
-    const offset = (page - 1) * limit;
 
     const { count: total, rows: discounts } = await Discount.findAndCountAll({
       where: { shopId: shop.id },
       order: [["updatedAt", "DESC"]],
       limit,
-      offset,
+      offset: (page - 1) * limit,
     });
 
     const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -359,7 +311,6 @@ const listDiscounts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error listing discounts:", error);
     handleError(res, error, "Failed to list discounts");
   }
 };
@@ -390,9 +341,7 @@ const createDiscount = async (req, res) => {
     } = req.body;
 
     const validationError = validateDiscountPayload(req.body);
-    if (validationError) {
-      return errorResponse(res, 400, validationError);
-    }
+    if (validationError) return errorResponse(res, 400, validationError);
 
     const client = getRestClient(shop);
 
@@ -403,8 +352,7 @@ const createDiscount = async (req, res) => {
       valueType === VALUE_TYPE.FIXED_AMOUNT
         ? VALUE_TYPE.FIXED_AMOUNT
         : VALUE_TYPE.PERCENTAGE;
-    let val = parseFloat(value || 0);
-    let shopifyValue = `-${Math.abs(val)}`;
+    let shopifyValue = `-${Math.abs(parseFloat(value || 0))}`;
 
     let entitledCountryIds = [];
 
@@ -413,19 +361,16 @@ const createDiscount = async (req, res) => {
       allocationMethod = ALLOCATION_METHOD.EACH;
       shopifyValueType = VALUE_TYPE.PERCENTAGE;
       shopifyValue = "-100.0";
-      const wantsSelectedCountries =
+      if (
         req.body.shippingCountries === "selected" &&
-        Array.isArray(req.body.selectedCountries) &&
-        req.body.selectedCountries.length > 0;
-      if (wantsSelectedCountries) {
+        Array.isArray(req.body.selectedCountries)?.length
+      ) {
         entitledCountryIds = await getShopifyCountryIds(
           client,
           req.body.selectedCountries
         );
-        targetSelection =
-          entitledCountryIds.length > 0
-            ? TARGET_SELECTION.ENTITLED
-            : TARGET_SELECTION.ALL;
+        if (entitledCountryIds.length)
+          targetSelection = TARGET_SELECTION.ENTITLED;
       }
     } else if (type === DISCOUNT_TYPE.BUY_X_GET_Y) {
       shopifyValueType = VALUE_TYPE.PERCENTAGE;
@@ -440,19 +385,18 @@ const createDiscount = async (req, res) => {
       value_type: shopifyValueType,
       value: shopifyValue,
       customer_selection:
-        req.body.eligibility === "Specific customers" &&
-        Array.isArray(req.body.selectedCustomers) &&
-        req.body.selectedCustomers.length > 0
+        eligibility === "Specific customers" &&
+        req.body.selectedCustomers?.length
           ? "prerequisite"
           : "all",
       starts_at: startsAt || new Date().toISOString(),
       ends_at: endsAt || null,
       combines_with: {
-        product_discounts: Boolean(combinesWithProduct),
-        order_discounts: Boolean(combinesWithOrder),
-        shipping_discounts: Boolean(combinesWithShipping),
+        product_discounts: !!combinesWithProduct,
+        order_discounts: !!combinesWithOrder,
+        shipping_discounts: !!combinesWithShipping,
       },
-      once_per_customer: Boolean(limitOnePerCustomer),
+      once_per_customer: !!limitOnePerCustomer,
     };
 
     if (priceRule.customer_selection === "prerequisite") {
@@ -472,20 +416,17 @@ const createDiscount = async (req, res) => {
       mapEntitledFields(priceRule, appliesTo, selectedItems);
     }
 
-    if (type === DISCOUNT_TYPE.FREE_SHIPPING) {
-      if (req.body.excludeShippingRates) {
-        const cleanVal = String(
-          req.body.excludeShippingRatesValue || ""
-        ).replace(/,/g, "");
-        priceRule.prerequisite_shipping_price_range = {
-          less_than_or_equal_to: parseFloat(cleanVal || 0),
-        };
-      }
+    if (type === DISCOUNT_TYPE.FREE_SHIPPING && req.body.excludeShippingRates) {
+      priceRule.prerequisite_shipping_price_range = {
+        less_than_or_equal_to: parseFloat(
+          String(req.body.excludeShippingRatesValue || "").replace(/,/g, "") ||
+            0
+        ),
+      };
     }
 
-    if (limitTotalUses && limitTotalUsesValue) {
+    if (limitTotalUses && limitTotalUsesValue)
       priceRule.usage_limit = parseInt(limitTotalUsesValue, 10);
-    }
 
     if (minimumRequirementType === "amount" && minimumRequirementValue) {
       priceRule.prerequisite_subtotal_range = {
@@ -500,20 +441,15 @@ const createDiscount = async (req, res) => {
       };
     }
 
-    const priceRuleData = {
-      price_rule: priceRule,
-    };
-
     const prResponse = await client.post({
       path: "price_rules",
       type: "application/json",
-      data: priceRuleData,
+      data: { price_rule: priceRule },
     });
 
     const createdPriceRule = prResponse.body?.price_rule;
-    if (!createdPriceRule || !createdPriceRule.id) {
+    if (!createdPriceRule?.id)
       throw new Error("Failed to create price rule on Shopify");
-    }
 
     const priceRuleId = createdPriceRule.id;
     const shopifyId = `gid://shopify/PriceRule/${priceRuleId}`;
@@ -523,16 +459,10 @@ const createDiscount = async (req, res) => {
       const codeResponse = await client.post({
         path: `price_rules/${priceRuleId}/discount_codes`,
         type: "application/json",
-        data: {
-          discount_code: {
-            code: title,
-          },
-        },
+        data: { discount_code: { code: title } },
       });
-      const codeNode = codeResponse.body?.discount_code;
-      if (codeNode && codeNode.code) {
-        finalTitle = codeNode.code;
-      }
+      if (codeResponse.body?.discount_code?.code)
+        finalTitle = codeResponse.body.discount_code.code;
     }
 
     const summary = buildSummary({
@@ -546,7 +476,6 @@ const createDiscount = async (req, res) => {
       createdPriceRule.starts_at,
       createdPriceRule.ends_at
     );
-
     const finalSelectedItems = serializeSelectedItems(type, req.body);
 
     const discount = await Discount.create({
@@ -558,9 +487,9 @@ const createDiscount = async (req, res) => {
       method,
       eligibility: eligibility || ELIGIBILITY.ALL_CUSTOMERS,
       type,
-      combinesWithProduct: Boolean(combinesWithProduct),
-      combinesWithOrder: Boolean(combinesWithOrder),
-      combinesWithShipping: Boolean(combinesWithShipping),
+      combinesWithProduct: !!combinesWithProduct,
+      combinesWithOrder: !!combinesWithOrder,
+      combinesWithShipping: !!combinesWithShipping,
       usedCount: 0,
       appliesTo: appliesTo || APPLIES_TO.ALL,
       purchaseType: purchaseType || PURCHASE_TYPE.ONE_TIME,
@@ -569,39 +498,29 @@ const createDiscount = async (req, res) => {
 
     successResponse(res, 201, "Discount created successfully", discount);
   } catch (error) {
-    console.error("Error creating discount:", error);
     handleError(res, error, "Failed to create discount");
   }
 };
 
-function formatTimeFromISO(isoString) {
-  if (!isoString) return "12:00 AM";
-  const tIndex = isoString.indexOf("T");
-  if (tIndex === -1) return "12:00 AM";
-  const timePart = isoString.substring(tIndex + 1);
-  const parts = timePart.split(":");
-  if (parts.length < 2) return "12:00 AM";
-  let hours = parseInt(parts[0], 10);
-  const minutes = parseInt(parts[1], 10);
+const formatTimeFromISO = (iso) => {
+  if (!iso || !iso.includes("T")) return "12:00 AM";
+  const [_, timePart] = iso.split("T");
+  const [hoursStr, minutesStr] = timePart.split(":");
+  let hours = parseInt(hoursStr, 10) || 0;
+  const minutes = parseInt(minutesStr, 10) || 0;
   const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
-  return `${hours}:${minutesStr} ${ampm}`;
-}
+  hours = hours % 12 || 12;
+  return `${hours}:${minutes < 10 ? "0" + minutes : minutes} ${ampm}`;
+};
 
 const getDiscount = async (req, res) => {
   try {
     const shop = await getShopRecord(req);
     const { id } = req.params;
 
-    const discount = await Discount.findOne({
-      where: { id, shopId: shop.id },
-    });
-
-    if (!discount) {
+    const discount = await Discount.findOne({ where: { id, shopId: shop.id } });
+    if (!discount)
       return errorResponse(res, 404, "Discount not found in local database.");
-    }
 
     const priceRuleId = discount.shopifyId.split("/").pop();
     const client = getRestClient(shop);
@@ -609,15 +528,13 @@ const getDiscount = async (req, res) => {
     const shopifyResponse = await client.get({
       path: `price_rules/${priceRuleId}`,
     });
-
     const rule = shopifyResponse.body?.price_rule;
-    if (!rule) {
+    if (!rule)
       return errorResponse(
         res,
         404,
         "Discount price rule not found on Shopify."
       );
-    }
 
     let discountTitle = rule.title;
     if (discount.method === DISCOUNT_METHOD.CODE) {
@@ -625,10 +542,8 @@ const getDiscount = async (req, res) => {
         const codesResponse = await client.get({
           path: `price_rules/${priceRuleId}/discount_codes`,
         });
-        const codes = codesResponse.body?.discount_codes || [];
-        if (codes.length > 0) {
-          discountTitle = codes[0].code;
-        }
+        if (codesResponse.body?.discount_codes?.length)
+          discountTitle = codesResponse.body.discount_codes[0].code;
       } catch (err) {
         console.warn(
           `Could not fetch discount codes for ${priceRuleId}:`,
@@ -665,11 +580,10 @@ const getDiscount = async (req, res) => {
     ) {
       shippingCountries = "selected";
       const countryIds = rule.entitled_country_ids || [];
-      if (countryIds.length > 0) {
+      if (countryIds.length) {
         try {
           const countriesResponse = await client.get({ path: "countries" });
-          const countriesList = countriesResponse.body?.countries || [];
-          selectedCountries = countriesList
+          selectedCountries = (countriesResponse.body?.countries || [])
             .filter((c) => countryIds.includes(c.id))
             .map((c) => c.code.toLowerCase());
         } catch (err) {
@@ -735,7 +649,7 @@ const getDiscount = async (req, res) => {
       }
     }
 
-    const responseData = {
+    successResponse(res, 200, "Discount fetched successfully", {
       id: discount.id,
       shopifyId: discount.shopifyId,
       title: discountTitle,
@@ -771,11 +685,8 @@ const getDiscount = async (req, res) => {
       selectedCountries,
       excludeShippingRates,
       excludeShippingRatesValue,
-    };
-
-    successResponse(res, 200, "Discount fetched successfully", responseData);
+    });
   } catch (error) {
-    console.error("Error fetching discount:", error);
     handleError(res, error, "Failed to fetch discount");
   }
 };
@@ -806,21 +717,14 @@ const updateDiscount = async (req, res) => {
       eligibility,
     } = req.body;
 
-    const discount = await Discount.findOne({
-      where: { id, shopId: shop.id },
-    });
-
-    if (!discount) {
-      return errorResponse(res, 404, "Discount not found.");
-    }
+    const discount = await Discount.findOne({ where: { id, shopId: shop.id } });
+    if (!discount) return errorResponse(res, 404, "Discount not found.");
 
     const validationError = validateDiscountPayload({
       ...req.body,
       type: req.body.type || discount.type,
     });
-    if (validationError) {
-      return errorResponse(res, 400, validationError);
-    }
+    if (validationError) return errorResponse(res, 400, validationError);
 
     const priceRuleId = discount.shopifyId.split("/").pop();
     const client = getRestClient(shop);
@@ -829,8 +733,7 @@ const updateDiscount = async (req, res) => {
       valueType === VALUE_TYPE.FIXED_AMOUNT
         ? VALUE_TYPE.FIXED_AMOUNT
         : VALUE_TYPE.PERCENTAGE;
-    let val = parseFloat(value || 0);
-    let shopifyValue = `-${Math.abs(val)}`;
+    let shopifyValue = `-${Math.abs(parseFloat(value || 0))}`;
 
     const priceRule = {
       title,
@@ -839,15 +742,14 @@ const updateDiscount = async (req, res) => {
       starts_at: startsAt || new Date().toISOString(),
       ends_at: endsAt || null,
       combines_with: {
-        product_discounts: Boolean(combinesWithProduct),
-        order_discounts: Boolean(combinesWithOrder),
-        shipping_discounts: Boolean(combinesWithShipping),
+        product_discounts: !!combinesWithProduct,
+        order_discounts: !!combinesWithOrder,
+        shipping_discounts: !!combinesWithShipping,
       },
-      once_per_customer: Boolean(limitOnePerCustomer),
+      once_per_customer: !!limitOnePerCustomer,
       customer_selection:
-        req.body.eligibility === "Specific customers" &&
-        Array.isArray(req.body.selectedCustomers) &&
-        req.body.selectedCustomers.length > 0
+        eligibility === "Specific customers" &&
+        req.body.selectedCustomers?.length
           ? "prerequisite"
           : "all",
     };
@@ -865,16 +767,13 @@ const updateDiscount = async (req, res) => {
       priceRule.allocation_method = ALLOCATION_METHOD.EACH;
       priceRule.value_type = VALUE_TYPE.PERCENTAGE;
       priceRule.value = "-100.0";
-      const wantsSelectedCountries =
-        shippingCountries === "selected" &&
-        Array.isArray(selectedCountries) &&
-        selectedCountries.length > 0;
-      const ids = wantsSelectedCountries
+      const wantsSelected =
+        shippingCountries === "selected" && selectedCountries?.length;
+      const ids = wantsSelected
         ? await getShopifyCountryIds(client, selectedCountries)
         : [];
-      // Fall back to all countries when no selection resolves to a shipping-zone
-      // country, so updating never errors out.
-      if (ids.length > 0) {
+
+      if (ids.length) {
         priceRule.target_selection = TARGET_SELECTION.ENTITLED;
         priceRule.entitled_country_ids = ids;
       } else {
@@ -883,11 +782,13 @@ const updateDiscount = async (req, res) => {
       }
 
       if (req.body.excludeShippingRates) {
-        const cleanVal = String(
-          req.body.excludeShippingRatesValue || ""
-        ).replace(/,/g, "");
         priceRule.prerequisite_shipping_price_range = {
-          less_than_or_equal_to: parseFloat(cleanVal || 0),
+          less_than_or_equal_to: parseFloat(
+            String(req.body.excludeShippingRatesValue || "").replace(
+              /,/g,
+              ""
+            ) || 0
+          ),
         };
       } else {
         priceRule.prerequisite_shipping_price_range = null;
@@ -925,15 +826,12 @@ const updateDiscount = async (req, res) => {
     const prResponse = await client.put({
       path: `price_rules/${priceRuleId}`,
       type: "application/json",
-      data: {
-        price_rule: priceRule,
-      },
+      data: { price_rule: priceRule },
     });
 
     const updatedPriceRule = prResponse.body?.price_rule;
-    if (!updatedPriceRule) {
+    if (!updatedPriceRule)
       throw new Error("Failed to update price rule on Shopify");
-    }
 
     let finalTitle = title;
     if (discount.method === DISCOUNT_METHOD.CODE) {
@@ -942,21 +840,15 @@ const updateDiscount = async (req, res) => {
           path: `price_rules/${priceRuleId}/discount_codes`,
         });
         const codes = codesResponse.body?.discount_codes || [];
-        if (codes.length > 0) {
+        if (codes.length) {
           const codeId = codes[0].id;
           const putCodeResponse = await client.put({
             path: `price_rules/${priceRuleId}/discount_codes/${codeId}`,
             type: "application/json",
-            data: {
-              discount_code: {
-                code: title,
-              },
-            },
+            data: { discount_code: { code: title } },
           });
-          const codeNode = putCodeResponse.body?.discount_code;
-          if (codeNode && codeNode.code) {
-            finalTitle = codeNode.code;
-          }
+          if (putCodeResponse.body?.discount_code?.code)
+            finalTitle = putCodeResponse.body.discount_code.code;
         }
       } catch (err) {
         console.warn(
@@ -977,7 +869,6 @@ const updateDiscount = async (req, res) => {
       updatedPriceRule.starts_at,
       updatedPriceRule.ends_at
     );
-
     const finalSelectedItems = serializeSelectedItems(discount.type, req.body);
 
     await discount.update({
@@ -985,9 +876,9 @@ const updateDiscount = async (req, res) => {
       summary,
       status,
       eligibility: eligibility || ELIGIBILITY.ALL_CUSTOMERS,
-      combinesWithProduct: Boolean(combinesWithProduct),
-      combinesWithOrder: Boolean(combinesWithOrder),
-      combinesWithShipping: Boolean(combinesWithShipping),
+      combinesWithProduct: !!combinesWithProduct,
+      combinesWithOrder: !!combinesWithOrder,
+      combinesWithShipping: !!combinesWithShipping,
       appliesTo: appliesTo || APPLIES_TO.ALL,
       purchaseType: purchaseType || PURCHASE_TYPE.ONE_TIME,
       selectedItems: finalSelectedItems,
@@ -995,7 +886,6 @@ const updateDiscount = async (req, res) => {
 
     successResponse(res, 200, "Discount updated successfully", discount);
   } catch (error) {
-    console.error("Error updating discount:", error);
     handleError(res, error, "Failed to update discount");
   }
 };
@@ -1004,16 +894,11 @@ const deleteDiscounts = async (req, res) => {
   try {
     const shop = await getShopRecord(req);
     const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
-
-    if (ids.length === 0) {
+    if (!ids.length)
       return errorResponse(res, 400, "No discount ids provided.");
-    }
-
     const result = await removeDiscounts(shop, ids);
-
     successResponse(res, 200, "Discounts deleted successfully", result);
   } catch (error) {
-    console.error("Error deleting discounts:", error);
     handleError(res, error, "Failed to delete discounts");
   }
 };
@@ -1034,20 +919,14 @@ const getMarkets = async (req, res) => {
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const response = await graphqlClient.request(`
       query {
         markets(first: 50) {
-          nodes {
-            id
-            name
-          }
+          nodes { id name }
         }
       }
     `);
-
-    const rawMarkets = response.data?.markets?.nodes || [];
-    const markets = rawMarkets.map((m) => ({
+    const markets = (response.data?.markets?.nodes || []).map((m) => ({
       id: m.id,
       title: m.name || m.id,
     }));
@@ -1079,20 +958,14 @@ const getSegments = async (req, res) => {
       shopDomain: shop.myshopifyDomain,
       accessToken: shop.token,
     });
-
     const response = await graphqlClient.request(`
       query {
         segments(first: 50) {
-          nodes {
-            id
-            name
-          }
+          nodes { id name }
         }
       }
     `);
-
-    const rawSegments = response.data?.segments?.nodes || [];
-    const segments = rawSegments.map((s) => ({
+    const segments = (response.data?.segments?.nodes || []).map((s) => ({
       id: s.id,
       title: s.name || s.id,
     }));

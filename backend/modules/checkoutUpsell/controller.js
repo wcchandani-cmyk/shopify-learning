@@ -1,7 +1,6 @@
 const { successResponse, errorResponse } = require("../../utils/response");
 const { getGraphQLClient } = require("../../utils/shopify");
 const { handleError } = require("../../utils/controllerHelper");
-
 const CheckoutUpsell = require("./model");
 const {
   CHECKOUT_UPSELL_TYPE,
@@ -28,12 +27,14 @@ const CONFIG_METAFIELD = {
 };
 
 const getShopAndClient = async (req) => {
-  const shop = req.shop;
-  const { graphqlClient } = getGraphQLClient({
-    shopDomain: shop.myshopifyDomain,
-    accessToken: shop.token,
-  });
-  return { shop, graphqlClient };
+  const { shop } = req;
+  return {
+    shop,
+    graphqlClient: getGraphQLClient({
+      shopDomain: shop.myshopifyDomain,
+      accessToken: shop.token,
+    }).graphqlClient,
+  };
 };
 
 const ensureUpsellDefinition = async (graphqlClient) => {
@@ -42,61 +43,42 @@ const ensureUpsellDefinition = async (graphqlClient) => {
       definition: {
         type: CHECKOUT_UPSELL_TYPE,
         name: "Checkout Upsell Campaign",
-        access: {
-          admin: "MERCHANT_READ",
-          storefront: "PUBLIC_READ",
-        },
-        capabilities: {
-          publishable: { enabled: true },
-        },
+        access: { admin: "MERCHANT_READ", storefront: "PUBLIC_READ" },
+        capabilities: { publishable: { enabled: true } },
         fieldDefinitions: [
-          {
-            key: UPSELL_FIELD_KEY,
-            name: "Upsell Config",
-            type: "json",
-          },
+          { key: UPSELL_FIELD_KEY, name: "Upsell Config", type: "json" },
         ],
       },
     },
   });
-
   const errors = res?.data?.metaobjectDefinitionCreate?.userErrors || [];
-  const hasFatal = errors.some((e) => e.code !== "TAKEN");
-  if (hasFatal) throw new Error(errors.map((e) => e.message).join("; "));
+  if (errors.some((e) => e.code !== "TAKEN"))
+    throw new Error(errors.map((e) => e.message).join("; "));
 };
 
 const parsePayloadArray = (val) => {
   if (Array.isArray(val)) return val;
-  if (typeof val === "string") {
-    try {
-      return JSON.parse(val);
-    } catch (e) {
-      return [];
-    }
+  try {
+    return typeof val === "string" ? JSON.parse(val) : [];
+  } catch {
+    return [];
   }
-  return [];
 };
 
 const getCollectionProducts = async (graphqlClient, collectionId) => {
   const productIds = [];
-  let hasNext = true;
-  let cursor = null;
-
+  let hasNext = true,
+    cursor = null;
   while (hasNext) {
     const res = await graphqlClient.request(GET_COLLECTION_PRODUCTS, {
       variables: { id: collectionId, cursor },
     });
-
     const products = res.data?.collection?.products;
     if (!products) break;
-
-    (products.nodes || []).forEach((p) => {
-      if (p.id) productIds.push(p.id);
-    });
+    (products.nodes || []).forEach((p) => p.id && productIds.push(p.id));
     hasNext = products.pageInfo?.hasNextPage || false;
     cursor = products.pageInfo?.endCursor || null;
   }
-
   return productIds;
 };
 
@@ -106,21 +88,21 @@ const resolveTriggerProductIds = async (
   triggerProductsArr,
   triggerCollectionsArr
 ) => {
-  if (triggerType !== "collections") {
+  if (triggerType !== "collections")
     return triggerProductsArr.map((p) => p.id).filter(Boolean);
-  }
-
-  let resolved = [];
-  for (const coll of triggerCollectionsArr) {
-    if (coll.id) {
-      const prodIds = await getCollectionProducts(graphqlClient, coll.id);
-      resolved = [...resolved, ...prodIds];
-    }
-  }
-  return [...new Set(resolved)];
+  const results = await Promise.all(
+    triggerCollectionsArr
+      .filter((c) => c.id)
+      .map((c) => getCollectionProducts(graphqlClient, c.id))
+  );
+  return [...new Set(results.flat())];
 };
 
-const firstTrigger = (triggerType, triggerProductsArr, triggerCollectionsArr) => {
+const firstTrigger = (
+  triggerType,
+  triggerProductsArr,
+  triggerCollectionsArr
+) => {
   const source =
     triggerType === "collections" ? triggerCollectionsArr : triggerProductsArr;
   return {
@@ -158,9 +140,8 @@ const toHandle = (title) =>
 
 exports.getAll = async (req, res) => {
   try {
-    const shop = req.shop;
     const upsells = await CheckoutUpsell.findAll({
-      where: { shopId: shop.id },
+      where: { shopId: req.shop.id },
       order: [["createdAt", "DESC"]],
     });
     successResponse(res, 200, "Checkout upsells fetched", { upsells });
@@ -171,9 +152,8 @@ exports.getAll = async (req, res) => {
 
 exports.getById = async (req, res) => {
   try {
-    const shop = req.shop;
     const upsell = await CheckoutUpsell.findOne({
-      where: { id: req.params.id, shopId: shop.id },
+      where: { id: req.params.id, shopId: req.shop.id },
     });
     if (!upsell) return errorResponse(res, 404, "Checkout upsell not found");
     successResponse(res, 200, "Checkout upsell fetched", { upsell });
@@ -197,9 +177,8 @@ exports.create = async (req, res) => {
       isActive = true,
     } = req.body;
 
-    if (!title || !upsellProductId) {
+    if (!title || !upsellProductId)
       return errorResponse(res, 400, "title and upsellProductId are required");
-    }
 
     const triggerProductsArr = parsePayloadArray(triggerProducts);
     const triggerCollectionsArr = parsePayloadArray(triggerCollections);
@@ -218,42 +197,50 @@ exports.create = async (req, res) => {
 
     await ensureUpsellDefinition(graphqlClient);
 
-    // 1. Create Shopify Metaobject for storefront view
-    const metaobjectRes = await graphqlClient.request(CREATE_UPSELL_METAOBJECT, {
-      variables: {
-        metaobject: {
-          type: CHECKOUT_UPSELL_TYPE,
-          handle: toHandle(title),
-          capabilities: {
-            publishable: { status: isActive ? "ACTIVE" : "DRAFT" },
+    const metaobjectRes = await graphqlClient.request(
+      CREATE_UPSELL_METAOBJECT,
+      {
+        variables: {
+          metaobject: {
+            type: CHECKOUT_UPSELL_TYPE,
+            handle: toHandle(title),
+            capabilities: {
+              publishable: { status: isActive ? "ACTIVE" : "DRAFT" },
+            },
+            fields: buildUpsellFields({
+              title,
+              triggerType,
+              triggerProducts: triggerProductsArr,
+              triggerCollections: triggerCollectionsArr,
+              triggerProductIds: resolvedProductIds,
+              triggerProductId,
+              triggerProductTitle,
+              upsellProductId,
+              upsellProductTitle,
+              offerTitle,
+              discountPercentage,
+              isActive,
+            }),
           },
-          fields: buildUpsellFields({
-            title,
-            triggerType,
-            triggerProducts: triggerProductsArr,
-            triggerCollections: triggerCollectionsArr,
-            triggerProductIds: resolvedProductIds,
-            triggerProductId,
-            triggerProductTitle,
-            upsellProductId,
-            upsellProductTitle,
-            offerTitle,
-            discountPercentage,
-            isActive,
-          }),
         },
-      },
-    });
+      }
+    );
 
     const metaErrors = metaobjectRes?.data?.metaobjectCreate?.userErrors;
-    if (metaErrors?.length) {
-      return errorResponse(res, 400, "Shopify rejected the Metaobject creation", metaErrors);
-    }
+    if (metaErrors?.length)
+      return errorResponse(
+        res,
+        400,
+        "Shopify rejected the Metaobject creation",
+        metaErrors
+      );
 
-    const shopifyMetaobject = metaobjectRes.data.metaobjectCreate.metaobject;
-    const metaobjectId = shopifyMetaobject.id.replace(METAOBJECT_GID_PREFIX, "");
+    const metaobjectId =
+      metaobjectRes.data.metaobjectCreate.metaobject.id.replace(
+        METAOBJECT_GID_PREFIX,
+        ""
+      );
 
-    // 2. Create Shopify Automatic Discount Node
     const discountRes = await graphqlClient.request(CREATE_AUTOMATIC_MUTATION, {
       variables: {
         automaticAppDiscount: {
@@ -288,22 +275,29 @@ exports.create = async (req, res) => {
       },
     });
 
-    const discountErrors = discountRes?.data?.discountAutomaticAppCreate?.userErrors;
-    if (discountErrors?.length) {
-      return errorResponse(res, 400, "Shopify rejected the automatic discount creation", discountErrors);
-    }
+    const discountErrors =
+      discountRes?.data?.discountAutomaticAppCreate?.userErrors;
+    if (discountErrors?.length)
+      return errorResponse(
+        res,
+        400,
+        "Shopify rejected the automatic discount creation",
+        discountErrors
+      );
 
-    const rawDiscountId = discountRes.data.discountAutomaticAppCreate.automaticAppDiscount.discountId;
-    const discountId = rawDiscountId.replace("gid://shopify/DiscountAutomaticNode/", "");
+    const rawDiscountId =
+      discountRes.data.discountAutomaticAppCreate.automaticAppDiscount
+        .discountId;
+    const discountId = rawDiscountId.replace(
+      "gid://shopify/DiscountAutomaticNode/",
+      ""
+    );
 
-    // If campaign is set to inactive (draft), deactivate the discount node
-    if (!isActive) {
+    if (!isActive)
       await graphqlClient.request(DISABLE_MUTATION, {
         variables: { id: rawDiscountId },
       });
-    }
 
-    // 3. Create database entry
     const upsell = await CheckoutUpsell.create({
       shopId: shop.id,
       metaobjectId,
@@ -322,9 +316,10 @@ exports.create = async (req, res) => {
       isActive,
     });
 
-    successResponse(res, 201, "Checkout upsell created successfully", { upsell });
+    successResponse(res, 201, "Checkout upsell created successfully", {
+      upsell,
+    });
   } catch (error) {
-    console.error("Error creating checkout upsell:", error);
     handleError(res, error, "Failed to create checkout upsell");
   }
 };
@@ -337,22 +332,20 @@ exports.update = async (req, res) => {
     });
     if (!upsell) return errorResponse(res, 404, "Checkout upsell not found");
 
-    const pick = (key, fallback) =>
-      req.body[key] !== undefined ? req.body[key] : fallback;
+    const {
+      title = upsell.title,
+      triggerType = upsell.triggerType || "products",
+      triggerProducts = upsell.triggerProducts,
+      triggerCollections = upsell.triggerCollections,
+      upsellProductId = upsell.upsellProductId,
+      upsellProductTitle = upsell.upsellProductTitle,
+      offerTitle = upsell.offerTitle,
+      discountPercentage = upsell.discountPercentage,
+      isActive = upsell.isActive,
+    } = req.body;
 
-    const title = pick("title", upsell.title);
-    const triggerType = pick("triggerType", upsell.triggerType || "products");
-    const triggerProductsArr = parsePayloadArray(
-      pick("triggerProducts", upsell.triggerProducts)
-    );
-    const triggerCollectionsArr = parsePayloadArray(
-      pick("triggerCollections", upsell.triggerCollections)
-    );
-    const upsellProductId = pick("upsellProductId", upsell.upsellProductId);
-    const upsellProductTitle = pick("upsellProductTitle", upsell.upsellProductTitle);
-    const offerTitle = pick("offerTitle", upsell.offerTitle);
-    const discountPercentage = pick("discountPercentage", upsell.discountPercentage);
-    const isActive = pick("isActive", upsell.isActive);
+    const triggerProductsArr = parsePayloadArray(triggerProducts);
+    const triggerCollectionsArr = parsePayloadArray(triggerCollections);
 
     const resolvedProductIds = await resolveTriggerProductIds(
       graphqlClient,
@@ -366,40 +359,45 @@ exports.update = async (req, res) => {
       triggerCollectionsArr
     );
 
-    // 1. Update Metaobject on Shopify
     const shopifyMetaId = `${METAOBJECT_GID_PREFIX}${upsell.metaobjectId}`;
-    const metaobjectRes = await graphqlClient.request(UPDATE_UPSELL_METAOBJECT, {
-      variables: {
-        id: shopifyMetaId,
-        metaobject: {
-          handle: toHandle(title),
-          capabilities: {
-            publishable: { status: isActive ? "ACTIVE" : "DRAFT" },
+    const metaobjectRes = await graphqlClient.request(
+      UPDATE_UPSELL_METAOBJECT,
+      {
+        variables: {
+          id: shopifyMetaId,
+          metaobject: {
+            handle: toHandle(title),
+            capabilities: {
+              publishable: { status: isActive ? "ACTIVE" : "DRAFT" },
+            },
+            fields: buildUpsellFields({
+              title,
+              triggerType,
+              triggerProducts: triggerProductsArr,
+              triggerCollections: triggerCollectionsArr,
+              triggerProductIds: resolvedProductIds,
+              triggerProductId,
+              triggerProductTitle,
+              upsellProductId,
+              upsellProductTitle,
+              offerTitle,
+              discountPercentage,
+              isActive,
+            }),
           },
-          fields: buildUpsellFields({
-            title,
-            triggerType,
-            triggerProducts: triggerProductsArr,
-            triggerCollections: triggerCollectionsArr,
-            triggerProductIds: resolvedProductIds,
-            triggerProductId,
-            triggerProductTitle,
-            upsellProductId,
-            upsellProductTitle,
-            offerTitle,
-            discountPercentage,
-            isActive,
-          }),
         },
-      },
-    });
+      }
+    );
 
     const metaErrors = metaobjectRes?.data?.metaobjectUpdate?.userErrors;
-    if (metaErrors?.length) {
-      return errorResponse(res, 400, "Shopify rejected the Metaobject update", metaErrors);
-    }
+    if (metaErrors?.length)
+      return errorResponse(
+        res,
+        400,
+        "Shopify rejected the Metaobject update",
+        metaErrors
+      );
 
-    // 2. Update/Create Automatic App Discount Node
     let discountId = upsell.discountId;
     const discountNodeId = `gid://shopify/DiscountAutomaticNode/${discountId}`;
     const metafieldValue = JSON.stringify({
@@ -414,29 +412,35 @@ exports.update = async (req, res) => {
     });
 
     if (discountId) {
-      // Update existing discount details
-      const updateDiscRes = await graphqlClient.request(UPDATE_AUTOMATIC_MUTATION, {
-        variables: {
-          id: discountNodeId,
-          automaticAppDiscount: {
-            title: `Upsell - ${title}`,
-            startsAt: new Date().toISOString(),
-            endsAt: null,
-            combinesWith: {
-              productDiscounts: true,
-              orderDiscounts: true,
-              shippingDiscounts: true,
+      const updateDiscRes = await graphqlClient.request(
+        UPDATE_AUTOMATIC_MUTATION,
+        {
+          variables: {
+            id: discountNodeId,
+            automaticAppDiscount: {
+              title: `Upsell - ${title}`,
+              startsAt: new Date().toISOString(),
+              endsAt: null,
+              combinesWith: {
+                productDiscounts: true,
+                orderDiscounts: true,
+                shippingDiscounts: true,
+              },
             },
           },
-        },
-      });
+        }
+      );
 
-      const discErrors = updateDiscRes?.data?.discountAutomaticAppUpdate?.userErrors;
-      if (discErrors?.length) {
-        return errorResponse(res, 400, "Shopify rejected the automatic discount update", discErrors);
-      }
+      const discErrors =
+        updateDiscRes?.data?.discountAutomaticAppUpdate?.userErrors;
+      if (discErrors?.length)
+        return errorResponse(
+          res,
+          400,
+          "Shopify rejected the automatic discount update",
+          discErrors
+        );
 
-      // Update Metafield directly using metafieldsSet mutation
       await graphqlClient.request(METAFIELDS_SET_MUTATION, {
         variables: {
           metafields: [
@@ -451,53 +455,60 @@ exports.update = async (req, res) => {
         },
       });
 
-      // Update active status
-      if (isActive) {
-        await graphqlClient.request(ENABLE_MUTATION, { variables: { id: discountNodeId } });
-      } else {
-        await graphqlClient.request(DISABLE_MUTATION, { variables: { id: discountNodeId } });
-      }
+      await graphqlClient.request(
+        isActive ? ENABLE_MUTATION : DISABLE_MUTATION,
+        { variables: { id: discountNodeId } }
+      );
     } else {
-      // Recreate discount node if it got lost/missing
-      const newDiscRes = await graphqlClient.request(CREATE_AUTOMATIC_MUTATION, {
-        variables: {
-          automaticAppDiscount: {
-            title: `Upsell - ${title}`,
-            functionHandle: FUNCTION_HANDLE,
-            discountClasses: ["PRODUCT"],
-            startsAt: new Date().toISOString(),
-            endsAt: null,
-            combinesWith: {
-              productDiscounts: true,
-              orderDiscounts: true,
-              shippingDiscounts: true,
-            },
-            metafields: [
-              {
-                namespace: CONFIG_METAFIELD.namespace,
-                key: CONFIG_METAFIELD.key,
-                type: "json",
-                value: metafieldValue,
+      const newDiscRes = await graphqlClient.request(
+        CREATE_AUTOMATIC_MUTATION,
+        {
+          variables: {
+            automaticAppDiscount: {
+              title: `Upsell - ${title}`,
+              functionHandle: FUNCTION_HANDLE,
+              discountClasses: ["PRODUCT"],
+              startsAt: new Date().toISOString(),
+              endsAt: null,
+              combinesWith: {
+                productDiscounts: true,
+                orderDiscounts: true,
+                shippingDiscounts: true,
               },
-            ],
+              metafields: [
+                {
+                  namespace: CONFIG_METAFIELD.namespace,
+                  key: CONFIG_METAFIELD.key,
+                  type: "json",
+                  value: metafieldValue,
+                },
+              ],
+            },
           },
-        },
-      });
+        }
+      );
 
-      const newDiscErrors = newDiscRes?.data?.discountAutomaticAppCreate?.userErrors;
-      if (newDiscErrors?.length) {
-        return errorResponse(res, 400, "Shopify rejected the automatic discount registration", newDiscErrors);
-      }
+      const newDiscErrors =
+        newDiscRes?.data?.discountAutomaticAppCreate?.userErrors;
+      if (newDiscErrors?.length)
+        return errorResponse(
+          res,
+          400,
+          "Shopify rejected the automatic discount registration",
+          newDiscErrors
+        );
 
-      const rawNewId = newDiscRes.data.discountAutomaticAppCreate.automaticAppDiscount.discountId;
+      const rawNewId =
+        newDiscRes.data.discountAutomaticAppCreate.automaticAppDiscount
+          .discountId;
       discountId = rawNewId.replace("gid://shopify/DiscountAutomaticNode/", "");
 
-      if (!isActive) {
-        await graphqlClient.request(DISABLE_MUTATION, { variables: { id: rawNewId } });
-      }
+      if (!isActive)
+        await graphqlClient.request(DISABLE_MUTATION, {
+          variables: { id: rawNewId },
+        });
     }
 
-    // 3. Update DB
     await upsell.update({
       title,
       triggerType,
@@ -514,9 +525,10 @@ exports.update = async (req, res) => {
       isActive,
     });
 
-    successResponse(res, 200, "Checkout upsell updated successfully", { upsell });
+    successResponse(res, 200, "Checkout upsell updated successfully", {
+      upsell,
+    });
   } catch (error) {
-    console.error("Error updating checkout upsell:", error);
     handleError(res, error, "Failed to update checkout upsell");
   }
 };
@@ -529,32 +541,39 @@ exports.deleted = async (req, res) => {
     });
     if (!upsell) return errorResponse(res, 404, "Checkout upsell not found");
 
-    // 1. Delete Metaobject from Shopify — ignore if already gone
     if (upsell.metaobjectId) {
       try {
-        const shopifyMetaId = `${METAOBJECT_GID_PREFIX}${upsell.metaobjectId}`;
-        await graphqlClient.request(DELETE_UPSELL_METAOBJECT, { variables: { id: shopifyMetaId } });
+        await graphqlClient.request(DELETE_UPSELL_METAOBJECT, {
+          variables: { id: `${METAOBJECT_GID_PREFIX}${upsell.metaobjectId}` },
+        });
       } catch (e) {
-        console.warn("Metaobject delete skipped (already removed or not found):", e.message);
+        console.warn(
+          "Metaobject delete skipped (already removed or not found):",
+          e.message
+        );
       }
     }
 
-    // 2. Delete Discount Node from Shopify — ignore if already gone
     if (upsell.discountId) {
       try {
-        const discountNodeId = `gid://shopify/DiscountAutomaticNode/${upsell.discountId}`;
-        await graphqlClient.request(DELETE_AUTOMATIC_MUTATION, { variables: { id: discountNodeId } });
+        await graphqlClient.request(DELETE_AUTOMATIC_MUTATION, {
+          variables: {
+            id: `gid://shopify/DiscountAutomaticNode/${upsell.discountId}`,
+          },
+        });
       } catch (e) {
-        console.warn("Discount delete skipped (already removed or not found):", e.message);
+        console.warn(
+          "Discount delete skipped (already removed or not found):",
+          e.message
+        );
       }
     }
 
-    // 3. Always destroy the DB row
     await upsell.destroy();
-
-    successResponse(res, 200, "Checkout upsell deleted successfully", { deletedId: req.params.id });
+    successResponse(res, 200, "Checkout upsell deleted successfully", {
+      deletedId: req.params.id,
+    });
   } catch (error) {
-    console.error("Error deleting checkout upsell:", error);
     handleError(res, error, "Failed to delete checkout upsell");
   }
 };

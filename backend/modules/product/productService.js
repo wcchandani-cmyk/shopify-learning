@@ -2,119 +2,103 @@ const { Op } = require("sequelize");
 const Product = require("./model");
 const Variant = require("../variant/model");
 
-const toShopifyId = (node) => {
-  if (node?.legacyResourceId != null) {
-    return String(node.legacyResourceId);
-  }
-  if (!node?.id) return null;
-  const parts = String(node.id).split("/");
-  return parts[parts.length - 1];
-};
+const toShopifyId = (node) =>
+  node?.legacyResourceId != null
+    ? String(node.legacyResourceId)
+    : node?.id
+    ? String(node.id).split("/").pop()
+    : null;
 
-const mapSelectedOptions = (selectedOptions = []) => ({
-  option1: selectedOptions[0]?.value ?? null,
-  option2: selectedOptions[1]?.value ?? null,
-  option3: selectedOptions[2]?.value ?? null,
+const mapSelectedOptions = (opts = []) => ({
+  option1: opts[0]?.value ?? null,
+  option2: opts[1]?.value ?? null,
+  option3: opts[2]?.value ?? null,
 });
 
-const mapProductOptionsJson = (productNode) => {
-  const opts = productNode?.options;
+const mapProductOptionsJson = (node) => {
+  const opts = node?.options;
   if (!Array.isArray(opts) || !opts.length) return null;
-
   const normalized = opts
-    .map((option) => {
-      const name = option?.name?.trim();
+    .map((o) => {
+      const name = o?.name?.trim();
       if (!name) return null;
-
       let values = [];
-      if (Array.isArray(option.values) && option.values.length) {
-        values = option.values.map((v) => String(v).trim()).filter(Boolean);
-      } else if (typeof option.values === "string" && option.values.trim()) {
-        values = option.values
+      if (Array.isArray(o.values) && o.values.length)
+        values = o.values.map((v) => String(v).trim()).filter(Boolean);
+      else if (typeof o.values === "string" && o.values.trim())
+        values = o.values
           .split(",")
           .map((v) => v.trim())
           .filter(Boolean);
-      } else if (Array.isArray(option.optionValues)) {
-        values = option.optionValues
+      else if (Array.isArray(o.optionValues))
+        values = o.optionValues
           .map((v) => String(v?.name || "").trim())
           .filter(Boolean);
-      }
-
-      return { name, values };
+      return values.length ? { name, values } : null;
     })
     .filter(Boolean);
-
   return normalized.length ? JSON.stringify(normalized) : null;
 };
 
 const normalizeProductStatus = (status) =>
   status ? String(status).toLowerCase() : null;
-
 const normalizeInventoryPolicy = (policy) =>
   policy ? String(policy).toLowerCase() : null;
 
-const pickProductImage = (productNode) => {
-  const img = productNode?.featuredImage ||
-    productNode?.featuredMedia?.preview?.image ||
-    productNode?.image ||
-    productNode?.images?.[0];
+const pickProductImage = (node) => {
+  const img =
+    node?.featuredImage ||
+    node?.featuredMedia?.preview?.image ||
+    node?.image ||
+    node?.images?.[0];
   return {
     imageUrl: img?.url || img?.src || null,
-    imageAlt: img?.altText || img?.alt || productNode?.title || null,
+    imageAlt: img?.altText || img?.alt || node?.title || null,
   };
 };
 
-/** Collect the full image gallery from a Shopify product node. */
-const pickProductImages = (productNode) => {
-  const list = Array.isArray(productNode?.images) ? productNode.images : [];
+const pickProductImages = (node) => {
+  const list = Array.isArray(node?.images) ? node.images : [];
   const gallery = list
     .map((img) => ({
       src: img?.src || img?.url || null,
-      alt: img?.alt || img?.altText || productNode?.title || null,
+      alt: img?.alt || img?.altText || node?.title || null,
     }))
     .filter((img) => img.src);
-
   if (gallery.length) return gallery;
-
-  const featured = pickProductImage(productNode);
+  const featured = pickProductImage(node);
   return featured.imageUrl
     ? [{ src: featured.imageUrl, alt: featured.imageAlt }]
     : [];
 };
 
-const buildImagesJson = (productNode) => {
-  const gallery = pickProductImages(productNode);
-  return gallery.length ? JSON.stringify(gallery) : null;
+const buildImagesJson = (node) => {
+  const g = pickProductImages(node);
+  return g.length ? JSON.stringify(g) : null;
 };
 
-/** Map REST webhook product payload to shape used by upsertProductWithVariants */
 const mapWebhookProduct = (product) => {
   if (!product?.id) return null;
-
-  const variants = (product.variants || []).map((variant) => ({
-    id:
-      variant.admin_graphql_api_id ||
-      `gid://shopify/ProductVariant/${variant.id}`,
-    legacyResourceId: String(variant.id),
-    title: variant.title,
-    price: variant.price,
-    compareAtPrice: variant.compare_at_price,
-    position: variant.position,
-    inventoryPolicy: variant.inventory_policy,
-    barcode: variant.barcode,
-    sku: variant.sku,
-    inventoryQuantity: variant.inventory_quantity,
+  const variants = (product.variants || []).map((v) => ({
+    id: v.admin_graphql_api_id || `gid://shopify/ProductVariant/${v.id}`,
+    legacyResourceId: String(v.id),
+    title: v.title,
+    price: v.price,
+    compareAtPrice: v.compare_at_price,
+    position: v.position,
+    inventoryPolicy: v.inventory_policy,
+    barcode: v.barcode,
+    sku: v.sku,
+    inventoryQuantity: v.inventory_quantity,
     selectedOptions: [
-      variant.option1 && { value: variant.option1 },
-      variant.option2 && { value: variant.option2 },
-      variant.option3 && { value: variant.option3 },
+      v.option1 && { value: v.option1 },
+      v.option2 && { value: v.option2 },
+      v.option3 && { value: v.option3 },
     ].filter(Boolean),
   }));
 
   return {
-    id:
-      product.admin_graphql_api_id ||
-      `gid://shopify/Product/${product.id}`,
+    id: product.admin_graphql_api_id || `gid://shopify/Product/${product.id}`,
     legacyResourceId: String(product.id),
     title: product.title,
     descriptionHtml: product.body_html,
@@ -133,46 +117,34 @@ const mapWebhookProduct = (product) => {
   };
 };
 
-async function resolveProductAfterUpsert(shop, shopifyProductId, productPayload) {
+const resolveProductAfterUpsert = async (
+  shop,
+  shopifyProductId,
+  productPayload
+) => {
   await Product.upsert(productPayload, {
     conflictFields: ["shopId", "shopifyId"],
   });
-
   const product = await Product.findOne({
     where: { shopId: shop.id, shopifyId: String(shopifyProductId) },
   });
-
-  if (!product?.id) {
+  if (!product?.id)
     throw new Error(
-      `Could not resolve product id after sync (shopifyId=${shopifyProductId})`,
+      `Could not resolve product id after sync (shopifyId=${shopifyProductId})`
     );
-  }
-
   return product;
-}
+};
 
-async function upsertVariantForProduct(productId, variantShopifyId, fields) {
-  if (!productId) {
+const upsertVariantForProduct = async (productId, variantShopifyId, fields) => {
+  if (!productId)
     throw new Error("productId is required when saving a variant");
-  }
-
   const shopifyId = String(variantShopifyId);
-  let variant = await Variant.findOne({ where: { shopifyId } });
+  const variant = await Variant.findOne({ where: { shopifyId } });
+  if (variant) return variant.update({ productId, ...fields });
+  return Variant.create({ productId, shopifyId, ...fields });
+};
 
-  if (variant) {
-    await variant.update({ productId, ...fields });
-    return variant;
-  }
-
-  return Variant.create({
-    productId,
-    shopifyId,
-    ...fields,
-  });
-}
-
-/** Upsert a Shopify product + its variants into the DB (API sync + webhooks). */
-async function upsertProductWithVariants(shop, productNode) {
+const upsertProductWithVariants = async (shop, productNode) => {
   const shopifyId = toShopifyId(productNode);
   if (!shopifyId) return null;
 
@@ -197,7 +169,11 @@ async function upsertProductWithVariants(shop, productNode) {
     optionsJson: mapProductOptionsJson(productNode),
   };
 
-  const product = await resolveProductAfterUpsert(shop, shopifyId, productPayload);
+  const product = await resolveProductAfterUpsert(
+    shop,
+    shopifyId,
+    productPayload
+  );
   const productId = product.id;
 
   const variantNodes = productNode.variants?.nodes || [];
@@ -206,19 +182,16 @@ async function upsertProductWithVariants(shop, productNode) {
   for (const variantNode of variantNodes) {
     const variantShopifyId = toShopifyId(variantNode);
     if (!variantShopifyId) continue;
-
     syncedVariantShopifyIds.push(variantShopifyId);
 
-    const existing = await Variant.findOne({ where: { shopifyId: variantShopifyId } });
+    const existing = await Variant.findOne({
+      where: { shopifyId: variantShopifyId },
+    });
     const shopifyQty = Number(variantNode.inventoryQuantity);
     const hasShopifyQty = Number.isFinite(shopifyQty) && shopifyQty > 0;
     const inventoryQuantity = hasShopifyQty
       ? shopifyQty
-      : existing?.inventoryQuantity != null
-        ? existing.inventoryQuantity
-        : Number.isFinite(shopifyQty)
-          ? shopifyQty
-          : 0;
+      : existing?.inventoryQuantity ?? shopifyQty ?? 0;
 
     await upsertVariantForProduct(productId, variantShopifyId, {
       title: variantNode.title,
@@ -235,15 +208,12 @@ async function upsertProductWithVariants(shop, productNode) {
 
   if (syncedVariantShopifyIds.length > 0) {
     await Variant.destroy({
-      where: {
-        productId,
-        shopifyId: { [Op.notIn]: syncedVariantShopifyIds },
-      },
+      where: { productId, shopifyId: { [Op.notIn]: syncedVariantShopifyIds } },
     });
   }
 
   return product;
-}
+};
 
 module.exports = {
   mapWebhookProduct,

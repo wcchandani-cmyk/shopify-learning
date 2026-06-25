@@ -5,7 +5,6 @@ const {
   RequestedTokenType,
 } = require("@shopify/shopify-api");
 require("@shopify/shopify-api/adapters/node");
-
 const {
   SHOPIFY_API_KEY,
   SHOPIFY_API_SECRET_KEY,
@@ -13,10 +12,8 @@ const {
   SHOPIFY_APP_URI,
 } = require("../config/constants");
 
-function getHostName() {
-  const uri = SHOPIFY_APP_URI || "http://localhost:5000";
-  return new URL(uri).host;
-}
+const getHostName = () =>
+  new URL(SHOPIFY_APP_URI || "http://localhost:5000").host;
 
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
@@ -35,9 +32,7 @@ const getGraphQLClient = ({ shopDomain, accessToken }) => {
     isOnline: false,
     accessToken,
   });
-
-  const graphqlClient = new shopify.clients.Graphql({ session });
-  return { graphqlClient, session };
+  return { graphqlClient: new shopify.clients.Graphql({ session }), session };
 };
 
 const getRestClient = (shop) => {
@@ -57,17 +52,16 @@ const extractGraphqlError = (error) => {
     const detail = gqlErrors
       .map((e) => {
         const problems = e?.extensions?.problems || e?.problems;
-        if (Array.isArray(problems) && problems.length > 0) {
-          return problems
-            .map(
-              (p) =>
-                `${(p.path || []).join(".") || "(input)"}: ${
-                  p.explanation || p.message
-                }`
-            )
-            .join("; ");
-        }
-        return e?.message;
+        return Array.isArray(problems) && problems.length > 0
+          ? problems
+              .map(
+                (p) =>
+                  `${(p.path || []).join(".") || "(input)"}: ${
+                    p.explanation || p.message
+                  }`
+              )
+              .join("; ")
+          : e?.message;
       })
       .filter(Boolean)
       .join(" | ");

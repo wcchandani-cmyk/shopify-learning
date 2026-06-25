@@ -3,29 +3,20 @@ const Customer = require("../customer/model");
 const companyService = require("./companyService");
 const { handleError: baseHandleError } = require("../../utils/controllerHelper");
 
-const getShopRecord = (req) => req.shop;
-
 const COMPANY_UNAUTH_MSG = "Shopify session expired or B2B access not granted. Reload the app and ensure the store has B2B (Companies) enabled.";
 
-const handleError = (res, error, fallback) =>
-  baseHandleError(res, error, fallback, COMPANY_UNAUTH_MSG);
+const handleError = (res, error, fallback) => baseHandleError(res, error, fallback, COMPANY_UNAUTH_MSG);
 
 const resolveCustomer = async (shop, rawId) => {
   const id = parseInt(rawId, 10);
-  if (!Number.isInteger(id) || id < 1) {
-    return { error: [400, "Invalid customer id"] };
-  }
+  if (!Number.isInteger(id) || id < 1) return { error: [400, "Invalid customer id"] };
   const customer = await Customer.findOne({ where: { id, shopId: shop.id } });
-  if (!customer) {
-    return { error: [404, "Customer not found"] };
-  }
-  return { customer };
+  return customer ? { customer } : { error: [404, "Customer not found"] };
 };
 
 const searchCompanies = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const companies = await companyService.searchCompanies(shop, req.query.q);
+    const companies = await companyService.searchCompanies(req.shop, req.query.q);
     successResponse(res, 200, "Companies fetched successfully", { companies });
   } catch (error) {
     console.error("Error searching companies:", error.message);
@@ -38,8 +29,7 @@ const createCompany = async (req, res) => {
     const name = String(req.body?.name ?? "").trim();
     if (!name) return errorResponse(res, 400, "Company name is required");
 
-    const shop = await getShopRecord(req);
-    const company = await companyService.createCompany(shop, { name });
+    const company = await companyService.createCompany(req.shop, { name });
     successResponse(res, 201, "Company created successfully", { company });
   } catch (error) {
     console.error("Error creating company:", error.message);
@@ -49,37 +39,21 @@ const createCompany = async (req, res) => {
 
 const assignCustomerToCompany = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const { customer, error } = await resolveCustomer(
-      shop,
-      req.body?.customerId
-    );
+    const shop = req.shop;
+    const { customer, error } = await resolveCustomer(shop, req.body?.customerId);
     if (error) return errorResponse(res, ...error);
 
     let companyId = req.body?.companyId || null;
     const newName = String(req.body?.companyName ?? "").trim();
 
-    // Create-and-assign in one step when the modal supplies a new company name.
     if (!companyId && newName) {
-      const created = await companyService.createCompany(shop, {
-        name: newName,
-      });
+      const created = await companyService.createCompany(shop, { name: newName });
       companyId = created.id;
     }
 
-    if (!companyId) {
-      return errorResponse(
-        res,
-        400,
-        "Select an existing company or enter a name"
-      );
-    }
+    if (!companyId) return errorResponse(res, 400, "Select an existing company or enter a name");
 
-    const company = await companyService.assignCustomerToCompany(
-      shop,
-      companyId,
-      customer.shopifyId
-    );
+    const company = await companyService.assignCustomerToCompany(shop, companyId, customer.shopifyId);
     successResponse(res, 200, "Customer added to company", { company });
   } catch (error) {
     console.error("Error assigning customer to company:", error.message);
@@ -89,17 +63,11 @@ const assignCustomerToCompany = async (req, res) => {
 
 const getCustomerCompany = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const { customer, error } = await resolveCustomer(
-      shop,
-      req.params.customerId
-    );
+    const shop = req.shop;
+    const { customer, error } = await resolveCustomer(shop, req.params.customerId);
     if (error) return errorResponse(res, ...error);
 
-    const company = await companyService.getCustomerCompany(
-      shop,
-      customer.shopifyId
-    );
+    const company = await companyService.getCustomerCompany(shop, customer.shopifyId);
     successResponse(res, 200, "Company fetched successfully", { company });
   } catch (error) {
     console.error("Error fetching customer company:", error.message);
@@ -109,17 +77,12 @@ const getCustomerCompany = async (req, res) => {
 
 const removeCustomerFromCompany = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const { customer, error } = await resolveCustomer(
-      shop,
-      req.params.customerId
-    );
+    const shop = req.shop;
+    const { customer, error } = await resolveCustomer(shop, req.params.customerId);
     if (error) return errorResponse(res, ...error);
 
     await companyService.removeCustomerFromCompany(shop, customer.shopifyId);
-    successResponse(res, 200, "Customer removed from company", {
-      company: null,
-    });
+    successResponse(res, 200, "Customer removed from company", { company: null });
   } catch (error) {
     console.error("Error removing customer from company:", error.message);
     handleError(res, error, "Failed to remove customer from company");
@@ -128,8 +91,7 @@ const removeCustomerFromCompany = async (req, res) => {
 
 const listCompanies = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const companies = await companyService.listCompanies(shop);
+    const companies = await companyService.listCompanies(req.shop);
     successResponse(res, 200, "Companies fetched successfully", { companies });
   } catch (error) {
     console.error("Error listing companies:", error.message);
@@ -139,11 +101,8 @@ const listCompanies = async (req, res) => {
 
 const getCompanyDetails = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const company = await companyService.getCompanyDetails(shop, req.params.id);
-    successResponse(res, 200, "Company details fetched successfully", {
-      company,
-    });
+    const company = await companyService.getCompanyDetails(req.shop, req.params.id);
+    successResponse(res, 200, "Company details fetched successfully", { company });
   } catch (error) {
     console.error("Error fetching company details:", error.message);
     handleError(res, error, "Failed to load company details");
@@ -152,21 +111,12 @@ const getCompanyDetails = async (req, res) => {
 
 const assignRoles = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { companyContactId, rolesToAssign } = req.body;
     if (!companyContactId || !Array.isArray(rolesToAssign)) {
-      return errorResponse(
-        res,
-        400,
-        "companyContactId and rolesToAssign array are required"
-      );
+      return errorResponse(res, 400, "companyContactId and rolesToAssign array are required");
     }
 
-    const assignments = await companyService.assignContactRoles(
-      shop,
-      companyContactId,
-      rolesToAssign
-    );
+    const assignments = await companyService.assignContactRoles(req.shop, companyContactId, rolesToAssign);
     successResponse(res, 200, "Roles assigned successfully", { assignments });
   } catch (error) {
     console.error("Error assigning roles:", error.message);
@@ -176,21 +126,12 @@ const assignRoles = async (req, res) => {
 
 const revokeRoles = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { companyContactId, roleAssignmentIds } = req.body;
     if (!companyContactId || !Array.isArray(roleAssignmentIds)) {
-      return errorResponse(
-        res,
-        400,
-        "companyContactId and roleAssignmentIds array are required"
-      );
+      return errorResponse(res, 400, "companyContactId and roleAssignmentIds array are required");
     }
 
-    const revokedIds = await companyService.revokeContactRoles(
-      shop,
-      companyContactId,
-      roleAssignmentIds
-    );
+    const revokedIds = await companyService.revokeContactRoles(req.shop, companyContactId, roleAssignmentIds);
     successResponse(res, 200, "Roles revoked successfully", { revokedIds });
   } catch (error) {
     console.error("Error revoking roles:", error.message);
@@ -200,15 +141,10 @@ const revokeRoles = async (req, res) => {
 
 const updateCompany = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { name, externalId } = req.body || {};
-    if (typeof name === "string" && !name.trim()) {
-      return errorResponse(res, 400, "Company name cannot be empty");
-    }
-    const company = await companyService.updateCompany(shop, req.params.id, {
-      name,
-      externalId,
-    });
+    if (typeof name === "string" && !name.trim()) return errorResponse(res, 400, "Company name cannot be empty");
+
+    const company = await companyService.updateCompany(req.shop, req.params.id, { name, externalId });
     successResponse(res, 200, "Company updated successfully", { company });
   } catch (error) {
     console.error("Error updating company:", error.message);
@@ -218,15 +154,10 @@ const updateCompany = async (req, res) => {
 
 const setMainContact = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { companyContactId } = req.body || {};
     const company = companyContactId
-      ? await companyService.assignMainContact(
-          shop,
-          req.params.id,
-          companyContactId
-        )
-      : await companyService.revokeMainContact(shop, req.params.id);
+      ? await companyService.assignMainContact(req.shop, req.params.id, companyContactId)
+      : await companyService.revokeMainContact(req.shop, req.params.id);
     successResponse(res, 200, "Main contact updated", { company });
   } catch (error) {
     console.error("Error updating main contact:", error.message);
@@ -236,16 +167,10 @@ const setMainContact = async (req, res) => {
 
 const addContactToCompany = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { companyId, customerId } = req.body || {};
-    if (!companyId || !customerId) {
-      return errorResponse(res, 400, "companyId and customerId are required");
-    }
-    const company = await companyService.assignCustomerToCompany(
-      shop,
-      companyId,
-      customerId
-    );
+    if (!companyId || !customerId) return errorResponse(res, 400, "companyId and customerId are required");
+
+    const company = await companyService.assignCustomerToCompany(req.shop, companyId, customerId);
     successResponse(res, 200, "Customer added to company", { company });
   } catch (error) {
     console.error("Error adding customer to company:", error.message);
@@ -255,12 +180,10 @@ const addContactToCompany = async (req, res) => {
 
 const removeContact = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { companyContactId } = req.body || {};
-    if (!companyContactId) {
-      return errorResponse(res, 400, "companyContactId is required");
-    }
-    const removedId = await companyService.removeContact(shop, companyContactId);
+    if (!companyContactId) return errorResponse(res, 400, "companyContactId is required");
+
+    const removedId = await companyService.removeContact(req.shop, companyContactId);
     successResponse(res, 200, "Customer removed from company", { removedId });
   } catch (error) {
     console.error("Error removing contact:", error.message);
@@ -270,11 +193,7 @@ const removeContact = async (req, res) => {
 
 const listEligibleCustomers = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const customers = await companyService.listCustomersForCompany(
-      shop,
-      req.query.q
-    );
+    const customers = await companyService.listCustomersForCompany(req.shop, req.query.q);
     successResponse(res, 200, "Customers fetched successfully", { customers });
   } catch (error) {
     console.error("Error listing customers:", error.message);
@@ -284,8 +203,7 @@ const listEligibleCustomers = async (req, res) => {
 
 const listStaff = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
-    const staff = await companyService.listStaffMembers(shop);
+    const staff = await companyService.listStaffMembers(req.shop);
     successResponse(res, 200, "Staff fetched successfully", { staff });
   } catch (error) {
     console.error("Error listing staff:", error.message);
@@ -295,16 +213,10 @@ const listStaff = async (req, res) => {
 
 const updateAssignedStaff = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { staffMemberIds } = req.body || {};
-    if (!Array.isArray(staffMemberIds)) {
-      return errorResponse(res, 400, "staffMemberIds array is required");
-    }
-    const company = await companyService.updateAssignedStaff(
-      shop,
-      req.params.id,
-      staffMemberIds
-    );
+    if (!Array.isArray(staffMemberIds)) return errorResponse(res, 400, "staffMemberIds array is required");
+
+    const company = await companyService.updateAssignedStaff(req.shop, req.params.id, staffMemberIds);
     successResponse(res, 200, "Assigned staff updated", { company });
   } catch (error) {
     console.error("Error updating assigned staff:", error.message);
@@ -314,12 +226,10 @@ const updateAssignedStaff = async (req, res) => {
 
 const sendAccessEmail = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { customerId } = req.body || {};
-    if (!customerId) {
-      return errorResponse(res, 400, "customerId is required");
-    }
-    await companyService.sendB2bAccessEmail(shop, customerId);
+    if (!customerId) return errorResponse(res, 400, "customerId is required");
+
+    await companyService.sendB2bAccessEmail(req.shop, customerId);
     successResponse(res, 200, "B2B access email sent", { sent: true });
   } catch (error) {
     console.error("Error sending B2B access email:", error.message);
@@ -329,12 +239,10 @@ const sendAccessEmail = async (req, res) => {
 
 const bulkDeleteCompanies = async (req, res) => {
   try {
-    const shop = await getShopRecord(req);
     const { ids } = req.body || {};
-    if (!Array.isArray(ids) || !ids.length) {
-      return errorResponse(res, 400, "ids array is required");
-    }
-    const deletedIds = await companyService.bulkDeleteCompanies(shop, ids);
+    if (!Array.isArray(ids) || !ids.length) return errorResponse(res, 400, "ids array is required");
+
+    const deletedIds = await companyService.bulkDeleteCompanies(req.shop, ids);
     successResponse(res, 200, "Companies deleted successfully", { deletedIds });
   } catch (error) {
     console.error("Error deleting companies:", error.message);

@@ -6,31 +6,25 @@ const verifyShopifyWebhook = (req, res, next) => {
   try {
     const hmacHeader = req.headers["x-shopify-hmac-sha256"];
     const shop = req.headers["x-shopify-shop-domain"];
-    const sharedSecret = SHOPIFY_API_SECRET_KEY;
-
-    const rawBody = req.body;
-    if (!rawBody) {
+    if (!req.body)
       return errorResponse(res, 400, "Please provide valid webhook data");
-    }
 
     const generatedHash = crypto
-      .createHmac("sha256", sharedSecret)
-      .update(rawBody)
+      .createHmac("sha256", SHOPIFY_API_SECRET_KEY)
+      .update(req.body)
       .digest("base64");
-
     if (generatedHash !== hmacHeader) {
       console.warn(`Webhook HMAC validation failed for shop: ${shop}`);
       return errorResponse(res, 401, "Unauthorized webhook request");
     }
-
     next();
   } catch (error) {
     console.error("Failed to verify Shopify webhook:", error);
-    return errorResponse(
+    errorResponse(
       res,
       500,
       "Unable to verify webhook. Please try again.",
-      error,
+      error
     );
   }
 };

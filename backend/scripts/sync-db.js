@@ -14,12 +14,12 @@ const {
   Variant,
   Customer,
   Discount,
+  Order,
   Comment,
   CustomDiscount,
   MetafieldDefinition,
   Metafield,
   CheckoutUpsell,
-  Order,
 } = require("../models/associations");
 
 async function ensureDatabase() {
@@ -30,7 +30,7 @@ async function ensureDatabase() {
     port: DB_PORT,
   });
   await connection.query(
-    `CREATE DATABASE IF NOT EXISTS \`${DB_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    `CREATE DATABASE IF NOT EXISTS \`${DB_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
   );
   await connection.end();
   console.log(`Database ready: ${DB_DATABASE}`);
@@ -42,38 +42,23 @@ async function main() {
   console.log("Database connected.");
   const syncOptions = { alter: process.env.DB_SYNC_ALTER === "true" };
 
-  await Shop.sync(syncOptions);
-  console.log("Table created/verified: shops");
-
-  await Product.sync(syncOptions);
-  console.log("Table created/verified: products");
-
-  await Variant.sync(syncOptions);
-  console.log("Table created/verified: variants");
-
-  await Customer.sync(syncOptions);
-  console.log("Table created/verified: customers");
-
-  await Discount.sync(syncOptions);
-  console.log("Table created/verified: discounts");
-
-  await Order.sync(syncOptions);
-  console.log("Table created/verified: orders");
-
-  await Comment.sync(syncOptions);
-  console.log("Table created/verified: comments");
-
-  await CustomDiscount.sync(syncOptions);
-  console.log("Table created/verified: customDiscounts");
-
-  await MetafieldDefinition.sync(syncOptions);
-  console.log("Table created/verified: metafieldDefinitions");
-
-  await Metafield.sync(syncOptions);
-  console.log("Table created/verified: metafields");
-
-  await CheckoutUpsell.sync(syncOptions);
-  console.log("Table created/verified: checkoutUpsells");
+  const models = [
+    Shop,
+    Product,
+    Variant,
+    Customer,
+    Discount,
+    Order,
+    Comment,
+    CustomDiscount,
+    MetafieldDefinition,
+    Metafield,
+    CheckoutUpsell,
+  ];
+  for (const model of models) {
+    await model.sync(syncOptions);
+    console.log(`Table created/verified: ${model.tableName}`);
+  }
 
   await sequelize.close();
 }
