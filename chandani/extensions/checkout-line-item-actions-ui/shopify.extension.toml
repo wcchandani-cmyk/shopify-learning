@@ -1,0 +1,15 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "Line Item Action"
+handle = "checkout-line-item-actions-ui"
+uid = "93f177ab-6371-1848-2393-8f0ec240df19eb440bec"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/Checkout.jsx"
+target = "purchase.checkout.block.render"
+
+[extensions.capabilities]
+api_access = true
+network_access = true

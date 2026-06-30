@@ -1,0 +1,15 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "Custom Content"
+handle = "checkout-custom-content-ui"
+uid = "3a618dc4-9047-28c2-6a43-589f427f98f4f93c2655"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/Checkout.jsx"
+target = "purchase.checkout.block.render"
+
+[extensions.capabilities]
+api_access = true
+network_access = true

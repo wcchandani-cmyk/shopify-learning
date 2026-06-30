@@ -1,26 +1,20 @@
+// @ts-nocheck
 import '@shopify/ui-extensions/preact';
 import { render } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { useCheckoutData } from '../../shared/useCheckoutData';
 
 export default async () => {
   render(<Extension />, document.body)
 };
 
-function Extension() {
+const Extension = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [productsInfo, setProductsInfo] = useState({});
   const [addingId, setAddingId] = useState(null);
 
-  const [cartLines, setCartLines] = useState(shopify.lines?.value || []);
-
-  useEffect(() => {
-    if (!shopify.lines) return;
-    const unsubscribe = shopify.lines.subscribe(val => {
-      setCartLines(val || []);
-    });
-    return () => unsubscribe();
-  }, []);
+  const { cartLines } = useCheckoutData();
 
   useEffect(() => {
     async function loadCampaigns() {
@@ -31,7 +25,6 @@ function Extension() {
       }
 
       try {
-        // Querying with fully qualified type name for Storefront API: app--376206196737--checkout_upsell
         const res = await shopify.query(`
           query {
             metaobjects(type: "app--376206196737--checkout_upsell", first: 10) {
@@ -119,8 +112,6 @@ function Extension() {
     return null;
   }
 
-  // An offer shows only when a trigger product is in the cart and the
-  // upsell product is not already in the cart.
   const activeOffer = campaigns.find(campaign => {
     const upsellId = String(campaign.upsellProductId || "").trim().toLowerCase();
 
@@ -167,7 +158,7 @@ function Extension() {
   const discountedPrice = originalPrice - (originalPrice * discountPercentage) / 100;
   const imageUrl = upsellProduct.featuredImage?.url;
 
-  async function handleAdd() {
+  const handleAdd = async () => {
     setAddingId(variant.id);
     try {
       const result = await shopify.applyCartLinesChange({
@@ -184,7 +175,7 @@ function Extension() {
     } finally {
       setAddingId(null);
     }
-  }
+  };
 
   return (
     <s-banner heading={activeOffer.offerTitle || "Special Offer"}>
@@ -220,7 +211,7 @@ function Extension() {
           </s-stack>
         </s-stack>
         <s-button
-          loading={addingId === variant.id}
+          loading={addingId === variant.id || undefined}
           onClick={handleAdd}
         >
           Add
@@ -228,4 +219,4 @@ function Extension() {
       </s-grid>
     </s-banner>
   );
-}
+};

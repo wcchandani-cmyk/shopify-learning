@@ -85,6 +85,36 @@ export default function OrderFulfillmentCard({
                         <span className="custom-variant-badge">{item.variantTitle}</span>
                       </div>
                     ) : null}
+                    {item.properties && item.properties.length > 0 && (
+                      <div className="order-line-item-properties" style={{ marginTop: 4 }}>
+                        {item.properties.map((prop, pIdx) => {
+                          const pName = prop.name || prop.key;
+                          const pVal = prop.value;
+                          if (!pName) return null;
+                          return (
+                            <div
+                              key={pIdx}
+                              className="order-line-item-property"
+                              style={{
+                                display: "inline-flex",
+                                padding: "2px 8px",
+                                backgroundColor: "#f1f2f3",
+                                borderRadius: "12px",
+                                fontSize: "11px",
+                                color: "#4f5357",
+                                marginTop: "4px",
+                                marginRight: "4px",
+                                fontWeight: "500",
+                                border: "1px solid #e1e3e5",
+                              }}
+                            >
+                              {pName}
+                              {pVal ? `: ${pVal}` : ''}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="order-line-item-qty">

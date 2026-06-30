@@ -1,0 +1,15 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "Custom Field"
+handle = "checkout-custom-fields-ui"
+uid = "baedcc19-4962-e093-3fe3-ebafd24dab8906d5548c"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/Checkout.jsx"
+target = "purchase.checkout.block.render"
+
+[extensions.capabilities]
+api_access = true
+network_access = true

@@ -10,6 +10,7 @@ const {
   Metafield,
 } = require("../modules/metafields/model");
 const CheckoutUpsell = require("../modules/checkoutUpsell/model");
+const CheckoutCustomization = require("../modules/checkoutCustomization/model");
 const Order = require("../modules/order/model");
 
 Shop.hasMany(Product, {
@@ -163,5 +164,6 @@ module.exports = {
   MetafieldDefinition,
   Metafield,
   CheckoutUpsell,
+  CheckoutCustomization,
   Order,
 };

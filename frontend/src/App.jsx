@@ -22,6 +22,7 @@ export default function App() {
         <a href="/companies">Companies</a>
         <a href="/discounts">Discounts</a>
         <a href="/custom-discounts">Custom Discount</a>
+        <a href="/checkout-customization">Checkout Customization</a>
         <a href="/checkout-upsells">Checkout Upsell</a>
       </ui-nav-menu>
       <RouterProvider router={appRouter} />

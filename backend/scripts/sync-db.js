@@ -20,6 +20,7 @@ const {
   MetafieldDefinition,
   Metafield,
   CheckoutUpsell,
+  CheckoutCustomization,
 } = require("../models/associations");
 
 async function ensureDatabase() {
@@ -54,6 +55,7 @@ async function main() {
     MetafieldDefinition,
     Metafield,
     CheckoutUpsell,
+    CheckoutCustomization,
   ];
   for (const model of models) {
     await model.sync(syncOptions);

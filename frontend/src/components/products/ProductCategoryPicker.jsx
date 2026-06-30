@@ -5,10 +5,6 @@ import "../../styles/ProductCategoryPicker.css";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-/**
- * Live category picker backed by Shopify's standardized product taxonomy.
- * Results are fetched on demand from GET /api/product/taxonomy (no hardcoding).
- */
 export default function ProductCategoryPicker({
   categoryId,
   categoryName,
@@ -118,8 +114,6 @@ export default function ProductCategoryPicker({
   }, [open, search, currentParentId]);
 
   const handleItemClick = (item) => {
-    // While searching we show global matches; pick them directly.
-    // While browsing, step into parents and only select leaf categories.
     if (isSearching || item.isLeaf) {
       onChange({ id: item.id, fullName: item.fullName });
       close();

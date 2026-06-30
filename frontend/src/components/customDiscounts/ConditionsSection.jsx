@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import "../../styles/CustomDiscountDetail.css";
+import ConditionTypeSelect from "../shared/ConditionTypeSelect";
+import ConditionOperatorSelect from "../shared/ConditionOperatorSelect";
 
 const NUMERIC_TYPES = new Set([
   "total_amount",
@@ -99,104 +101,59 @@ const ConditionResourcesList = React.memo(function ConditionResourcesList({
   const visibleItems = isExpanded ? items : items.slice(0, 3);
 
   return (
-    <div className="condition-resources-list" style={{ marginTop: "12px" }}>
+    <s-box padding-block-start="tight">
       <s-stack gap="tight">
         {visibleItems.map((item) => (
-          <div
+          <s-box
             key={item.id}
-            className="condition-resource-row"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "8px 12px",
-              background: "#fff",
-              border: "1px solid #e1e3e5",
-              borderRadius: "8px",
-              marginTop: "4px",
-            }}
+            padding="tight"
+            border="base"
+            border-radius="base"
+            background="bg-surface"
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <s-stack align="center" gap="tight">
               {item.image ? (
-                <img
-                  src={item.image}
+                <s-thumbnail
+                  source={item.image}
                   alt={item.title}
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    objectFit: "cover",
-                    borderRadius: "4px",
-                    border: "1px solid #e1e3e5",
-                  }}
+                  size="small"
                 />
               ) : (
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    background: "#f1f2f3",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "4px",
-                    border: "1px solid #e1e3e5",
-                  }}
+                <s-box
+                  background="bg-surface-secondary"
+                  border="base"
+                  border-radius="base"
+                  padding="tight"
                 >
                   <s-icon
                     type={appliesTo === "collection" ? "folder" : "image"}
-                    source={appliesTo === "collection" ? "folder" : "image"}
                   />
-                </div>
+                </s-box>
               )}
-              <span style={{ fontWeight: "500", fontSize: "14px" }}>
-                {item.title}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="resource-row__remove"
-              style={{
-                background: "none",
-                border: "none",
-                color: "#8c9196",
-                cursor: "pointer",
-                fontSize: "20px",
-                padding: "4px 8px",
-                lineHeight: "1",
-              }}
-              onClick={() => onRemove(item)}
-              aria-label="Remove item"
-            >
-              &times;
-            </button>
-          </div>
+              <s-box grow="1">
+                <s-text fontWeight="semibold">{item.title}</s-text>
+              </s-box>
+              <s-button
+                variant="tertiary"
+                tone="critical"
+                icon="delete"
+                accessibilityLabel="Remove item"
+                onClick={() => onRemove(item)}
+              />
+            </s-stack>
+          </s-box>
         ))}
 
         {items.length > 3 && (
-          <button
-            type="button"
-            className="resources-list-toggle"
-            style={{
-              background: "none",
-              border: "none",
-              color: "#008060",
-              cursor: "pointer",
-              padding: "4px 8px",
-              fontSize: "13px",
-              fontWeight: "500",
-              textAlign: "left",
-            }}
+          <s-button
+            variant="plain"
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            {isExpanded ? (
-              <span>Show less</span>
-            ) : (
-              <span>Show all {items.length} selected &gt;</span>
-            )}
-          </button>
+            {isExpanded ? "Show less" : `Show all ${items.length} selected`}
+          </s-button>
         )}
       </s-stack>
-    </div>
+    </s-box>
   );
 });
 
@@ -327,10 +284,10 @@ export default function ConditionsSection({
 
     const isNumeric = NUMERIC_TYPES.has(cond.type);
     return (
-      <input
+      <s-text-field
         type={isNumeric ? "number" : "text"}
-        className="discount-input-field"
-        aria-label="Condition value"
+        label=""
+        labelHidden
         placeholder={
           isNumeric
             ? "Enter a number (e.g. 100)"
@@ -373,9 +330,10 @@ export default function ConditionsSection({
           <div key={idx} className="condition-builder-row">
             <div className="condition-builder-fields-row">
               <div className="flex-1">
-                <select
-                  className="custom-select-field"
+                <ConditionTypeSelect
+                  source="discount"
                   value={cond.type}
+                  showAddress={functionType === "2"}
                   onChange={(e) => {
                     const isNewNumeric = NUMERIC_TYPES.has(e.target.value);
                     handleConditionChange(idx, {
@@ -385,58 +343,21 @@ export default function ConditionsSection({
                       valueLabel: "",
                     });
                   }}
-                >
-                  <optgroup label="Cart Details">
-                    <option value="total_amount">Total Amount</option>
-                    <option value="subtotal_amount">Subtotal Amount</option>
-                    <option value="total_weight">Total Weight</option>
-                  </optgroup>
-                  <optgroup label="Cart Has Any Items">
-                    <option value="sku">SKU</option>
-                    <option value="collection">Choose Collection</option>
-                    <option value="product">Choose Product</option>
-                  </optgroup>
-                  {functionType === "2" && (
-                    <optgroup label="Address">
-                      <option value="country_code">Country Code</option>
-                      <option value="province_code">Province Code / State Code</option>
-                      <option value="zip_code">Zip Code / Postal Code</option>
-                      <option value="city">City / Area</option>
-                      <option value="address_line">Address Line</option>
-                    </optgroup>
-                  )}
-                  <optgroup label="Customer">
-                    <option value="customer_tag">Customer tags</option>
-                    <option value="total_spend">Total Spend</option>
-                    <option value="total_orders">Total Orders</option>
-                  </optgroup>
-                </select>
+                />
               </div>
 
               <div className="flex-1">
-                <select
-                  className="custom-select-field"
+                <ConditionOperatorSelect
                   value={
                     NUMERIC_TYPES.has(cond.type)
                       ? (["greater_than_or_equals", "less_than_or_equals", "equals"].includes(cond.operator) ? cond.operator : "greater_than_or_equals")
                       : (["contains", "not_contains"].includes(cond.operator) ? cond.operator : "contains")
                   }
+                  isNumeric={NUMERIC_TYPES.has(cond.type)}
                   onChange={(e) =>
                     handleConditionChange(idx, { operator: e.target.value })
                   }
-                >
-                  {NUMERIC_TYPES.has(cond.type) ? (
-                    <>
-                      <option value="greater_than_or_equals">Greater than or equals</option>
-                      <option value="less_than_or_equals">Less than or equals</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="contains">Contains</option>
-                      <option value="not_contains">Not contains</option>
-                    </>
-                  )}
-                </select>
+                />
               </div>
 
               <button
