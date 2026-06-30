@@ -29,7 +29,7 @@ export function useProductVariants(setForm) {
 
   const handleToggleVariant = useCallback((variantId) => {
     setTempVariants((prev) =>
-      prev.map((v) => (v.id === variantId ? { ...v, selected: !v.selected } : v))
+      prev.map((variant) => (variant.id === variantId ? { ...variant, selected: !variant.selected } : variant))
     );
   }, []);
 

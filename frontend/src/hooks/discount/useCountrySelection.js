@@ -103,7 +103,7 @@ export function useCountrySelection(selectedCountries, updateField) {
   }, [filteredCountries, tempSelectedCountries]);
 
   const handleToggleSelectAllCountries = useCallback(() => {
-    const codes = filteredCountries.map((c) => c.code);
+    const codes = filteredCountries.map((country) => country.code);
     setTempSelectedCountries((prev) =>
       isAllFilteredCountriesSelected
         ? prev.filter((code) => !codes.includes(code))

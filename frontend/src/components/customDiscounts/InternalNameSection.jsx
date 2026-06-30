@@ -6,9 +6,6 @@ export default function InternalNameSection({ title, onChangeTitle }) {
     <s-section heading="Internal Name">
       <s-stack gap="base">
         <div>
-          <label className="form-group-label" htmlFor="internal-name-input">
-            Title
-          </label>
           <s-text-field
             id="internal-name-input"
             label="Title"
@@ -17,9 +14,11 @@ export default function InternalNameSection({ title, onChangeTitle }) {
             value={title}
             onInput={(e) => onChangeTitle(e.target.value)}
           />
-          <div className="form-group-subtext">
-            Only visible to you — not shown to customers.
-          </div>
+          <s-box padding-block-start="100">
+            <s-text tone="subdued">
+              Only visible to you — not shown to customers.
+            </s-text>
+          </s-box>
         </div>
       </s-stack>
     </s-section>

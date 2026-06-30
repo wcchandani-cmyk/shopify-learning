@@ -1,4 +1,5 @@
 import { formatMoney } from "../../utils/customerForm";
+import { getInputEventValue, getCheckboxChecked } from "../../utils/fieldEvent";
 
 export default function OrderPaymentSection({
   currency,
@@ -98,36 +99,30 @@ export default function OrderPaymentSection({
       {hasItems && (
         <>
           <div className="order-pay-duelater">
-            <label className="order-pay-checkbox">
-              <input
-                type="checkbox"
-                checked={paymentDueLater}
-                onChange={(e) => onTogglePaymentDueLater(e.target.checked)}
-              />
-              <span>Payment due later</span>
-            </label>
+            <s-checkbox
+              label="Payment due later"
+              checked={paymentDueLater || undefined}
+              onChange={(event) => onTogglePaymentDueLater(getCheckboxChecked(event))}
+            />
 
             {paymentDueLater && (
               <div className="order-pay-terms">
-                <label className="order-currency-label" htmlFor="payment-terms-select">
-                  Payment terms
-                </label>
-                <select
+                <s-select
+                  label="Payment terms"
                   id="payment-terms-select"
-                  className="order-currency-select"
                   value={paymentTermsTemplateId || ""}
-                  onChange={(e) => onChangePaymentTerm(e.target.value)}
+                  onChange={(event) => onChangePaymentTerm(getInputEventValue(event))}
                 >
                   {paymentTermsTemplates.map((term) => (
-                    <option key={term.id} value={term.id}>
+                    <s-option key={term.id} value={term.id}>
                       {term.name}
-                    </option>
+                    </s-option>
                   ))}
-                </select>
-                <p className="order-pay-terms-help">
+                </s-select>
+                <s-text tone="subdued" className="order-pay-terms-help">
                   Payment due when invoice is sent. You'll be able to collect the
                   balance from the order page.
-                </p>
+                </s-text>
               </div>
             )}
           </div>

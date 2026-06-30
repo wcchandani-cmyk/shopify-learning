@@ -13,39 +13,23 @@ export default function DiscountAmountSection({
   return (
     <s-section heading="Discount Amount">
       <s-stack gap="base">
-        <div className="side-by-side-row">
-          <div>
-            <label className="form-group-label" htmlFor="discount-value-input">
-              Discount Value
-            </label>
-            <div className={`discount-value-input-wrapper ${isFixed ? "has-prefix" : "has-suffix"}`}>
-              {isFixed && <span className="discount-value-icon prefix">$</span>}
-              <input
-                id="discount-value-input"
-                type="number"
-                className="discount-input-field"
-                placeholder={isFixed ? "0.00" : "0"}
-                value={discountValue}
-                onChange={(e) => onChangeDiscountValue(e.target.value)}
-              />
-              {!isFixed && <span className="discount-value-icon suffix">%</span>}
-            </div>
-          </div>
-
-          <div>
-            <label className="form-group-label" htmlFor="discount-message-input">
-              Discount Message
-            </label>
-            <input
-              id="discount-message-input"
-              type="text"
-              className="discount-input-field"
-              placeholder="e.g. Special Discount"
-              value={discountMessage}
-              onChange={(e) => onChangeDiscountMessage(e.target.value)}
-            />
-          </div>
-        </div>
+        <s-grid gridTemplateColumns="1fr 1fr" gap="base">
+          <s-text-field
+            label="Discount Value"
+            type="number"
+            placeholder={isFixed ? "0.00" : "0"}
+            prefix={isFixed ? "$" : undefined}
+            suffix={!isFixed ? "%" : undefined}
+            value={discountValue}
+            onInput={(e) => onChangeDiscountValue(e.target.value)}
+          />
+          <s-text-field
+            label="Discount Message"
+            placeholder="e.g. Special Discount"
+            value={discountMessage}
+            onInput={(e) => onChangeDiscountMessage(e.target.value)}
+          />
+        </s-grid>
       </s-stack>
     </s-section>
   );

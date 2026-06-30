@@ -91,7 +91,6 @@ export default function CustomDiscountsList() {
   const handleToggleStatus = useCallback(
     async (id, currentStatus) => {
       const newStatus = currentStatus === "active" ? "inactive" : "active";
-      // Optimistic update in the list
       setCustomDiscounts((prev) =>
         prev.map((item) => {
           const tail = item.shopifyId ? item.shopifyId.split("/").pop() : null;
@@ -104,13 +103,14 @@ export default function CustomDiscountsList() {
           newStatus === "active" ? "Discount activated" : "Discount deactivated"
         );
       } catch (err) {
-        // Revert on error
         setCustomDiscounts((prev) =>
           prev.map((item) => {
             const tail = item.shopifyId
               ? item.shopifyId.split("/").pop()
               : null;
-            return tail === String(id) ? { ...item, status: currentStatus } : item;
+            return tail === String(id)
+              ? { ...item, status: currentStatus }
+              : item;
           })
         );
         shopify.toast.show(
@@ -145,7 +145,7 @@ export default function CustomDiscountsList() {
       {error && (
         <s-section>
           <s-banner tone="critical" heading="Could not load custom discounts">
-            {error}
+            <s-text>{error}</s-text>
           </s-banner>
         </s-section>
       )}
@@ -159,34 +159,28 @@ export default function CustomDiscountsList() {
       {!loading && !error && (
         <>
           <s-section padding="none">
-            <div className="cd-search-bar">
-              <input
-                className="cd-search-input"
-                type="text"
+            <s-box padding="base">
+              <s-search-field
+                label="Search discounts"
+                labelAccessibilityVisibility="exclusive"
                 placeholder="Search by title, method, status..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onInput={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch("")}
               />
-              {search && (
-                <button className="cd-search-clear" onClick={() => setSearch("")} aria-label="Clear search">
-                  ×
-                </button>
-              )}
-            </div>
+            </s-box>
           </s-section>
 
           {showEmpty && (
             <s-section>
-              <s-grid gap="base" justifyItems="center" paddingBlock="large-400">
-                <s-stack alignItems="center">
-                  <s-heading>No custom discounts found</s-heading>
-                  <s-paragraph>
-                    {search
-                      ? "Try a different search term."
-                      : "Click 'Add discount' to create your first custom discount."}
-                  </s-paragraph>
-                </s-stack>
-              </s-grid>
+              <s-stack alignItems="center" gap="base">
+                <s-heading>No custom discounts found</s-heading>
+                <s-paragraph>
+                  {search
+                    ? "Try a different search term."
+                    : "Click 'Add discount' to create your first custom discount."}
+                </s-paragraph>
+              </s-stack>
             </s-section>
           )}
 

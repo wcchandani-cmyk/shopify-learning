@@ -1,4 +1,5 @@
 import React from "react";
+import { useChoiceList } from "../../hooks/useChoiceList";
 import "../../styles/CustomDiscountDetail.css";
 
 export default function DiscountTypeRadioSection({
@@ -7,41 +8,28 @@ export default function DiscountTypeRadioSection({
   applyToEachEntitledItem = false,
   onChangeApplyToEach,
 }) {
+  const choiceListRef = useChoiceList(discountType, onChangeDiscountType);
+
   return (
     <s-section heading="Discount Type">
       <s-stack gap="base">
-        <div className="radio-options-stack">
-          <label className="radio-option-label">
-            <input
-              type="radio"
-              name="discountValueType"
-              checked={discountType === "percentage"}
-              onChange={() => onChangeDiscountType("percentage")}
-            />
-            <span>Percentage</span>
-          </label>
-          <label className="radio-option-label">
-            <input
-              type="radio"
-              name="discountValueType"
-              checked={discountType === "fixed_amount"}
-              onChange={() => onChangeDiscountType("fixed_amount")}
-            />
-            <span>Fixed Amount</span>
-          </label>
-        </div>
+        <s-choice-list
+          ref={choiceListRef}
+          name="discountValueType"
+          values={[discountType]}
+        >
+          <s-choice value="percentage">Percentage</s-choice>
+          <s-choice value="fixed_amount">Fixed Amount</s-choice>
+        </s-choice-list>
 
         {discountType === "fixed_amount" && (
-          <div className="entitled-item-checkbox-container">
-            <label className="checkbox-option-label">
-              <input
-                type="checkbox"
-                checked={applyToEachEntitledItem}
-                onChange={(e) => onChangeApplyToEach && onChangeApplyToEach(e.target.checked)}
-              />
-              <span>Apply the discount to each entitled item</span>
-            </label>
-          </div>
+          <s-checkbox
+            label="Apply the discount to each entitled item"
+            checked={applyToEachEntitledItem || undefined}
+            onClick={() =>
+              onChangeApplyToEach && onChangeApplyToEach(!applyToEachEntitledItem)
+            }
+          />
         )}
       </s-stack>
     </s-section>

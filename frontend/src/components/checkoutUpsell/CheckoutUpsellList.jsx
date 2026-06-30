@@ -14,11 +14,11 @@ const getTriggerLabel = (rule) => {
   const type = rule.triggerType || "products";
   if (type === "collections") {
     const cols = parseJsonField(rule.triggerCollections);
-    if (cols.length > 0) return cols.map((c) => c.title).join(", ");
+    if (cols.length > 0) return cols.map((collection) => collection.title).join(", ");
     return rule.triggerProductTitle || "—";
   }
   const prods = parseJsonField(rule.triggerProducts);
-  if (prods.length > 0) return prods.map((p) => p.title).join(", ");
+  if (prods.length > 0) return prods.map((product) => product.title).join(", ");
   return rule.triggerProductTitle || "—";
 };
 
@@ -48,14 +48,14 @@ export default function CheckoutUpsellList() {
   useEffect(() => { fetchRules(); }, [fetchRules]);
 
   const filteredRules = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rules;
-    return rules.filter((r) => {
-      const label = getTriggerLabel(r).toLowerCase();
+    const searchQuery = search.trim().toLowerCase();
+    if (!searchQuery) return rules;
+    return rules.filter((rule) => {
+      const label = getTriggerLabel(rule).toLowerCase();
       return (
-        String(r.title || "").toLowerCase().includes(q) ||
-        label.includes(q) ||
-        String(r.upsellProductTitle || "").toLowerCase().includes(q)
+        String(rule.title || "").toLowerCase().includes(searchQuery) ||
+        label.includes(searchQuery) ||
+        String(rule.upsellProductTitle || "").toLowerCase().includes(searchQuery)
       );
     });
   }, [rules, search]);
@@ -111,13 +111,13 @@ export default function CheckoutUpsellList() {
         <s-section>
           <s-card>
             <div className="cu-search-wrapper">
-              <input
-                type="text"
+              <s-search-field
+                label="Search campaigns"
+                labelAccessibilityVisibility="exclusive"
                 placeholder="Search campaigns..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="discount-input-field"
-                style={{ width: "100%" }}
+                onInput={(event) => setSearch(event.target.value)}
+                onClear={() => setSearch("")}
               />
             </div>
             <div className="cu-list">

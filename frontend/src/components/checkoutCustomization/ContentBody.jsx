@@ -6,17 +6,19 @@ const BenefitsList = ({ benefits = [], onChange }) => {
   const remove = (i) => onChange(benefits.filter((_, idx) => idx !== i));
 
   return (
-    <div className="ccf-choice-list">
+    <s-stack gap="tight">
       <s-text type="strong">Benefits</s-text>
       {benefits.map((b, i) => (
-        <div key={i} className="ccf-choice-row">
-          <s-text-field
-            label="Benefit"
-            label-hidden
-            placeholder="Benefit text"
-            value={b}
-            onInput={(e) => upd(i, e.target.value)}
-          />
+        <s-stack key={i} direction="inline" gap="base" alignItems="end">
+          <s-box grow="1">
+            <s-text-field
+              label="Benefit"
+              labelAccessibilityVisibility="exclusive"
+              placeholder="Benefit text"
+              value={b}
+              onInput={(e) => upd(i, e.target.value)}
+            />
+          </s-box>
           <s-button
             variant="tertiary"
             tone="critical"
@@ -24,14 +26,16 @@ const BenefitsList = ({ benefits = [], onChange }) => {
             accessibilityLabel="Remove"
             onClick={() => remove(i)}
           />
-        </div>
+        </s-stack>
       ))}
-      <s-button variant="tertiary" icon="plus-circle" onClick={add}>
-        Add benefit
-      </s-button>
-    </div>
+      <div>
+        <s-button variant="tertiary" icon="plus-circle" onClick={add}>
+          Add benefit
+        </s-button>
+      </div>
+    </s-stack>
   );
-}
+};
 
 const ContentBody = ({ item, upd }) => {
   const { type } = item;
@@ -68,21 +72,19 @@ const ContentBody = ({ item, upd }) => {
 
   if (type === "button")
     return (
-      <s-stack gap="base">
-        <div className="ccf-two-col">
-          <s-text-field
-            label="Label"
-            value={item.buttonLabel}
-            onInput={(e) => upd("buttonLabel", e.target.value)}
-          />
-          <s-text-field
-            label="URL"
-            placeholder="https://"
-            value={item.buttonUrl}
-            onInput={(e) => upd("buttonUrl", e.target.value)}
-          />
-        </div>
-      </s-stack>
+      <s-grid gridTemplateColumns="1fr 1fr" gap="base">
+        <s-text-field
+          label="Label"
+          value={item.buttonLabel}
+          onInput={(e) => upd("buttonLabel", e.target.value)}
+        />
+        <s-text-field
+          label="URL"
+          placeholder="https://"
+          value={item.buttonUrl}
+          onInput={(e) => upd("buttonUrl", e.target.value)}
+        />
+      </s-grid>
     );
 
   if (type === "divider")
@@ -94,31 +96,29 @@ const ContentBody = ({ item, upd }) => {
 
   if (type === "heading")
     return (
-      <s-stack gap="base">
-        <div className="ccf-two-col">
-          <s-text-field
-            label="Heading text"
-            value={item.headingText}
-            onInput={(e) => upd("headingText", e.target.value)}
-          />
-          <s-select
-            label="Level"
-            value={item.headingLevel}
-            onChange={(e) => upd("headingLevel", e.target.value)}
-          >
-            {["h1", "h2", "h3", "h4", "h5", "h6"].map((h) => (
-              <s-option key={h} value={h}>
-                {h.toUpperCase()}
-              </s-option>
-            ))}
-          </s-select>
-        </div>
-      </s-stack>
+      <s-grid gridTemplateColumns="1fr 1fr" gap="base">
+        <s-text-field
+          label="Heading text"
+          value={item.headingText}
+          onInput={(event) => upd("headingText", event.target.value)}
+        />
+        <s-select
+          label="Level"
+          value={item.headingLevel}
+          onChange={(event) => upd("headingLevel", event.target.value)}
+        >
+          {["h1", "h2", "h3", "h4", "h5", "h6"].map((headerTag) => (
+            <s-option key={headerTag} value={headerTag}>
+              {headerTag.toUpperCase()}
+            </s-option>
+          ))}
+        </s-select>
+      </s-grid>
     );
 
   if (type === "image") {
-    const handleFileChange = (e) => {
-      const file = e.target.files?.[0];
+    const handleFileChange = (event) => {
+      const file = event.target.files?.[0];
       if (!file) return;
 
       const reader = new FileReader();
@@ -149,14 +149,13 @@ const ContentBody = ({ item, upd }) => {
                       alt={item.imageAlt || "Preview"}
                     />
                   </s-box>
-                  <button
-                    type="button"
-                    className="product-media-upload__remove"
-                    aria-label="Remove image"
+                  <s-button
+                    variant="tertiary"
+                    tone="critical"
+                    icon="x"
+                    accessibilityLabel="Remove image"
                     onClick={() => upd("imageUrl", "")}
-                  >
-                    ×
-                  </button>
+                  />
                 </div>
               ) : (
                 <s-clickable
@@ -175,6 +174,7 @@ const ContentBody = ({ item, upd }) => {
                 </s-clickable>
               )}
 
+              {/* Hidden file input — no Polaris equivalent */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -189,7 +189,7 @@ const ContentBody = ({ item, upd }) => {
         <s-text-field
           label="Alt text"
           value={item.imageAlt}
-          onInput={(e) => upd("imageAlt", e.target.value)}
+          onInput={(event) => upd("imageAlt", event.target.value)}
         />
       </s-stack>
     );
@@ -200,7 +200,7 @@ const ContentBody = ({ item, upd }) => {
       <s-select
         label="Size"
         value={item.spacerSize}
-        onChange={(e) => upd("spacerSize", e.target.value)}
+        onChange={(event) => upd("spacerSize", event.target.value)}
       >
         <s-option value="small">Small</s-option>
         <s-option value="medium">Medium</s-option>
@@ -214,7 +214,7 @@ const ContentBody = ({ item, upd }) => {
         label="Text content"
         value={item.textContent}
         multiline={3}
-        onInput={(e) => upd("textContent", e.target.value)}
+        onInput={(event) => upd("textContent", event.target.value)}
       />
     );
 

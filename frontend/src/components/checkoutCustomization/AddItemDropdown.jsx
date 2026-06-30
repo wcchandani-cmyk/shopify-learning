@@ -15,17 +15,17 @@ export default function AddItemDropdown({ items, onAdd, label = "Add Item", grou
       <s-popover id={pid} position="below">
         <div className="ccf-popover-menu">
           <div className="ccf-dropdown-group-label">{groupLabel}</div>
-          {items.map((t) => (
+          {items.map((item) => (
             <button
-              key={t.id}
+              key={item.id}
               type="button"
               className="ccf-dropdown-item"
               command="--hide"
               commandFor={pid}
-              onClick={() => onAdd(t.id)}
+              onClick={() => onAdd(item.id)}
             >
-              <s-icon type={t.icon} />
-              {t.label}
+              {item.icon && <s-icon type={item.icon} />}
+              {item.label}
             </button>
           ))}
         </div>

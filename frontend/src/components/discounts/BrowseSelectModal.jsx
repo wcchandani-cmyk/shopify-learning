@@ -34,7 +34,7 @@ export default function BrowseSelectModal({
 
         <div className="channel-modal-controls">
           <div className="channel-modal-controls__left">
-            <span className="product-list-checkbox" onClick={(e) => e.stopPropagation()}>
+            <span className="product-list-checkbox" onClick={(event) => event.stopPropagation()}>
               <s-checkbox
                 checked={isAllSelected}
                 onChange={onToggleSelectAll}
@@ -65,9 +65,9 @@ export default function BrowseSelectModal({
           ) : (
             filteredItems.map((item) => (
               <div key={item.id} className="channel-list-item" onClick={() => onToggleItem(item)}>
-                <span className="product-list-checkbox" onClick={(e) => e.stopPropagation()}>
+                <span className="product-list-checkbox" onClick={(event) => event.stopPropagation()}>
                   <s-checkbox
-                    checked={tempSelected.some((t) => t.id === item.id)}
+                    checked={tempSelected.some((selectedItem) => selectedItem.id === item.id)}
                     onChange={() => onToggleItem(item)}
                   />
                 </span>

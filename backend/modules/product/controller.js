@@ -27,7 +27,7 @@ const fetchDbProductColumn = async (shopId, column) => {
     order: [[column, "ASC"]],
     raw: true,
   });
-  return rows.map((r) => String(r[column] || "").trim()).filter(Boolean);
+  return rows.map((row) => String(row[column] || "").trim()).filter(Boolean);
 };
 
 const fetchShopifyStringConnection = async (shop, query, rootField) => {
@@ -38,7 +38,7 @@ const fetchShopifyStringConnection = async (shop, query, rootField) => {
   for (let page = 0; page < 20; page += 1) {
     const response = await graphqlClient.request(query, { variables: { first: 250, after } });
     if (response?.errors) {
-      const msg = Array.isArray(response.errors) ? response.errors.map((e) => e.message).join("; ") : response.errors.message || "Shopify GraphQL error";
+      const msg = Array.isArray(response.errors) ? response.errors.map((err) => err.message).join("; ") : response.errors.message || "Shopify GraphQL error";
       throw new Error(`${rootField}: ${msg}`);
     }
     const connection = response?.data?.[rootField];
@@ -46,7 +46,7 @@ const fetchShopifyStringConnection = async (shop, query, rootField) => {
     if (!connection?.pageInfo?.hasNextPage) break;
     after = connection.pageInfo.endCursor;
   }
-  return values.map((v) => String(v || "").trim()).filter(Boolean);
+  return values.map((val) => String(val || "").trim()).filter(Boolean);
 };
 
 const fetchAllProductTypes = async (shop) => {
@@ -81,7 +81,7 @@ const loadProductWithVariants = (productId, shopId) => Product.findOne({
 });
 
 const variantPayloadKey = (variant) => [variant.option1, variant.option2, variant.option3]
-  .map((v) => String(v || "").trim().toLowerCase())
+  .map((val) => String(val || "").trim().toLowerCase())
   .join("|");
 
 const parseOptionsJson = (optionsJson) => {
@@ -92,7 +92,7 @@ const parseOptionsJson = (optionsJson) => {
     const normalized = parsed
       .map((opt) => {
         const name = String(opt?.name || "").trim();
-        const values = Array.isArray(opt?.values) ? opt.values.map((v) => String(v).trim()).filter(Boolean) : [];
+        const values = Array.isArray(opt?.values) ? opt.values.map((val) => String(val).trim()).filter(Boolean) : [];
         return name && values.length ? { name, values } : null;
       })
       .filter(Boolean);
@@ -171,11 +171,11 @@ const setVariantInventoryAvailable = async (shop, shopifyVariantId, available) =
 const findVariantRowForPayload = (rows, payloadVariant) => {
   const varId = parseInt(payloadVariant.id, 10);
   if (Number.isInteger(varId) && varId > 0) {
-    const byId = rows.find((r) => Number(r.id) === varId);
+    const byId = rows.find((row) => Number(row.id) === varId);
     if (byId) return byId;
   }
   const key = variantPayloadKey(payloadVariant);
-  return rows.find((r) => variantPayloadKey(r) === key) || null;
+  return rows.find((row) => variantPayloadKey(row) === key) || null;
 };
 
 const persistPayloadInventoryToDb = async (productId, payloadVariants = []) => {
@@ -217,7 +217,7 @@ const defaultVariantRow = (tpl) => ({
 const normalizePayloadForShopify = (payload) => {
   const variants = Array.isArray(payload.variants) ? [...payload.variants] : [];
   const options = parseOptionsJson(payload.optionsJson);
-  const nextVariants = variants.filter((v) => String(v.option1 || v.title || "").trim());
+  const nextVariants = variants.filter((variant) => String(variant.option1 || variant.title || "").trim());
   return {
     ...payload,
     optionsJson: options ? payload.optionsJson : null,
@@ -245,7 +245,7 @@ const toProductGid = (shopifyId) => {
 
 const gidToNumericId = (gid) => (String(gid || "").match(/(\d+)$/) || [])[1] || null;
 
-const splitTagsToArray = (tags) => Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : String(tags || "").split(",").map((t) => t.trim()).filter(Boolean);
+const splitTagsToArray = (tags) => Array.isArray(tags) ? tags.map((tag) => String(tag).trim()).filter(Boolean) : String(tags || "").split(",").map((tag) => tag.trim()).filter(Boolean);
 
 const buildVariantSetInput = (variant, optionNames) => {
   const vals = [variant.option1, variant.option2, variant.option3];
@@ -276,8 +276,8 @@ const buildProductSetInput = (payload, { productGid } = {}) => {
 
   let optionNames = [];
   if (options?.length) {
-    optionNames = options.map((o) => o.name);
-    input.productOptions = options.map((o, idx) => ({ name: o.name, position: idx + 1, values: o.values.map((v) => ({ name: v })) }));
+    optionNames = options.map((option) => option.name);
+    input.productOptions = options.map((option, idx) => ({ name: option.name, position: idx + 1, values: option.values.map((val) => ({ name: val })) }));
   } else {
     input.productOptions = [{ name: DEFAULT_OPTION_NAME, position: 1, values: [{ name: DEFAULT_OPTION_VALUE }] }];
   }
@@ -286,7 +286,7 @@ const buildProductSetInput = (payload, { productGid } = {}) => {
   const sourceVars = optionNames.length ? allVars : allVars.slice(0, 1);
   const variants = sourceVars.length ? sourceVars : [defaultVariantRow()];
 
-  input.variants = variants.map((v) => buildVariantSetInput(v, optionNames));
+  input.variants = variants.map((variant) => buildVariantSetInput(variant, optionNames));
   return input;
 };
 
@@ -295,7 +295,7 @@ const runProductSet = async (shop, input) => {
   const response = await graphqlClient.request(PRODUCT_SET_MUTATION, { variables: { input, synchronous: true } });
 
   if (response?.errors) {
-    const err = new Error(Array.isArray(response.errors) ? response.errors.map((e) => e.message).join("; ") : response.errors.message || "Shopify GraphQL error");
+    const err = new Error(Array.isArray(response.errors) ? response.errors.map((errItem) => errItem.message).join("; ") : response.errors.message || "Shopify GraphQL error");
     err.statusCode = 502;
     throw err;
   }
@@ -303,7 +303,7 @@ const runProductSet = async (shop, input) => {
   const result = response?.data?.productSet;
   const userErrors = result?.userErrors || [];
   if (userErrors.length) {
-    const err = new Error(userErrors.map((e) => e.message).join("; ") || "Shopify rejected the product");
+    const err = new Error(userErrors.map((errItem) => errItem.message).join("; ") || "Shopify rejected the product");
     err.statusCode = 422;
     throw err;
   }
@@ -407,7 +407,7 @@ const listProducts = async (req, res) => {
       offset,
     });
 
-    const ids = idRows.map((r) => r.id);
+    const ids = idRows.map((row) => row.id);
     let products = [];
 
     if (ids.length > 0) {
@@ -416,7 +416,7 @@ const listProducts = async (req, res) => {
         include: [{ model: Variant, as: "variants" }],
         order: [[{ model: Variant, as: "variants" }, "position", "ASC"]],
       });
-      const byId = new Map(rows.map((p) => [p.id, p]));
+      const byId = new Map(rows.map((prod) => [prod.id, prod]));
       products = ids.map((id) => byId.get(id)).filter(Boolean);
     }
 

@@ -1,3 +1,4 @@
+import { useChoiceList } from "../../hooks/useChoiceList";
 import { getInputEventValue, getCheckboxChecked } from "../../utils/fieldEvent";
 import SelectedResourcesList from "./SelectedResourcesList";
 
@@ -18,44 +19,39 @@ export default function BuyXGetYSection({
   onBrowse,
   onEditProduct,
 }) {
+  const handleBuysTypeChange = (nextValue) => {
+    setForm((prev) => ({
+      ...prev,
+      bxgyCustomerBuysType: nextValue,
+      bxgyCustomerBuysAmount: nextValue === "quantity" ? "" : prev.bxgyCustomerBuysAmount,
+      bxgyCustomerBuysQuantity: nextValue === "amount" ? "1" : prev.bxgyCustomerBuysQuantity,
+    }));
+  };
+
+  const buysTypeRef = useChoiceList(form.bxgyCustomerBuysType, handleBuysTypeChange);
+
+  const handleGetsDiscountTypeChange = (nextValue) => {
+    setForm((prev) => ({
+      ...prev,
+      bxgyCustomerGetsDiscountType: nextValue,
+      bxgyCustomerGetsDiscountValue: nextValue === "free" ? "" : prev.bxgyCustomerGetsDiscountValue,
+    }));
+  };
+
+  const getsDiscountTypeRef = useChoiceList(form.bxgyCustomerGetsDiscountType, handleGetsDiscountTypeChange);
+
   return (
     <s-stack gap="base">
       <s-section heading="Customer buys">
         <s-stack gap="base">
-          <div className="radio-group">
-            <label className="radio-label">
-              <input
-                type="radio"
-                name="bxgyCustomerBuysType"
-                value="quantity"
-                checked={form.bxgyCustomerBuysType === "quantity"}
-                onChange={() => {
-                  setForm(prev => ({
-                    ...prev,
-                    bxgyCustomerBuysType: "quantity",
-                    bxgyCustomerBuysAmount: ""
-                  }));
-                }}
-              />
-              <span>Minimum quantity of items</span>
-            </label>
-            <label className="radio-label">
-              <input
-                type="radio"
-                name="bxgyCustomerBuysType"
-                value="amount"
-                checked={form.bxgyCustomerBuysType === "amount"}
-                onChange={() => {
-                  setForm(prev => ({
-                    ...prev,
-                    bxgyCustomerBuysType: "amount",
-                    bxgyCustomerBuysQuantity: "1"
-                  }));
-                }}
-              />
-              <span>Minimum purchase amount</span>
-            </label>
-          </div>
+          <s-choice-list
+            ref={buysTypeRef}
+            name="bxgyCustomerBuysType"
+            values={[form.bxgyCustomerBuysType]}
+          >
+            <s-choice value="quantity">Minimum quantity of items</s-choice>
+            <s-choice value="amount">Minimum purchase amount</s-choice>
+          </s-choice-list>
 
           <div className="side-by-side-row">
             <div className="column-40">
@@ -131,7 +127,7 @@ export default function BuyXGetYSection({
               onToggleExpand={() => setIsExpandedBuys(!isExpandedBuys)}
               onEdit={(item) => onEditProduct({ product: item, section: "buys" })}
               onRemove={(item) => {
-                const next = (form.bxgyCustomerBuysSelectedItems || []).filter((i) => i.id !== item.id);
+                const next = (form.bxgyCustomerBuysSelectedItems || []).filter((itemVal) => itemVal.id !== item.id);
                 updateField("bxgyCustomerBuysSelectedItems", next);
               }}
             />
@@ -197,7 +193,7 @@ export default function BuyXGetYSection({
               onToggleExpand={() => setIsExpandedGets(!isExpandedGets)}
               onEdit={(item) => onEditProduct({ product: item, section: "gets" })}
               onRemove={(item) => {
-                const next = (form.bxgyCustomerGetsSelectedItems || []).filter((i) => i.id !== item.id);
+                const next = (form.bxgyCustomerGetsSelectedItems || []).filter((itemVal) => itemVal.id !== item.id);
                 updateField("bxgyCustomerGetsSelectedItems", next);
               }}
             />
@@ -205,54 +201,15 @@ export default function BuyXGetYSection({
 
           <div style={{ marginTop: "16px" }}>
             <label className="field-label" style={{ marginBottom: "8px", display: "block", fontWeight: 600 }}>At a discounted value</label>
-            <div className="radio-group">
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="bxgyCustomerGetsDiscountType"
-                  value="percentage"
-                  checked={form.bxgyCustomerGetsDiscountType === "percentage"}
-                  onChange={() => {
-                    setForm(prev => ({
-                      ...prev,
-                      bxgyCustomerGetsDiscountType: "percentage"
-                    }));
-                  }}
-                />
-                <span>Percentage</span>
-              </label>
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="bxgyCustomerGetsDiscountType"
-                  value="fixed_amount"
-                  checked={form.bxgyCustomerGetsDiscountType === "fixed_amount"}
-                  onChange={() => {
-                    setForm(prev => ({
-                      ...prev,
-                      bxgyCustomerGetsDiscountType: "fixed_amount"
-                    }));
-                  }}
-                />
-                <span>Amount off each</span>
-              </label>
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="bxgyCustomerGetsDiscountType"
-                  value="free"
-                  checked={form.bxgyCustomerGetsDiscountType === "free"}
-                  onChange={() => {
-                    setForm(prev => ({
-                      ...prev,
-                      bxgyCustomerGetsDiscountType: "free",
-                      bxgyCustomerGetsDiscountValue: ""
-                    }));
-                  }}
-                />
-                <span>Free</span>
-              </label>
-            </div>
+            <s-choice-list
+              ref={getsDiscountTypeRef}
+              name="bxgyCustomerGetsDiscountType"
+              values={[form.bxgyCustomerGetsDiscountType]}
+            >
+              <s-choice value="percentage">Percentage</s-choice>
+              <s-choice value="fixed_amount">Amount off each</s-choice>
+              <s-choice value="free">Free</s-choice>
+            </s-choice-list>
 
             {form.bxgyCustomerGetsDiscountType !== "free" && (
               <div className="checkbox-conditional-field" style={{ marginTop: "8px", width: "200px" }}>

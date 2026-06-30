@@ -18,7 +18,7 @@ const getHostName = () =>
 const shopify = shopifyApi({
   apiKey: SHOPIFY_API_KEY,
   apiSecretKey: SHOPIFY_API_SECRET_KEY,
-  scopes: (SCOPES || "write_products").split(",").map((s) => s.trim()),
+  scopes: (SCOPES || "write_products").split(",").map((scope) => scope.trim()),
   hostName: getHostName(),
   apiVersion: ApiVersion.October25,
   isEmbeddedApp: true,
@@ -50,18 +50,18 @@ const extractGraphqlError = (error) => {
     [];
   if (Array.isArray(gqlErrors) && gqlErrors.length > 0) {
     const detail = gqlErrors
-      .map((e) => {
-        const problems = e?.extensions?.problems || e?.problems;
+      .map((errDetail) => {
+        const problems = errDetail?.extensions?.problems || errDetail?.problems;
         return Array.isArray(problems) && problems.length > 0
           ? problems
               .map(
-                (p) =>
-                  `${(p.path || []).join(".") || "(input)"}: ${
-                    p.explanation || p.message
+                (problem) =>
+                  `${(problem.path || []).join(".") || "(input)"}: ${
+                    problem.explanation || problem.message
                   }`
               )
               .join("; ")
-          : e?.message;
+          : errDetail?.message;
       })
       .filter(Boolean)
       .join(" | ");

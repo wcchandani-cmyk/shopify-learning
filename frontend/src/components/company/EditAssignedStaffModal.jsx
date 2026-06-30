@@ -26,7 +26,6 @@ export default function EditAssignedStaffModal({
     else modal.hideOverlay?.();
   }, [open]);
 
-  // Seed the selection from the company's currently assigned staff on open.
   useEffect(() => {
     if (!open) return;
     const initial = {};

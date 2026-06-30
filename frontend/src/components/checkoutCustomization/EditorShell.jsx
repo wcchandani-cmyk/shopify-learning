@@ -7,30 +7,38 @@ export default function EditorShell({
   children,
 }) {
   return (
-    <div className="ccf-field-editor">
-      <div className="ccf-field-header">
-        <span className="ccf-drag-handle">⠿</span>
-        <span className="ccf-field-type-icon">
-          <s-icon type={icon} />
-        </span>
-        <span className="ccf-field-type-name">{label}</span>
-        <div className="ccf-field-header-actions">
-          <s-button
-            variant="tertiary"
-            icon={collapsed ? "chevron-down" : "chevron-up"}
-            accessibilityLabel={collapsed ? "Expand" : "Collapse"}
-            onClick={onToggle}
-          />
-          <s-button
-            variant="tertiary"
-            tone="critical"
-            icon="delete"
-            accessibilityLabel="Remove"
-            onClick={onRemove}
-          />
-        </div>
-      </div>
-      {!collapsed && <div className="ccf-field-body">{children}</div>}
-    </div>
+    <s-box border="base" borderRadius="base">
+      <s-stack gap="none">
+        <s-box padding="base" background="bg-surface-secondary">
+          <s-stack direction="inline" alignItems="center" gap="base">
+            <span className="ccf-drag-handle">⠿</span>
+            <s-icon type={icon} />
+            <s-box grow="1">
+              <s-text type="strong">{label}</s-text>
+            </s-box>
+            <s-button-group gap="tight">
+              <s-button
+                variant="tertiary"
+                icon={collapsed ? "chevron-down" : "chevron-up"}
+                accessibilityLabel={collapsed ? "Expand" : "Collapse"}
+                onClick={onToggle}
+              />
+              <s-button
+                variant="tertiary"
+                tone="critical"
+                icon="delete"
+                accessibilityLabel="Remove"
+                onClick={onRemove}
+              />
+            </s-button-group>
+          </s-stack>
+        </s-box>
+        {!collapsed && (
+          <s-box padding="base">
+            {children}
+          </s-box>
+        )}
+      </s-stack>
+    </s-box>
   );
 }

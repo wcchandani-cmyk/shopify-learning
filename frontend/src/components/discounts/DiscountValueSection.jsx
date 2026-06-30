@@ -102,11 +102,11 @@ export default function DiscountValueSection({
               onToggleExpand={() => setIsExpandedResources(!isExpandedResources)}
               onEdit={(item) => onEditProduct(item)}
               onRemove={(item) => {
-                const next = (form.selectedItems || []).filter((i) => i.id !== item.id);
+                const next = (form.selectedItems || []).filter((itemVal) => itemVal.id !== item.id);
                 setForm(prev => ({
                   ...prev,
                   selectedItems: next,
-                  searchQuery: next.map((i) => i.title).join(", ")
+                  searchQuery: next.map((itemVal) => itemVal.title).join(", ")
                 }));
               }}
             />

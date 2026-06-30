@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { assignContactRoles, revokeContactRoles } from "../../services/companyService";
 import { exclusiveFieldLabel } from "../../utils/formFields";
-import { getInputEventValue } from "../../utils/fieldEvent";
+import { getInputEventValue, getCheckboxChecked } from "../../utils/fieldEvent";
 
 export default function ManagePermissionsModal({
   open,
@@ -210,7 +210,7 @@ export default function ManagePermissionsModal({
             icon="search"
             placeholder="Search locations"
             value={searchQuery}
-            onInput={(e) => setSearchQuery(getInputEventValue(e))}
+            onInput={(event) => setSearchQuery(getInputEventValue(event))}
           />
 
           <div style={{ maxHeight: "300px", overflowY: "auto", border: "1px solid #e3e3e3", borderRadius: "8px", padding: "8px" }}>
@@ -225,7 +225,7 @@ export default function ManagePermissionsModal({
                       <s-checkbox
                         id={`loc-check-${loc.id}`}
                         checked={state.checked || undefined}
-                        onChange={(e) => handleCheckboxChange(loc.id, e.target.checked)}
+                        onChange={(event) => handleCheckboxChange(loc.id, getCheckboxChecked(event))}
                       />
                       <label htmlFor={`loc-check-${loc.id}`} style={{ fontSize: "14px", fontWeight: 500, color: "#303030", cursor: "pointer" }}>
                         {loc.name}
@@ -233,25 +233,18 @@ export default function ManagePermissionsModal({
                     </div>
                     {state.checked && (
                       <div style={{ width: "160px" }}>
-                        <select
+                        <s-select
+                          label="Role"
+                          labelAccessibilityVisibility="exclusive"
                           value={state.roleId}
-                          onChange={(e) => handleRoleChange(loc.id, e.target.value)}
-                          style={{
-                            width: "100%",
-                            padding: "6px 12px",
-                            borderRadius: "6px",
-                            border: "1px solid #c9cccf",
-                            background: "#fff",
-                            fontSize: "13px",
-                            fontFamily: "inherit"
-                          }}
+                          onChange={(event) => handleRoleChange(loc.id, getInputEventValue(event))}
                         >
                           {availableRoles.map((role) => (
-                            <option key={role.id} value={role.id}>
+                            <s-option key={role.id} value={role.id}>
                               {role.name}
-                            </option>
+                            </s-option>
                           ))}
-                        </select>
+                        </s-select>
                       </div>
                     )}
                   </div>

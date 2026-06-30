@@ -32,32 +32,54 @@ export default function TagsSection({
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
-              commitTag();
+              event.target.blur();
             }
           }}
           onBlur={commitTag}
         />
       ) : (
-        <div className="tags-display-container" onClick={() => setIsEditingTags(true)}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "8px",
+            alignItems: "center",
+          }}
+          onClick={() => setIsEditingTags(true)}
+        >
           {tagList.map((tag) => (
-            <span key={tag} className="tag-pill">
-              {tag}
-              <button
-                type="button"
-                className="tag-pill__remove"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  const nextTags = tagList.filter((t) => t !== tag);
-                  updateField("tags", nextTags.join(", "));
+            <s-clickable-chip
+              key={tag}
+              removable
+              accessibilityLabel={tag}
+              onRemove={(event) => {
+                event.stopPropagation();
+                const nextTags = tagList.filter((tagItem) => tagItem !== tag);
+                updateField("tags", nextTags.join(", "));
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "2px 0",
+                  fontSize: "13px",
+                  lineHeight: "1.2",
                 }}
               >
-                &times;
-              </button>
-            </span>
+                {tag}
+              </span>
+            </s-clickable-chip>
           ))}
-          <span className="add-tags-btn">
-            <s-icon type="plus-circle" /> Add tags
-          </span>
+          <s-button
+            variant="plain"
+            icon="plus-circle"
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsEditingTags(true);
+            }}
+          >
+            Add tags
+          </s-button>
         </div>
       )}
     </s-section>

@@ -19,20 +19,20 @@ const mapProductOptionsJson = (node) => {
   const opts = node?.options;
   if (!Array.isArray(opts) || !opts.length) return null;
   const normalized = opts
-    .map((o) => {
-      const name = o?.name?.trim();
+    .map((option) => {
+      const name = option?.name?.trim();
       if (!name) return null;
       let values = [];
-      if (Array.isArray(o.values) && o.values.length)
-        values = o.values.map((v) => String(v).trim()).filter(Boolean);
-      else if (typeof o.values === "string" && o.values.trim())
-        values = o.values
+      if (Array.isArray(option.values) && option.values.length)
+        values = option.values.map((val) => String(val).trim()).filter(Boolean);
+      else if (typeof option.values === "string" && option.values.trim())
+        values = option.values
           .split(",")
-          .map((v) => v.trim())
+          .map((val) => val.trim())
           .filter(Boolean);
-      else if (Array.isArray(o.optionValues))
-        values = o.optionValues
-          .map((v) => String(v?.name || "").trim())
+      else if (Array.isArray(option.optionValues))
+        values = option.optionValues
+          .map((val) => String(val?.name || "").trim())
           .filter(Boolean);
       return values.length ? { name, values } : null;
     })
@@ -79,21 +79,21 @@ const buildImagesJson = (node) => {
 
 const mapWebhookProduct = (product) => {
   if (!product?.id) return null;
-  const variants = (product.variants || []).map((v) => ({
-    id: v.admin_graphql_api_id || `gid://shopify/ProductVariant/${v.id}`,
-    legacyResourceId: String(v.id),
-    title: v.title,
-    price: v.price,
-    compareAtPrice: v.compare_at_price,
-    position: v.position,
-    inventoryPolicy: v.inventory_policy,
-    barcode: v.barcode,
-    sku: v.sku,
-    inventoryQuantity: v.inventory_quantity,
+  const variants = (product.variants || []).map((variant) => ({
+    id: variant.admin_graphql_api_id || `gid://shopify/ProductVariant/${variant.id}`,
+    legacyResourceId: String(variant.id),
+    title: variant.title,
+    price: variant.price,
+    compareAtPrice: variant.compare_at_price,
+    position: variant.position,
+    inventoryPolicy: variant.inventory_policy,
+    barcode: variant.barcode,
+    sku: variant.sku,
+    inventoryQuantity: variant.inventory_quantity,
     selectedOptions: [
-      v.option1 && { value: v.option1 },
-      v.option2 && { value: v.option2 },
-      v.option3 && { value: v.option3 },
+      variant.option1 && { value: variant.option1 },
+      variant.option2 && { value: variant.option2 },
+      variant.option3 && { value: variant.option3 },
     ].filter(Boolean),
   }));
 

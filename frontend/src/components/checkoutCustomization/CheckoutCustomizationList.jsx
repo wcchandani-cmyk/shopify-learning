@@ -60,10 +60,9 @@ export default function CheckoutCustomizationList() {
     [deleting, shopify, fetchRecords]
   );
 
-  // Filter records by active tab using the type field
-  const visibleRecords = records.filter((r) => {
+  const visibleRecords = records.filter((record) => {
     if (activeTab === "All") return true;
-    const meta = TYPE_META[r.type];
+    const meta = TYPE_META[record.type];
     return meta && meta.tab === activeTab;
   });
 
@@ -72,55 +71,57 @@ export default function CheckoutCustomizationList() {
       <s-button
         slot="primary-action"
         variant="primary"
-        onClick={() => setShowCreationStep((v) => !v)}
+        onClick={() => setShowCreationStep((prevVal) => !prevVal)}
       >
         Create Element
       </s-button>
 
       {showCreationStep && (
         <s-section>
-          <div className="cc-creation-header">
-            <div>
-              <h2 className="cc-creation-title">Custom Field And Content</h2>
-              <p className="cc-creation-subtitle">
-                Showcase personalized fields and content to enhance the customer
-                experience during checkout.
-              </p>
-            </div>
-            <button
-              className="cc-close-btn"
-              onClick={() => setShowCreationStep(false)}
-              aria-label="Close"
-            >
-              ✕
-            </button>
-          </div>
+          <s-stack gap="base">
+            <s-stack direction="inline" alignItems="start" gap="base">
+              <s-box grow="1">
+                <s-stack gap="tight">
+                  <s-heading>Custom Field And Content</s-heading>
+                  <s-paragraph>
+                    Showcase personalized fields and content to enhance the
+                    customer experience during checkout.
+                  </s-paragraph>
+                </s-stack>
+              </s-box>
+              <s-button
+                variant="tertiary"
+                icon="x"
+                accessibilityLabel="Close"
+                onClick={() => setShowCreationStep(false)}
+              />
+            </s-stack>
 
-          <div className="cc-cards-grid">
-            {CREATION_CARDS.map((card) => (
-              <div key={card.id} className="cc-card">
-                <div className="cc-card-image-wrapper">
-                  <img
-                    src={card.image}
-                    alt={card.title}
-                    className="cc-card-image"
-                  />
+            <div className="cc-cards-grid">
+              {CREATION_CARDS.map((card) => (
+                <div key={card.id} className="cc-card">
+                  <div className="cc-card-image-wrapper">
+                    <s-image
+                      src={card.image}
+                      alt={card.title}
+                      objectFit="cover"
+                    />
+                  </div>
+                  <div className="cc-card-body">
+                    <s-text type="strong">{card.title}</s-text>
+                    <s-paragraph>{card.description}</s-paragraph>
+                    <s-button
+                      variant="primary"
+                      disabled={!card.path || undefined}
+                      onClick={() => card.path && navigate(card.path)}
+                    >
+                      Create
+                    </s-button>
+                  </div>
                 </div>
-                <div className="cc-card-body">
-                  <h3 className="cc-card-title">{card.title}</h3>
-                  <p className="cc-card-desc">{card.description}</p>
-                  <button
-                    className="cc-create-btn"
-                    onClick={() => card.path && navigate(card.path)}
-                    disabled={!card.path}
-                    title={!card.path ? "Coming soon" : undefined}
-                  >
-                    Create
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </s-stack>
         </s-section>
       )}
 
@@ -128,7 +129,7 @@ export default function CheckoutCustomizationList() {
         <s-section>
           {error && (
             <s-banner tone="critical" heading="Could not load elements">
-              <p>{error}</p>
+              <s-text>{error}</s-text>
             </s-banner>
           )}
 
@@ -136,77 +137,70 @@ export default function CheckoutCustomizationList() {
             <PageLoader />
           ) : (
             <s-card>
-              <div className="cc-table-wrapper">
-                <table className="cc-table">
-                  <thead>
-                    <tr>
-                      <th>Element Name</th>
-                      <th>Block Type</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleRecords.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="cc-empty-row">
-                          <span className="cc-empty-text">
-                            No elements created yet.
-                          </span>
-                          <br />
-                          <span className="cc-empty-subtext">
+              <s-table variant="auto">
+                <s-table-header-row>
+                  <s-table-header style={{ padding: "16px 20px" }}>Element Name</s-table-header>
+                  <s-table-header style={{ padding: "16px 20px" }}>Block Type</s-table-header>
+                  <s-table-header style={{ padding: "16px 20px" }}>Status</s-table-header>
+                  <s-table-header style={{ padding: "16px 20px" }}>Action</s-table-header>
+                </s-table-header-row>
+                <s-table-body>
+                  {visibleRecords.length === 0 ? (
+                    <s-table-row>
+                      <s-table-cell colSpan={4} style={{ padding: "32px 20px" }}>
+                        <s-stack alignItems="center" gap="tight">
+                          <s-text>No elements created yet.</s-text>
+                          <s-text tone="subdued">
                             Click "Create Element" to get started.
-                          </span>
-                        </td>
-                      </tr>
-                    ) : (
-                      visibleRecords.map((record) => {
-                        const meta = TYPE_META[record.type] || {
-                          label: record.type,
-                          editPath: "/checkout-customization",
-                        };
-                        return (
-                          <tr key={record.id}>
-                            <td>
-                              <strong>{record.internalName}</strong>
-                            </td>
-                            <td>
-                              <span className="cc-block-type-badge">
-                                {meta.label}
-                              </span>
-                            </td>
-                            <td>
-                              <s-badge
-                                tone={record.isActive ? "success" : "warning"}
+                          </s-text>
+                        </s-stack>
+                      </s-table-cell>
+                    </s-table-row>
+                  ) : (
+                    visibleRecords.map((record) => {
+                      const meta = TYPE_META[record.type] || {
+                        label: record.type,
+                        editPath: "/checkout-customization",
+                      };
+                      return (
+                        <s-table-row key={record.id}>
+                          <s-table-cell style={{ padding: "16px 20px", verticalAlign: "middle" }}>
+                            <s-text type="strong">{record.internalName}</s-text>
+                          </s-table-cell>
+                          <s-table-cell style={{ padding: "16px 20px", verticalAlign: "middle" }}>
+                            <s-badge>{meta.label}</s-badge>
+                          </s-table-cell>
+                          <s-table-cell style={{ padding: "16px 20px", verticalAlign: "middle" }}>
+                            <s-badge
+                              tone={record.isActive ? "success" : "warning"}
+                            >
+                              {record.isActive ? "Active" : "Inactive"}
+                            </s-badge>
+                          </s-table-cell>
+                          <s-table-cell style={{ padding: "16px 20px", verticalAlign: "middle" }}>
+                            <div className="cc-row-actions">
+                              <s-button
+                                variant="secondary"
+                                onClick={() =>
+                                  navigate(`${meta.editPath}/${record.id}`)
+                                }
                               >
-                                {record.isActive ? "Active" : "Inactive"}
-                              </s-badge>
-                            </td>
-                            <td>
-                              <div className="cc-row-actions">
-                                <s-button
-                                  variant="secondary"
-                                  onClick={() =>
-                                    navigate(`${meta.editPath}/${record.id}`)
-                                  }
-                                >
-                                  Edit
-                                </s-button>
-                                <s-button
-                                  variant="critical"
-                                  onClick={() => handleDelete(record.id)}
-                                >
-                                  Delete
-                                </s-button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                                Edit
+                              </s-button>
+                              <s-button
+                                variant="critical"
+                                onClick={() => handleDelete(record.id)}
+                              >
+                                Delete
+                              </s-button>
+                            </div>
+                          </s-table-cell>
+                        </s-table-row>
+                      );
+                    })
+                  )}
+                </s-table-body>
+              </s-table>
             </s-card>
           )}
         </s-section>

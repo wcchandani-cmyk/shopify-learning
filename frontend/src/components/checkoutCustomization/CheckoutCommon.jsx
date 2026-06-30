@@ -29,7 +29,7 @@ export default function CheckoutCommonHeader({
               label="Internal Name"
               label-hidden
               value={internalName}
-              onInput={(e) => onInternalNameChange(e.target.value)}
+              onInput={(event) => onInternalNameChange(event.target.value)}
             />
             <div style={{ marginTop: 4 }}>
               <s-text tone="subdued">Not displayed to customers.</s-text>
@@ -44,7 +44,7 @@ export default function CheckoutCommonHeader({
             <div>
               <s-select
                 value={blockVisibility}
-                onChange={(e) => onBlockVisibilityChange(getInputEventValue(e))}
+                onChange={(event) => onBlockVisibilityChange(getInputEventValue(event))}
               >
                 {BLOCK_VISIBILITY_OPTIONS.map((opt) => (
                   <s-option key={opt} value={opt}>

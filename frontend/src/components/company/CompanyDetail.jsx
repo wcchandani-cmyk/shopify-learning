@@ -145,7 +145,7 @@ export default function CompanyDetail() {
       0
     );
     const mainContactVal =
-      company.contacts?.find((c) => c.id === company.mainContactId) ||
+      company.contacts?.find((contact) => contact.id === company.mainContactId) ||
       firstContactVal;
 
     return {

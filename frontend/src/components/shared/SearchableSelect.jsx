@@ -24,7 +24,7 @@ export default function SearchableSelect({
   const popoverId = `ss-${useId().replace(/:/g, "")}`;
 
   const selectedLabel = useMemo(
-    () => options.find((o) => o.value === value)?.label || "",
+    () => options.find((option) => option.value === value)?.label || "",
     [options, value]
   );
 
@@ -32,9 +32,9 @@ export default function SearchableSelect({
     if (!search.trim()) return options;
     const q = search.toLowerCase();
     return options.filter(
-      (o) =>
-        o.label.toLowerCase().includes(q) ||
-        (o.email && o.email.toLowerCase().includes(q))
+      (option) =>
+        option.label.toLowerCase().includes(q) ||
+        (option.email && option.email.toLowerCase().includes(q))
     );
   }, [options, search]);
 
@@ -85,7 +85,7 @@ export default function SearchableSelect({
             className="searchable-select__search"
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             placeholder={placeholder}
             aria-label={`Search ${label || "options"}`}
           />

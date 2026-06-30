@@ -77,7 +77,7 @@ export default function AddProductModal({ open, onClose, onAdd }) {
   const filteredProducts = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return products;
-    return products.filter((p) => p.title.toLowerCase().includes(q));
+    return products.filter((prod) => prod.title.toLowerCase().includes(q));
   }, [products, search]);
 
   const selectedCount = Object.keys(selectedIds).length;

@@ -72,14 +72,6 @@
   gap: 0.5rem;
 }
 
-.phone-field__flag {
-  width: 20px;
-  height: 15px;
-  object-fit: cover;
-  border-radius: 2px;
-  display: block;
-}
-
 .phone-field__input {
   flex: 1 1 auto;
   min-width: 0;
@@ -398,14 +390,6 @@
   flex: 0 0 auto;
 }
 
-.cust-badge__dot--on {
-  background: #29845a;
-}
-
-.cust-badge__dot--off {
-  background: #b5b5b5;
-}
-
 /* ── Customer timeline ──────────────────────────────── */
 .cust-timeline {
   display: flex;
@@ -677,19 +661,5 @@
   font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.4;
-}
-
-.cust-company-manage {
-  border: none;
-  background: transparent;
-  padding: 0;
-  font: inherit;
-  font-size: 0.875rem;
-  color: #1f4fb3;
-  cursor: pointer;
-}
-
-.cust-company-manage:hover {
-  text-decoration: underline;
 }
 

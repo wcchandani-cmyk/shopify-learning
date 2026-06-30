@@ -12,17 +12,17 @@ export default function EligibilitySection({
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleRemoveMarket = (market) => {
-    const next = (form.selectedMarkets || []).filter((m) => m.id !== market.id);
+    const next = (form.selectedMarkets || []).filter((marketItem) => marketItem.id !== market.id);
     updateField("selectedMarkets", next);
   };
 
   const handleRemoveSegment = (segment) => {
-    const next = (form.selectedSegments || []).filter((s) => s.id !== segment.id);
+    const next = (form.selectedSegments || []).filter((segmentItem) => segmentItem.id !== segment.id);
     updateField("selectedSegments", next);
   };
 
   const handleRemoveCustomer = (customer) => {
-    const next = (form.selectedCustomers || []).filter((c) => c.id !== customer.id);
+    const next = (form.selectedCustomers || []).filter((customerItem) => customerItem.id !== customer.id);
     updateField("selectedCustomers", next);
   };
 

@@ -41,7 +41,7 @@ const getDraftName = (row) => {
 
 const throwUserErrors = (errors, fallback) => {
   if (errors?.length) {
-    const err = new Error(errors.map((e) => e.message).join("; ") || fallback);
+    const err = new Error(errors.map((errItem) => errItem.message).join("; ") || fallback);
     err.statusCode = 422;
     throw err;
   }
@@ -165,20 +165,20 @@ const upsertOrder = async (shop, mappedNode) => {
 
     const existingTags = (existing.tags || "")
       .split(",")
-      .map((t) => t.trim())
+      .map((tag) => tag.trim())
       .filter(Boolean);
     if (existingTags.includes("Draft")) {
       const incomingTags = (updates.tags || "")
         .split(",")
-        .map((t) => t.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean);
       if (!incomingTags.includes("Draft")) incomingTags.push("Draft");
-      const draftNumTag = existingTags.find((t) =>
-        t.startsWith("DraftNumber:")
+      const draftNumTag = existingTags.find((tag) =>
+        tag.startsWith("DraftNumber:")
       );
       if (
         draftNumTag &&
-        !incomingTags.some((t) => t.startsWith("DraftNumber:"))
+        !incomingTags.some((tag) => tag.startsWith("DraftNumber:"))
       ) {
         incomingTags.push(draftNumTag);
       }
@@ -359,12 +359,12 @@ const getPaymentTermsTemplates = async (shop) => {
   const resp = await graphqlClient.request(PAYMENT_TERMS_TEMPLATES_QUERY);
   const templates = resp?.data?.paymentTermsTemplates || [];
   return templates
-    .filter((t) => t.paymentTermsType !== "FIXED")
-    .map((t) => ({
-      id: t.id,
-      name: t.translatedName || t.name,
-      type: t.paymentTermsType,
-      dueInDays: t.dueInDays,
+    .filter((template) => template.paymentTermsType !== "FIXED")
+    .map((template) => ({
+      id: template.id,
+      name: template.translatedName || template.name,
+      type: template.paymentTermsType,
+      dueInDays: template.dueInDays,
     }));
 };
 
@@ -403,7 +403,7 @@ const createPendingOrderViaDraft = async (shop, payload) => {
   if (payload.tags)
     input.tags = String(payload.tags)
       .split(",")
-      .map((t) => t.trim())
+      .map((tag) => tag.trim())
       .filter(Boolean);
   if (payload.customerShopifyId)
     input.purchasingEntity = {
@@ -487,7 +487,7 @@ const createOrder = async (shop, payload) => {
   const existingTags = payload.tags
     ? String(payload.tags)
         .split(",")
-        .map((t) => t.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean)
     : [];
   const isDraft =
@@ -499,7 +499,7 @@ const createOrder = async (shop, payload) => {
       where: { shopId: shop.id, tags: { [Op.like]: "%Draft%" } },
     });
     if (!existingTags.includes("Draft")) existingTags.push("Draft");
-    if (!existingTags.some((t) => t.startsWith("DraftNumber:")))
+    if (!existingTags.some((tag) => tag.startsWith("DraftNumber:")))
       existingTags.push(`DraftNumber:${draftCount + 1}`);
     payload.tags = existingTags.join(", ");
   }
@@ -731,8 +731,8 @@ const cancelOrder = async (shop, order, payload = {}) => {
     ...(result?.userErrors || []),
   ];
   if (userErrors.length) {
-    const messages = userErrors.map((e) => e.message);
-    const friendly = messages.some((m) => /outstanding fulfillment/i.test(m))
+    const messages = userErrors.map((err) => err.message);
+    const friendly = messages.some((msg) => /outstanding fulfillment/i.test(msg))
       ? "This order can't be cancelled because it has in-progress fulfillments. Open the order in Shopify and cancel or remove the fulfillment first, then try again."
       : messages.join("; ");
     throw new Error(friendly);
@@ -770,7 +770,7 @@ const fulfillOrderOnShopify = async (shop, order) => {
         if (releaseErrors.length) {
           console.warn(
             `Failed to release hold on ${fo.id}:`,
-            releaseErrors.map((e) => e.message).join("; ")
+            releaseErrors.map((err) => err.message).join("; ")
           );
         } else currentStatus = "OPEN";
       } catch (error) {

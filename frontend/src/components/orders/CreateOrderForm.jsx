@@ -72,11 +72,11 @@ export default function CreateOrderForm() {
     setLoadingCustomers(true);
     listCustomers({ page: 1, limit: 100 })
       .then((data) => {
-        const options = (data?.customers ?? []).map((c) => ({
-          value: String(c.shopifyId),
-          label: c.name,
-          email: c.email || "",
-          id: c.id,
+        const options = (data?.customers ?? []).map((customer) => ({
+          value: String(customer.shopifyId),
+          label: customer.name,
+          email: customer.email || "",
+          id: customer.id,
         }));
         setCustomerOptions(options);
       })
@@ -111,7 +111,7 @@ export default function CreateOrderForm() {
       .then((terms) => {
         setPaymentTermsTemplates(terms);
         const due =
-          terms.find((t) => t.type === "RECEIPT") || terms[0];
+          terms.find((term) => term.type === "RECEIPT") || terms[0];
         if (due) setPaymentTermsTemplateId(due.id);
       })
       .catch((err) => {
@@ -184,12 +184,12 @@ export default function CreateOrderForm() {
   }, []);
 
   const handleRemoveItem = useCallback((index) => {
-    setLineItems((prev) => prev.filter((_, i) => i !== index));
+    setLineItems((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   }, []);
 
   const handleUpdateQty = useCallback((index, qty) => {
     setLineItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, quantity: qty } : item))
+      prev.map((item, itemIndex) => (itemIndex === index ? { ...item, quantity: qty } : item))
     );
   }, []);
 
@@ -235,7 +235,7 @@ export default function CreateOrderForm() {
         const payload = {
           lineItems,
           note,
-          tags: isDraftMode && !tags.split(",").map((t) => t.trim()).includes("Draft")
+          tags: isDraftMode && !tags.split(",").map((tag) => tag.trim()).includes("Draft")
             ? (tags ? `${tags}, Draft` : "Draft")
             : tags,
           currency,
@@ -306,7 +306,7 @@ export default function CreateOrderForm() {
     () =>
       tags
         .split(",")
-        .map((t) => t.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean),
     [tags]
   );
@@ -402,12 +402,12 @@ export default function CreateOrderForm() {
                             labelAccessibilityVisibility="exclusive"
                             type="number"
                             value={String(item.quantity)}
-                            onInput={(e) =>
+                            onInput={(event) =>
                               handleUpdateQty(
                                 index,
                                 Math.max(
                                   1,
-                                  parseInt(getInputEventValue(e), 10) || 1
+                                  parseInt(getInputEventValue(event), 10) || 1
                                 )
                               )
                             }
@@ -510,7 +510,7 @@ export default function CreateOrderForm() {
                     <select
                       className="order-currency-select"
                       value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
+                      onChange={(event) => setCurrency(event.target.value)}
                     >
                       <optgroup label="Market currency">
                         <option value={currencyInfo.primary}>
@@ -598,7 +598,7 @@ export default function CreateOrderForm() {
           labelAccessibilityVisibility="exclusive"
           placeholder="Add a note..."
           value={noteInput}
-          onInput={(e) => setNoteInput(getInputEventValue(e))}
+          onInput={(event) => setNoteInput(getInputEventValue(event))}
         />
         <s-button
           slot="primary-action"

@@ -17,17 +17,17 @@ export default function EditVariantsModal({
       <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "16px 0" }}>
         <div className="channel-modal-controls">
           <div className="channel-modal-controls__left">
-            <span className="product-list-checkbox" onClick={(e) => e.stopPropagation()}>
+            <span className="product-list-checkbox" onClick={(event) => event.stopPropagation()}>
               <s-checkbox
-                checked={tempVariants.every((v) => v.selected)}
+                checked={tempVariants.every((variant) => variant.selected)}
                 onChange={() => {
-                  const allSelected = tempVariants.every((v) => v.selected);
-                  setTempVariants((prev) => prev.map((v) => ({ ...v, selected: !allSelected })));
+                  const allSelected = tempVariants.every((variant) => variant.selected);
+                  setTempVariants((prev) => prev.map((variant) => ({ ...variant, selected: !allSelected })));
                 }}
               />
             </span>
             <span style={{ fontSize: "14px", fontWeight: 500 }}>
-              {tempVariants.filter((v) => v.selected).length} selected
+              {tempVariants.filter((variant) => variant.selected).length} selected
             </span>
           </div>
         </div>
@@ -39,7 +39,7 @@ export default function EditVariantsModal({
               className="variant-row"
               onClick={() => onToggleVariant(variant.id)}
             >
-              <span className="variant-row__checkbox" onClick={(e) => e.stopPropagation()}>
+              <span className="variant-row__checkbox" onClick={(event) => event.stopPropagation()}>
                 <s-checkbox
                   checked={variant.selected}
                   onChange={() => onToggleVariant(variant.id)}

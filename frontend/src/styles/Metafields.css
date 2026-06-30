@@ -77,23 +77,12 @@
   gap: 12px;
 }
 
-.metafield-modal-flex-row--align-end {
-  align-items: flex-end;
-}
-
 .metafield-modal-flex-row__item-1 {
   flex: 1;
 }
 
 .metafield-modal-flex-row__item-2 {
   flex: 2;
-}
-
-.metafield-modal-switch-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
 }
 
 /* Options (capabilities) list — mirrors Shopify's bordered toggle rows */
@@ -125,14 +114,6 @@
   font-size: 13px;
   color: #6d7175;
   margin: 0;
-}
-
-/* View all modal */
-.metafield-view-all-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
 }
 
 .metafield-view-all-empty {
@@ -437,21 +418,6 @@
   text-decoration: underline;
 }
 
-.metafield-link-btn {
-  background: none;
-  border: none;
-  color: #005bd3;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 0;
-  text-align: left;
-}
-
-.metafield-link-btn:hover {
-  text-decoration: underline;
-}
-
 /* Validation card */
 .metafield-accordion-trigger {
   display: flex;
@@ -510,51 +476,6 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: #303030;
-}
-
-.metafield-submenu-back:hover {
-  background: #f6f6f7;
-}
-
-.metafield-submenu-back__chevron {
-  font-size: 1.1rem;
-  line-height: 1;
-  color: #6d7175;
-}
-
-.metafield-submenu-trigger {
-  cursor: pointer;
-}
-
-.metafield-submenu-trigger__chevron {
-  color: #8c9196;
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.metafield-submenu-create {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 0.55rem 0.6rem;
-  border: none;
-  border-top: 1px solid #e8e8e8;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.875rem;
-  color: #005bd3;
-  font-weight: 500;
-}
-
-.metafield-submenu-create:hover {
-  background: #f1f1f1;
-}
-
-.metafield-submenu-create__icon {
-  font-size: 1rem;
-  line-height: 1;
 }
 
 /* Type picker popover */

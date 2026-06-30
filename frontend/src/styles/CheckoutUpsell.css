@@ -137,24 +137,6 @@
   text-overflow: ellipsis;
 }
 
-/* ── Tag area legacy (kept for no-items text) ──── */
-.cu-tag-area {
-  border: 1.5px solid #8c9196;
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 60px;
-}
-
-.cu-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .cu-tag {
   display: inline-flex;
   align-items: center;
@@ -208,33 +190,6 @@
   font-size: 14px;
   color: #202223;
   flex: 1;
-}
-
-/* ── Summary sidebar ───────────────────────────── */
-.cu-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.cu-summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 13px;
-}
-
-.cu-summary-key {
-  color: #6d7175;
-  flex-shrink: 0;
-}
-
-.cu-summary-val {
-  color: #202223;
-  font-weight: 500;
-  text-align: right;
-  word-break: break-word;
 }
 
 /* ── List page ─────────────────────────────────── */

@@ -45,8 +45,8 @@ exports.getPublic = async (req, res) => {
     });
 
     // Parse JSON fields before returning
-    const parsed = records.map((r) => {
-      const raw = r.toJSON();
+    const parsed = records.map((record) => {
+      const raw = record.toJSON();
       return {
         ...raw,
         fields: raw.fields ? JSON.parse(raw.fields) : [],

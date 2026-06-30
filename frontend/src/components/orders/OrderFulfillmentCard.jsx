@@ -87,13 +87,13 @@ export default function OrderFulfillmentCard({
                     ) : null}
                     {item.properties && item.properties.length > 0 && (
                       <div className="order-line-item-properties" style={{ marginTop: 4 }}>
-                        {item.properties.map((prop, pIdx) => {
-                          const pName = prop.name || prop.key;
-                          const pVal = prop.value;
-                          if (!pName) return null;
+                        {item.properties.map((property, propertyIndex) => {
+                          const propertyName = property.name || property.key;
+                          const propertyValue = property.value;
+                          if (!propertyName) return null;
                           return (
                             <div
-                              key={pIdx}
+                              key={propertyIndex}
                               className="order-line-item-property"
                               style={{
                                 display: "inline-flex",
@@ -108,8 +108,8 @@ export default function OrderFulfillmentCard({
                                 border: "1px solid #e1e3e5",
                               }}
                             >
-                              {pName}
-                              {pVal ? `: ${pVal}` : ''}
+                              {propertyName}
+                              {propertyValue ? `: ${propertyValue}` : ''}
                             </div>
                           );
                         })}

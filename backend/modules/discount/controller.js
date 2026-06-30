@@ -40,8 +40,8 @@ const getShopifyCountryIds = async (client, isoCodes) => {
     const countries = response.body?.countries || [];
     const upperCodes = new Set(isoCodes.map((code) => code.toUpperCase()));
     return countries
-      .filter((c) => upperCodes.has(c.code.toUpperCase()))
-      .map((c) => c.id);
+      .filter((country) => upperCodes.has(country.code.toUpperCase()))
+      .map((country) => country.id);
   } catch (err) {
     console.error("Error fetching country IDs from Shopify:", err.message);
     return [];
@@ -137,10 +137,10 @@ const mapEntitledFields = (priceRule, appliesTo, selectedItems) => {
       const pId = extractNumericId(item.id);
       if (!pId) continue;
       const variants = item.variants || [];
-      const selected = variants.filter((v) => v.selected);
+      const selected = variants.filter((variant) => variant.selected);
       if (selected.length > 0 && selected.length < variants.length) {
-        selected.forEach((v) => {
-          const vId = extractNumericId(v.id);
+        selected.forEach((variant) => {
+          const vId = extractNumericId(variant.id);
           if (vId) priceRule.entitled_variant_ids.push(vId);
         });
       } else {
@@ -153,7 +153,7 @@ const mapEntitledFields = (priceRule, appliesTo, selectedItems) => {
   ) {
     priceRule.target_selection = TARGET_SELECTION.ENTITLED;
     priceRule.entitled_collection_ids = selectedItems
-      .map((i) => extractNumericId(i.id))
+      .map((item) => extractNumericId(item.id))
       .filter(Boolean);
   } else if (priceRule.target_type !== TARGET_TYPE.SHIPPING_LINE) {
     priceRule.target_selection = TARGET_SELECTION.ALL;
@@ -206,10 +206,10 @@ const mapBxgyFields = (priceRule, body) => {
         const pId = extractNumericId(item.id);
         if (!pId) continue;
         const variants = item.variants || [];
-        const selected = variants.filter((v) => v.selected);
+        const selected = variants.filter((variant) => variant.selected);
         if (selected.length > 0 && selected.length < variants.length) {
-          selected.forEach((v) => {
-            const vId = extractNumericId(v.id);
+          selected.forEach((variant) => {
+            const vId = extractNumericId(variant.id);
             if (vId) priceRule.prerequisite_variant_ids.push(vId);
           });
         } else {
@@ -221,7 +221,7 @@ const mapBxgyFields = (priceRule, body) => {
       Array.isArray(bxgyCustomerBuysSelectedItems)
     ) {
       priceRule.prerequisite_collection_ids = bxgyCustomerBuysSelectedItems
-        .map((i) => extractNumericId(i.id))
+        .map((item) => extractNumericId(item.id))
         .filter(Boolean);
     }
   }
@@ -254,10 +254,10 @@ const mapBxgyFields = (priceRule, body) => {
       const pId = extractNumericId(item.id);
       if (!pId) continue;
       const variants = item.variants || [];
-      const selected = variants.filter((v) => v.selected);
+      const selected = variants.filter((variant) => variant.selected);
       if (selected.length > 0 && selected.length < variants.length) {
-        selected.forEach((v) => {
-          const vId = extractNumericId(v.id);
+        selected.forEach((variant) => {
+          const vId = extractNumericId(variant.id);
           if (vId) priceRule.entitled_variant_ids.push(vId);
         });
       } else {
@@ -269,7 +269,7 @@ const mapBxgyFields = (priceRule, body) => {
     Array.isArray(bxgyCustomerGetsSelectedItems)
   ) {
     priceRule.entitled_collection_ids = bxgyCustomerGetsSelectedItems
-      .map((i) => extractNumericId(i.id))
+      .map((item) => extractNumericId(item.id))
       .filter(Boolean);
   }
 };
@@ -401,7 +401,7 @@ const createDiscount = async (req, res) => {
 
     if (priceRule.customer_selection === "prerequisite") {
       priceRule.prerequisite_customer_ids = req.body.selectedCustomers
-        .map((c) => extractNumericId(c.id))
+        .map((customer) => extractNumericId(customer.id))
         .filter(Boolean);
     }
 
@@ -584,8 +584,8 @@ const getDiscount = async (req, res) => {
         try {
           const countriesResponse = await client.get({ path: "countries" });
           selectedCountries = (countriesResponse.body?.countries || [])
-            .filter((c) => countryIds.includes(c.id))
-            .map((c) => c.code.toLowerCase());
+            .filter((country) => countryIds.includes(country.id))
+            .map((country) => country.code.toLowerCase());
         } catch (err) {
           console.warn("Could not fetch countries to map IDs:", err.message);
         }
@@ -756,7 +756,7 @@ const updateDiscount = async (req, res) => {
 
     if (priceRule.customer_selection === "prerequisite") {
       priceRule.prerequisite_customer_ids = req.body.selectedCustomers
-        .map((c) => extractNumericId(c.id))
+        .map((customer) => extractNumericId(customer.id))
         .filter(Boolean);
     } else {
       priceRule.prerequisite_customer_ids = [];
@@ -926,9 +926,9 @@ const getMarkets = async (req, res) => {
         }
       }
     `);
-    const markets = (response.data?.markets?.nodes || []).map((m) => ({
-      id: m.id,
-      title: m.name || m.id,
+    const markets = (response.data?.markets?.nodes || []).map((market) => ({
+      id: market.id,
+      title: market.name || market.id,
     }));
     successResponse(res, 200, "Markets fetched successfully", { markets });
   } catch (error) {
@@ -965,9 +965,9 @@ const getSegments = async (req, res) => {
         }
       }
     `);
-    const segments = (response.data?.segments?.nodes || []).map((s) => ({
-      id: s.id,
-      title: s.name || s.id,
+    const segments = (response.data?.segments?.nodes || []).map((segment) => ({
+      id: segment.id,
+      title: segment.name || segment.id,
     }));
     successResponse(res, 200, "Segments fetched successfully", { segments });
   } catch (error) {

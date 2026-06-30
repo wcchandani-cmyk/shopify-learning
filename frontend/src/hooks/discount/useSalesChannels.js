@@ -60,7 +60,7 @@ export function useSalesChannels(selectedChannels, updateField) {
   }, [filteredChannels, tempSelectedChannels]);
 
   const handleToggleSelectAll = useCallback(() => {
-    const ids = filteredChannels.map((c) => c.id);
+    const ids = filteredChannels.map((channel) => channel.id);
     setTempSelectedChannels((prev) =>
       isAllFilteredSelected
         ? prev.filter((id) => !ids.includes(id))

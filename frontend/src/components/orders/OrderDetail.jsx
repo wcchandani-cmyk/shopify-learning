@@ -76,9 +76,9 @@ export default function OrderDetail() {
     }
   }, [order]);
 
-  const saveField = useCallback(async (fieldsToUpdate) => {
+  const saveField = useCallback(async (fieldsToUpdate, isBackground = false) => {
     if (!order) return;
-    setSaving(true);
+    if (!isBackground) setSaving(true);
     try {
       const payload = {
         tags: draftTags,
@@ -90,15 +90,17 @@ export default function OrderDetail() {
         ...fieldsToUpdate,
       };
       await updateOrder(order.shopifyId, payload);
-      shopify.toast.show("Order updated successfully");
-      await reload(true);
-      setTimelineTrigger((v) => v + 1);
+      if (!isBackground) {
+        shopify.toast.show("Order updated successfully");
+        await reload(true);
+      }
+      setTimelineTrigger((prevTrigger) => prevTrigger + 1);
     } catch (err) {
       shopify.toast.show(err.message || "Failed to update order", {
         isError: true,
       });
     } finally {
-      setSaving(false);
+      if (!isBackground) setSaving(false);
     }
   }, [
     order,
@@ -117,7 +119,7 @@ export default function OrderDetail() {
   const draftCustomer = useMemo(() => {
     if (!draftCustomerId) return null;
     if (order?.customer?.id === draftCustomerId) return order.customer;
-    const found = allCustomers.find((c) => c.id === draftCustomerId);
+    const found = allCustomers.find((cust) => cust.id === draftCustomerId);
     if (!found) return null;
     return {
       id: found.id,
@@ -196,14 +198,14 @@ export default function OrderDetail() {
     loadCustomers();
   }, [loadCustomers]);
 
-  const handleUpdateTags = useCallback(async (fieldName, value) => {
+  const handleUpdateTags = useCallback((fieldName, value) => {
     setDraftTags(value);
-    await saveField({ tags: value });
+    saveField({ tags: value }, true);
   }, [saveField]);
 
-  const handleSaveNote = useCallback(async () => {
+  const handleSaveNote = useCallback(() => {
     setDraftNote(noteInput);
-    await saveField({ note: noteInput });
+    saveField({ note: noteInput }, true);
   }, [noteInput, saveField]);
 
   const handleUpdateCustomer = useCallback(async (selectedCustomerId) => {
@@ -215,8 +217,8 @@ export default function OrderDetail() {
     return draftTags
       ? draftTags
         .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
+        .map((tag) => tag.trim())
+        .filter((tag) => tag && tag !== "Draft" && !tag.startsWith("DraftNumber:"))
       : [];
   }, [draftTags]);
 
@@ -256,7 +258,7 @@ export default function OrderDetail() {
       setDraftFinancialStatus("paid");
       setRecordPaymentOpen(false);
       await reload(true);
-      setTimelineTrigger((v) => v + 1);
+      setTimelineTrigger((prevTrigger) => prevTrigger + 1);
     } catch (err) {
       shopify.toast.show(err.message || "Failed to record payment", {
         isError: true,
@@ -356,8 +358,8 @@ export default function OrderDetail() {
                   Order created on {formatOrderDateLong(order.createdAt)}. You can{" "}
                   <s-link
                     href={`/orders/${order.shopifyId}`}
-                    onClick={(e) => {
-                      e.preventDefault();
+                    onClick={(event) => {
+                      event.preventDefault();
                       navigate(`/orders/${order.shopifyId}`);
                     }}
                   >
@@ -366,8 +368,8 @@ export default function OrderDetail() {
                   or{" "}
                   <s-link
                     href="/orders/new"
-                    onClick={(e) => {
-                      e.preventDefault();
+                    onClick={(event) => {
+                      event.preventDefault();
                       navigate("/orders/new");
                     }}
                   >
@@ -476,7 +478,7 @@ export default function OrderDetail() {
             labelAccessibilityVisibility="exclusive"
             placeholder="Add a note..."
             value={noteInput}
-            onInput={(e) => setNoteInput(getInputEventValue(e))}
+            onInput={(event) => setNoteInput(getInputEventValue(event))}
           />
           <div className="note-modal-counter">{noteInput.length}/5000</div>
           <div className="note-modal-caption">

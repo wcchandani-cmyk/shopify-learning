@@ -117,7 +117,7 @@ const FieldBody = ({ field, upd, orderFieldSetting }) => {
         </s-box>
       </s-stack>
 
-      <div className="ccf-two-col">
+      <s-grid gridTemplateColumns="1fr 1fr" gap="base">
         <div>
           <s-text-field label="Field label *" value={field.label} onInput={(e) => upd("label", e.target.value)} />
           <s-box padding-block-start="100">
@@ -134,7 +134,7 @@ const FieldBody = ({ field, upd, orderFieldSetting }) => {
             </s-text>
           </s-box>
         </div>
-      </div>
+      </s-grid>
 
       <div>
         <s-text-field

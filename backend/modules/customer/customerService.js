@@ -29,7 +29,7 @@ const mapRestCustomer = (node) => {
   const addr =
     node.default_address ||
     (Array.isArray(node.addresses)
-      ? node.addresses.find((a) => a?.default) || node.addresses[0]
+      ? node.addresses.find((addrItem) => addrItem?.default) || node.addresses[0]
       : null) ||
     {};
 
@@ -145,7 +145,7 @@ const buildAddressBody = (payload, { isUpdate = false } = {}) => {
   const existingId = toAddressRestId(address.id);
   if (
     !existingId &&
-    !ADDRESS_MEANINGFUL_KEYS.some((k) => trimOrNull(address[k]))
+    !ADDRESS_MEANINGFUL_KEYS.some((keyName) => trimOrNull(address[keyName]))
   )
     return null;
 
@@ -191,7 +191,7 @@ const buildRestCustomer = (payload = {}, { id, isUpdate = false } = {}) => {
   body.tax_exempt = payload.taxSetting === "dont_collect";
   body.tags = String(payload.tags ?? "")
     .split(",")
-    .map((t) => t.trim())
+    .map((tag) => tag.trim())
     .filter(Boolean)
     .join(", ");
 

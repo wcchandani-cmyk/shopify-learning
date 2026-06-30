@@ -79,7 +79,7 @@ const FULFILLMENT_ACTIONS = [
 
 export function getFulfillmentMenuOptions(status) {
   const normalized = normalizeFulfillment(status);
-  const current = FULFILLMENT_ACTIONS.some((a) => a.status === normalized)
+  const current = FULFILLMENT_ACTIONS.some((action) => action.status === normalized)
     ? normalized
     : "unfulfilled";
   return FULFILLMENT_ACTIONS.filter((action) => action.status !== current);

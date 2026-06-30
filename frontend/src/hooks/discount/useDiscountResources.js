@@ -26,12 +26,12 @@ export function useDiscountResources(form, setForm, shopify) {
             image: item.image?.src || item.image?.originalSrc || item.images?.[0]?.src || item.images?.[0]?.originalSrc || "",
           };
           if (resourceType === "product") {
-            mapped.variants = (item.variants || []).map((v) => ({
-              id: v.id,
-              title: v.title,
-              price: v.price || "",
+            mapped.variants = (item.variants || []).map((variant) => ({
+              id: variant.id,
+              title: variant.title,
+              price: variant.price || "",
               selected: true,
-              inventoryQuantity: v.inventoryQuantity ?? v.inventory ?? 0,
+              inventoryQuantity: variant.inventoryQuantity ?? variant.inventory ?? 0,
             }));
           }
           return mapped;
@@ -42,10 +42,10 @@ export function useDiscountResources(form, setForm, shopify) {
         const mergedNewItems = newItems.map(item => {
           const matched = existingMap.get(item.id);
           if (matched && matched.variants && item.variants) {
-            const matchedVariantsMap = new Map(matched.variants.map(v => [v.id, v]));
-            item.variants = item.variants.map(v => {
-              const mv = matchedVariantsMap.get(v.id);
-              return mv ? { ...v, selected: mv.selected } : v;
+            const matchedVariantsMap = new Map(matched.variants.map(variant => [variant.id, variant]));
+            item.variants = item.variants.map(variant => {
+              const matchedVariant = matchedVariantsMap.get(variant.id);
+              return matchedVariant ? { ...variant, selected: matchedVariant.selected } : variant;
             });
           }
           return item;
@@ -78,8 +78,8 @@ export function useDiscountResources(form, setForm, shopify) {
   }, [form.appliesTo, form.selectedItems, form.bxgyCustomerBuysAppliesTo, form.bxgyCustomerBuysSelectedItems, form.bxgyCustomerGetsAppliesTo, form.bxgyCustomerGetsSelectedItems, setForm, shopify]);
 
   const filterItems = (items, query) => {
-    const q = query.trim().toLowerCase();
-    return q ? (items || []).filter(item => item.title.toLowerCase().includes(q)) : (items || []);
+    const searchQuery = query.trim().toLowerCase();
+    return searchQuery ? (items || []).filter(item => item.title.toLowerCase().includes(searchQuery)) : (items || []);
   };
   const filteredSelectedItems = useMemo(() => filterItems(form.selectedItems, appliesToSearchQuery), [form.selectedItems, appliesToSearchQuery]);
   const filteredBuysItems = useMemo(() => filterItems(form.bxgyCustomerBuysSelectedItems, buysSearchQuery), [form.bxgyCustomerBuysSelectedItems, buysSearchQuery]);

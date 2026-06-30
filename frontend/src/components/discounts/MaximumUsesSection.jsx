@@ -8,7 +8,7 @@ export default function MaximumUsesSection({
   limitTotalLabel = "Limit number of times each code can be used in total",
 }) {
   const content = (
-    <div className="checkbox-group tight-gap">
+    <s-stack gap="tight">
       <s-checkbox
         label={limitTotalLabel}
         checked={form.limitTotalUses}
@@ -19,7 +19,7 @@ export default function MaximumUsesSection({
         }}
       />
       {form.limitTotalUses && (
-        <div className="checkbox-conditional-field" style={{ marginTop: "8px" }}>
+        <s-box padding-inline-start="700">
           <s-number-field
             label="Total usage limit"
             labelAccessibilityVisibility="exclusive"
@@ -28,7 +28,7 @@ export default function MaximumUsesSection({
             value={form.limitTotalUsesValue}
             onInput={(event) => updateField("limitTotalUsesValue", getInputEventValue(event))}
           />
-        </div>
+        </s-box>
       )}
 
       <s-checkbox
@@ -36,15 +36,15 @@ export default function MaximumUsesSection({
         checked={form.limitOnePerCustomer}
         onChange={(event) => updateField("limitOnePerCustomer", getCheckboxChecked(event))}
       />
-    </div>
+    </s-stack>
   );
 
   if (plain) {
     return (
-      <div>
-        <h4 className="additional-options-sub-heading">{title}</h4>
+      <s-stack gap="tight">
+        <s-heading>{title}</s-heading>
         {content}
-      </div>
+      </s-stack>
     );
   }
 

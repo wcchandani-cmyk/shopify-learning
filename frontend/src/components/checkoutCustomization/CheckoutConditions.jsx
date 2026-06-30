@@ -19,62 +19,43 @@ const ConditionResourcesList = React.memo(function ConditionResourcesList({
   const visibleItems = isExpanded ? items : items.slice(0, 3);
 
   return (
-    <div style={{ marginTop: "8px" }}>
+    <s-box padding-block-start="tight">
       <s-stack gap="tight">
         {visibleItems.map((item) => (
-          <div
+          <s-box
             key={item.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "6px 12px",
-              background: "#fff",
-              border: "1px solid #e1e3e5",
-              borderRadius: "8px",
-              marginTop: "4px",
-            }}
+            padding="tight"
+            border="base"
+            borderRadius="base"
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <s-stack direction="inline" alignItems="center" gap="tight">
               {item.image ? (
-                <img
+                <s-thumbnail
                   src={item.image}
                   alt={item.title}
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    objectFit: "cover",
-                    borderRadius: "4px",
-                    border: "1px solid #e1e3e5",
-                  }}
+                  size="small"
                 />
               ) : (
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    background: "#f1f2f3",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "4px",
-                    border: "1px solid #e1e3e5",
-                  }}
+                <s-box
+                  background="bg-surface-secondary"
+                  border="base"
+                  borderRadius="base"
+                  padding="tight"
                 >
                   <s-icon type="image" />
-                </div>
+                </s-box>
               )}
-              <span style={{ fontWeight: "500", fontSize: "13px", color: "#202223" }}>
-                {item.title}
-              </span>
-            </div>
-            <s-button
-              variant="tertiary"
-              tone="critical"
-              icon="delete"
-              onClick={() => onRemove(item)}
-            />
-          </div>
+              <s-box grow="1">
+                <s-text type="strong">{item.title}</s-text>
+              </s-box>
+              <s-button
+                variant="tertiary"
+                tone="critical"
+                icon="delete"
+                onClick={() => onRemove(item)}
+              />
+            </s-stack>
+          </s-box>
         ))}
 
         {items.length > 3 && (
@@ -86,7 +67,7 @@ const ConditionResourcesList = React.memo(function ConditionResourcesList({
           </s-button>
         )}
       </s-stack>
-    </div>
+    </s-box>
   );
 });
 
@@ -231,18 +212,20 @@ export default function CheckoutConditionsSection({
 
         return (
           <s-stack gap="tight">
-            <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "8px" }}>
-              <div style={{ flex: 1 }}>
+            <s-stack direction="inline" gap="base" alignItems="end">
+              <s-box grow="1">
                 <s-text-field
+                  label="Search products"
+                  labelAccessibilityVisibility="exclusive"
                   placeholder="Search products"
                   value={query}
-                  onInput={(e) =>
-                    setSearchQueries((prev) => ({ ...prev, [idx]: getInputEventValue(e) }))
+                  onInput={(event) =>
+                    setSearchQueries((prev) => ({ ...prev, [idx]: getInputEventValue(event) }))
                   }
                 />
-              </div>
+              </s-box>
               <s-button onClick={() => handleBrowse(idx)}>Browse</s-button>
-            </div>
+            </s-stack>
 
             <ConditionResourcesList
               items={filteredItems}
@@ -263,38 +246,36 @@ export default function CheckoutConditionsSection({
 
       if (BOOLEAN_TYPES.has(cond.type)) {
         return (
-          <div style={{ marginTop: "8px" }}>
-            <s-select
-              value={cond.value ?? "true"}
-              onChange={(e) =>
-                handleConditionChange(idx, { value: getInputEventValue(e) })
-              }
-            >
-              <s-option value="true">Yes</s-option>
-              <s-option value="false">No</s-option>
-            </s-select>
-          </div>
+          <s-select
+            value={cond.value ?? "true"}
+            onChange={(event) =>
+              handleConditionChange(idx, { value: getInputEventValue(event) })
+            }
+          >
+            <s-option value="true">Yes</s-option>
+            <s-option value="false">No</s-option>
+          </s-select>
         );
       }
 
       const isNumeric = NUMERIC_TYPES.has(cond.type);
       return (
-        <div style={{ marginTop: "8px" }}>
-          <s-text-field
-            type={isNumeric ? "number" : "text"}
-            placeholder={
-              cond.type
-                ? isNumeric
-                  ? "Enter a number (e.g. 100)"
-                  : "Enter value (e.g. VIP, USD)"
-                : ""
-            }
-            value={cond.value ?? ""}
-            onInput={(e) =>
-              handleConditionChange(idx, { value: getInputEventValue(e) })
-            }
-          />
-        </div>
+        <s-text-field
+          type={isNumeric ? "number" : "text"}
+          label="Value"
+          labelAccessibilityVisibility="exclusive"
+          placeholder={
+            cond.type
+              ? isNumeric
+                ? "Enter a number (e.g. 100)"
+                : "Enter value (e.g. VIP, USD)"
+              : ""
+          }
+          value={cond.value ?? ""}
+          onInput={(event) =>
+            handleConditionChange(idx, { value: getInputEventValue(event) })
+          }
+        />
       );
     },
     [handleBrowse, handleConditionChange, searchQueries]
@@ -322,8 +303,8 @@ export default function CheckoutConditionsSection({
                 <ConditionTypeSelect
                   source="checkout"
                   value={cond.type}
-                  onChange={(e) => {
-                    const nextType = getInputEventValue(e);
+                  onChange={(event) => {
+                    const nextType = getInputEventValue(event);
                     const isNewNumeric = NUMERIC_TYPES.has(nextType);
                     const isNewBoolean = BOOLEAN_TYPES.has(nextType);
                     handleConditionChange(idx, {
@@ -345,8 +326,8 @@ export default function CheckoutConditionsSection({
                   isNumeric={NUMERIC_TYPES.has(cond.type)}
                   isBoolean={BOOLEAN_TYPES.has(cond.type)}
                   isCheckout={true}
-                  onChange={(e) =>
-                    handleConditionChange(idx, { operator: getInputEventValue(e) })
+                  onChange={(event) =>
+                    handleConditionChange(idx, { operator: getInputEventValue(event) })
                   }
                 />
 

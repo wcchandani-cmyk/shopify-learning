@@ -244,20 +244,20 @@ const updateOrder = async (req, res) => {
     if (tags !== undefined) {
       const existingTags = (order.tags || "")
         .split(",")
-        .map((t) => t.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean);
       const incomingTags = (tags || "")
         .split(",")
-        .map((t) => t.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean);
       if (existingTags.includes("Draft")) {
         if (!incomingTags.includes("Draft")) incomingTags.push("Draft");
-        const draftNumTag = existingTags.find((t) =>
-          t.startsWith("DraftNumber:")
+        const draftNumTag = existingTags.find((tag) =>
+          tag.startsWith("DraftNumber:")
         );
         if (
           draftNumTag &&
-          !incomingTags.some((t) => t.startsWith("DraftNumber:"))
+          !incomingTags.some((tag) => tag.startsWith("DraftNumber:"))
         )
           incomingTags.push(draftNumTag);
       }
@@ -284,14 +284,14 @@ const updateOrder = async (req, res) => {
     if (order.financialStatus === "pending") {
       const tagsList = (order.tags || "")
         .split(",")
-        .map((t) => t.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean);
       let tagsUpdated = false;
       if (!tagsList.includes("Draft")) {
         tagsList.push("Draft");
         tagsUpdated = true;
       }
-      if (!tagsList.some((t) => t.startsWith("DraftNumber:"))) {
+      if (!tagsList.some((tag) => tag.startsWith("DraftNumber:"))) {
         const { Op } = require("sequelize");
         const draftCount = await Order.count({
           where: { shopId: shop.id, tags: { [Op.like]: "%Draft%" } },
@@ -326,11 +326,11 @@ const updateOrder = async (req, res) => {
     if (customerChanged) {
       const getCustName = async (id) => {
         if (!id) return "";
-        const c = await Customer.findByPk(id);
-        return c
-          ? c.displayName ||
-              `${c.firstName || ""} ${c.lastName || ""}`.trim() ||
-              c.email ||
+        const cust = await Customer.findByPk(id);
+        return cust
+          ? cust.displayName ||
+              `${cust.firstName || ""} ${cust.lastName || ""}`.trim() ||
+              cust.email ||
               ""
           : "";
       };

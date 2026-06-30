@@ -164,7 +164,7 @@ export default function MetafieldsCard({ entityType, entityId }) {
   }, [entityType, entityId, loadMetafields, applyBundle]);
 
   const definitionsById = useMemo(
-    () => new Map(metafields.map((m) => [m.definition.id, m.definition])),
+    () => new Map(metafields.map((metafield) => [metafield.definition.id, metafield.definition])),
     [metafields]
   );
 
@@ -190,11 +190,11 @@ export default function MetafieldsCard({ entityType, entityId }) {
 
     const errors = {};
     let hasErrors = false;
-    metafields.forEach((m) => {
-      const val = localValues[m.definition.id] ?? "";
-      const err = validateSingleField(m.definition, val);
+    metafields.forEach((metafield) => {
+      const val = localValues[metafield.definition.id] ?? "";
+      const err = validateSingleField(metafield.definition, val);
       if (err) {
-        errors[m.definition.id] = err;
+        errors[metafield.definition.id] = err;
         hasErrors = true;
       }
     });
@@ -242,13 +242,13 @@ export default function MetafieldsCard({ entityType, entityId }) {
     setActiveModal(null);
   };
 
-  const pinnedMetafields = metafields.filter((m) => m.definition.pinned);
+  const pinnedMetafields = metafields.filter((metafield) => metafield.definition.pinned);
 
-  const renderInputField = (m, isActive) => (
+  const renderInputField = (metafield, isActive) => (
     <MetafieldValueInput
-      def={m.definition}
-      value={localValues[m.definition.id] ?? ""}
-      onChange={(val) => handleValueChange(m.definition.id, val)}
+      def={metafield.definition}
+      value={localValues[metafield.definition.id] ?? ""}
+      onChange={(val) => handleValueChange(metafield.definition.id, val)}
       disabled={entityId === "new" || !entityId}
       active={isActive}
     />
@@ -291,8 +291,8 @@ export default function MetafieldsCard({ entityType, entityId }) {
                   customize fields.
                 </div>
               ) : (
-                pinnedMetafields.map((m) => {
-                  const def = m.definition;
+                pinnedMetafields.map((metafield) => {
+                  const def = metafield.definition;
                   const isActive = activeId === def.id;
                   const hasValue = String(localValues[def.id] ?? "") !== "";
                   return (
@@ -323,7 +323,7 @@ export default function MetafieldsCard({ entityType, entityId }) {
                         )}
                       </div>
                       <div className="metafield-card-row__field">
-                        {renderInputField(m, isActive)}
+                        {renderInputField(metafield, isActive)}
 
                         {validationErrors[def.id] && (
                           <div
@@ -341,7 +341,7 @@ export default function MetafieldsCard({ entityType, entityId }) {
                       {isActive && (
                         <div
                           className="metafield-card-row__actions"
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(event) => event.stopPropagation()}
                         >
                           <button
                             type="button"

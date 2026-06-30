@@ -1,5 +1,6 @@
 import React from "react";
 import { CAMPAIGN_OPTIONS } from "../../constants/customDiscounts";
+import { getInputEventValue } from "../../utils/fieldEvent";
 import "../../styles/CustomDiscountDetail.css";
 
 export default function DiscountTypeSelectSection({
@@ -21,19 +22,20 @@ export default function DiscountTypeSelectSection({
     <s-section heading="Discount Type">
       <s-stack gap="base">
         <div>
-          <select
-            className="custom-select-field"
+          <s-select
+            label="Campaign Type"
+            labelAccessibilityVisibility="exclusive"
             value={campaignType}
-            onChange={(e) =>
-              onChangeCampaignType && onChangeCampaignType(e.target.value)
+            onChange={(event) =>
+              onChangeCampaignType && onChangeCampaignType(getInputEventValue(event))
             }
           >
-            {filteredOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+            {filteredOptions.map((option) => (
+              <s-option key={option.value} value={option.value}>
+                {option.label}
+              </s-option>
             ))}
-          </select>
+          </s-select>
         </div>
       </s-stack>
     </s-section>

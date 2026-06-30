@@ -140,11 +140,6 @@ export function buildCustomerPayload(form) {
   };
 }
 
-/**
- * Format a monetary amount as currency.
- * `locale` controls number formatting; `fallbackCurrency` is used when no
- * currencyCode is given (omit it to render a plain fixed-decimal number).
- */
 export function formatMoney(
   amount,
   currencyCode,
@@ -165,17 +160,15 @@ export function formatMoney(
   return value.toFixed(2);
 }
 
-/** Split a comma-separated tag string (or array) into a clean tag array. */
 export function parseTags(tags) {
   if (Array.isArray(tags))
-    return tags.map((t) => String(t).trim()).filter(Boolean);
+    return tags.map((tag) => String(tag).trim()).filter(Boolean);
   return String(tags || "")
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
 }
 
-/** Serialize a tag array back to the comma-separated string the backend stores. */
 export function formatTags(tags) {
   return parseTags(tags).join(", ");
 }
@@ -192,7 +185,6 @@ export function provinceName(countryCode, stateCode) {
   );
 }
 
-/** Full multi-line address (with resolved names) for read-only display. */
 export function addressLines(address, recipientName = "") {
   if (!customerHasAddress(address)) return [];
   const name = recipientName.trim();

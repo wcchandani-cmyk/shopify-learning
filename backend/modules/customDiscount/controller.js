@@ -56,8 +56,8 @@ const getCombinesWith = (
 };
 
 const formatShopifyErrors = (errors) => {
-  const messages = errors.map((e) => e.message);
-  if (messages.some((m) => /title must be unique/i.test(m || ""))) {
+  const messages = errors.map((err) => err.message);
+  if (messages.some((msg) => /title must be unique/i.test(msg || ""))) {
     return `A discount with this title already exists in Shopify. Either choose a different title, or remove the existing one from Shopify Admin → Discounts before recreating it.`;
   }
   return `Shopify error: ${messages.join(", ")}`;
@@ -142,7 +142,7 @@ const setConfigMetafield = async ({
   const errors = res.data?.metafieldsSet?.userErrors || [];
   if (errors.length > 0)
     throw new Error(
-      `Shopify metafield error: ${errors.map((e) => e.message).join(", ")}`
+      `Shopify metafield error: ${errors.map((err) => err.message).join(", ")}`
     );
 };
 
@@ -408,7 +408,7 @@ const updateCustomDiscount = async (req, res) => {
         return errorResponse(
           res,
           400,
-          `Shopify error: ${errors.map((e) => e.message).join(", ")}`
+          `Shopify error: ${errors.map((err) => err.message).join(", ")}`
         );
 
       await setConfigMetafield({
@@ -478,8 +478,8 @@ const deleteCustomDiscounts = async (req, res) => {
               ? shopifyRes.data?.discountAutomaticDelete
               : shopifyRes.data?.discountCodeDelete) || {};
           const errors = result.userErrors || [];
-          const alreadyGone = errors.some((e) =>
-            /(not found|could not find|does not exist)/i.test(e.message || "")
+          const alreadyGone = errors.some((err) =>
+            /(not found|could not find|does not exist)/i.test(err.message || "")
           );
 
           if (
@@ -492,7 +492,7 @@ const deleteCustomDiscounts = async (req, res) => {
             return errorResponse(
               res,
               400,
-              `Shopify error: ${errors.map((e) => e.message).join(", ")}`
+              `Shopify error: ${errors.map((err) => err.message).join(", ")}`
             );
           }
         } catch (shopifyError) {
@@ -564,7 +564,7 @@ const toggleDiscountStatus = async (req, res) => {
       return errorResponse(
         res,
         400,
-        `Shopify error: ${errors.map((e) => e.message).join(", ")}`
+        `Shopify error: ${errors.map((err) => err.message).join(", ")}`
       );
 
     await customization.update({ status: activate ? "active" : "inactive" });

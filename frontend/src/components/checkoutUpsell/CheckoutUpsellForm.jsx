@@ -8,6 +8,7 @@ import {
 } from "../../services/checkoutUpsellService";
 import PageLoader from "../shared/PageLoader";
 import "../../styles/CheckoutUpsell.css";
+import { exclusiveFieldLabel } from "../../utils/formFields";
 
 const parseJsonField = (val) => {
   if (Array.isArray(val)) return val;
@@ -40,19 +41,19 @@ export default function CheckoutUpsellForm() {
     (async () => {
       try {
         const data = await getCheckoutUpsell(id);
-        const u = data.upsell;
-        if (u) {
+        const upsellRule = data.upsell;
+        if (upsellRule) {
           setForm({
-            title: u.title || "",
-            triggerType: u.triggerType || "products",
-            triggerProducts: parseJsonField(u.triggerProducts),
-            triggerCollections: parseJsonField(u.triggerCollections),
-            upsellProductId: u.upsellProductId || "",
-            upsellProductTitle: u.upsellProductTitle || "",
-            upsellProductImage: u.upsellProductImage || "",
-            offerTitle: u.offerTitle || "",
-            discountPercentage: Number(u.discountPercentage) || 10,
-            isActive: Boolean(u.isActive),
+            title: upsellRule.title || "",
+            triggerType: upsellRule.triggerType || "products",
+            triggerProducts: parseJsonField(upsellRule.triggerProducts),
+            triggerCollections: parseJsonField(upsellRule.triggerCollections),
+            upsellProductId: upsellRule.upsellProductId || "",
+            upsellProductTitle: upsellRule.upsellProductTitle || "",
+            upsellProductImage: upsellRule.upsellProductImage || "",
+            offerTitle: upsellRule.offerTitle || "",
+            discountPercentage: Number(upsellRule.discountPercentage) || 10,
+            isActive: Boolean(upsellRule.isActive),
           });
         }
       } catch (err) {
@@ -70,16 +71,16 @@ export default function CheckoutUpsellForm() {
       const selection = await shopify.resourcePicker({
         type: isProducts ? "product" : "collection",
         multiple: true,
-        selection: (isProducts ? form.triggerProducts : form.triggerCollections).map((x) => ({ id: x.id })),
+        selection: (isProducts ? form.triggerProducts : form.triggerCollections).map((item) => ({ id: item.id })),
       });
       if (selection) {
-        const items = selection.map((x) => ({
-          id: x.id,
-          title: x.title,
-          image: x.image?.src || x.image?.originalSrc || x.images?.[0]?.src || x.images?.[0]?.originalSrc || "",
+        const items = selection.map((selectedItem) => ({
+          id: selectedItem.id,
+          title: selectedItem.title,
+          image: selectedItem.image?.src || selectedItem.image?.originalSrc || selectedItem.images?.[0]?.src || selectedItem.images?.[0]?.originalSrc || "",
         }));
-        setForm((prev) => ({
-          ...prev,
+        setForm((prevForm) => ({
+          ...prevForm,
           [isProducts ? "triggerProducts" : "triggerCollections"]: items,
         }));
       }
@@ -92,12 +93,12 @@ export default function CheckoutUpsellForm() {
     try {
       const selection = await shopify.resourcePicker({ type: "product", multiple: false });
       if (selection && selection.length > 0) {
-        const p = selection[0];
-        setForm((prev) => ({
-          ...prev,
-          upsellProductId: p.id,
-          upsellProductTitle: p.title,
-          upsellProductImage: p.image?.src || p.image?.originalSrc || p.images?.[0]?.src || p.images?.[0]?.originalSrc || "",
+        const product = selection[0];
+        setForm((prevForm) => ({
+          ...prevForm,
+          upsellProductId: product.id,
+          upsellProductTitle: product.title,
+          upsellProductImage: product.image?.src || product.image?.originalSrc || product.images?.[0]?.src || product.images?.[0]?.originalSrc || "",
         }));
       }
     } catch (err) {
@@ -106,7 +107,7 @@ export default function CheckoutUpsellForm() {
   }, [shopify]);
 
   const removeItem = (key, itemId) => {
-    setForm((prev) => ({ ...prev, [key]: prev[key].filter((x) => x.id !== itemId) }));
+    setForm((prevForm) => ({ ...prevForm, [key]: prevForm[key].filter((item) => item.id !== itemId) }));
   };
 
   const handleSave = async () => {
@@ -149,7 +150,7 @@ export default function CheckoutUpsellForm() {
     <s-page heading={isEdit ? "Edit Upsell Campaign" : "New Upsell Campaign"}>
       <s-link
         slot="breadcrumb-actions"
-        onClick={(e) => { e.preventDefault(); navigate("/checkout-upsells"); }}
+        onClick={(event) => { event.preventDefault(); navigate("/checkout-upsells"); }}
         href="/checkout-upsells"
       >
         Checkout Upsell
@@ -173,10 +174,10 @@ export default function CheckoutUpsellForm() {
               <p className="cu-row-heading">Campaign Name</p>
               <s-text-field
                 label="Campaign Name"
-                label-hidden
+                {...exclusiveFieldLabel}
                 placeholder="e.g. Socks promo for Shoes buyers"
                 value={form.title}
-                onInput={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+                onInput={(event) => setForm((prevForm) => ({ ...prevForm, title: event.target.value }))}
               />
               <p className="cu-help-text">For internal reference only. Customers won't see this.</p>
             </div>
@@ -187,15 +188,15 @@ export default function CheckoutUpsellForm() {
             <div className="cu-form-row">
               <div className="cu-field-group">
                 <label className="cu-label" htmlFor="trigger-type-select">Trigger by</label>
-                <select
+                <s-select
                   id="trigger-type-select"
                   className="custom-select-field"
                   value={form.triggerType}
-                  onChange={(e) => setForm((p) => ({ ...p, triggerType: e.target.value }))}
+                  onChange={(event) => setForm((prevForm) => ({ ...prevForm, triggerType: event.target.value }))}
                 >
-                  <option value="products">Specific Products</option>
-                  <option value="collections">Specific Collections</option>
-                </select>
+                  <s-option value="products">Specific Products</s-option>
+                  <s-option value="collections">Specific Collections</s-option>
+                </s-select>
                 <p className="cu-help-text">
                   {form.triggerType === "products"
                     ? "Show the offer when any of these products are in the cart."
@@ -270,30 +271,33 @@ export default function CheckoutUpsellForm() {
               <div className="cu-offer-row">
                 <div className="cu-offer-headline">
                   <label className="cu-label" htmlFor="offer-title-input">Headline</label>
-                  <input
+                  <s-text-field
                     id="offer-title-input"
-                    type="text"
+                    label="Headline"
+                    {...exclusiveFieldLabel}
                     className="discount-input-field"
                     placeholder="e.g. Special offer — add matching socks!"
                     value={form.offerTitle}
-                    onChange={(e) => setForm((p) => ({ ...p, offerTitle: e.target.value }))}
+                    onInput={(event) => setForm((prevForm) => ({ ...prevForm, offerTitle: event.target.value }))}
                   />
                   <p className="cu-help-text">Shown above the upsell widget at checkout.</p>
                 </div>
                 <div className="cu-offer-discount">
                   <label className="cu-label" htmlFor="discount-pct-input">Discount</label>
                   <div className="discount-value-input-wrapper has-suffix">
-                    <input
+                    <s-text-field
                       id="discount-pct-input"
                       type="number"
+                      label="Discount"
+                      {...exclusiveFieldLabel}
                       className="discount-input-field"
-                      min="0"
-                      max="100"
+                      min={0}
+                      max={100}
                       value={form.discountPercentage}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          discountPercentage: Math.max(0, Math.min(100, Number(e.target.value) || 0)),
+                      onInput={(event) =>
+                        setForm((prevForm) => ({
+                          ...prevForm,
+                          discountPercentage: Math.max(0, Math.min(100, Number(event.target.value) || 0)),
                         }))
                       }
                     />
@@ -306,17 +310,13 @@ export default function CheckoutUpsellForm() {
           </s-section>
         </div>
 
-        {/* ── Sidebar ── */}
         <div className="cu-form-sidebar">
           <s-section heading="Status">
-            <label className="checkbox-option-label">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
-              />
-              <span>Campaign is active</span>
-            </label>
+            <s-checkbox
+              label="Campaign is active"
+              checked={form.isActive || undefined}
+              onClick={() => setForm((prevForm) => ({ ...prevForm, isActive: !prevForm.isActive }))}
+            />
             <p className="cu-help-text" style={{ marginTop: 8 }}>
               Inactive campaigns won't show at checkout.
             </p>

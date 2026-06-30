@@ -57,7 +57,7 @@ export default function CombinationsSection({ form, updateField, displayType }) 
         <s-paragraph color="subdued">
           Select which other discount classes this discount can be combined with.
         </s-paragraph>
-        <div className="checkbox-group tight-gap">
+        <s-stack gap="tight">
           <s-checkbox
             ref={productRef}
             label={productLabel}
@@ -78,18 +78,20 @@ export default function CombinationsSection({ form, updateField, displayType }) 
               onChange={(event) => updateField("combinesWithShipping", getCheckboxChecked(event))}
             />
           )}
-        </div>
+        </s-stack>
 
-        <div className="discount-combinations-summary">
-          <span className="discount-combinations-summary__title">{form.title || displayType}</span>{" "}
-          {wonCombine
-            ? "won't combine with any other discount at checkout"
-            : `will combine with ${[
-                form.combinesWithProduct && productSummaryText,
-                orderChecked && orderSummaryText,
-                shippingChecked && shippingSummaryText
-              ].filter(Boolean).join(", ")} at checkout.`}
-        </div>
+        <s-box padding="tight" background="bg-surface-secondary" borderRadius="base">
+          <s-text>
+            <s-text type="strong">{form.title || displayType}</s-text>{" "}
+            {wonCombine
+              ? "won't combine with any other discount at checkout"
+              : `will combine with ${[
+                  form.combinesWithProduct && productSummaryText,
+                  orderChecked && orderSummaryText,
+                  shippingChecked && shippingSummaryText
+                ].filter(Boolean).join(", ")} at checkout.`}
+          </s-text>
+        </s-box>
       </s-stack>
     </s-section>
   );

@@ -1,3 +1,4 @@
+import { useChoiceList } from "../../hooks/useChoiceList";
 import { getInputEventValue, getCheckboxChecked } from "../../utils/fieldEvent";
 import { Flag, PillFlag, getCountryName } from "../shared/CountryFlag";
 
@@ -9,37 +10,33 @@ export default function FreeShippingSection({
   autocompleteCountries,
   onOpenCountryModal,
 }) {
+  const handleCountriesChange = (nextValue) => {
+    updateField("shippingCountries", nextValue);
+    if (nextValue === "all") {
+      updateField("selectedCountries", []);
+    }
+  };
+
+  const countriesRef = useChoiceList(form.shippingCountries, handleCountriesChange);
+
+  const handlePurchaseTypeChange = (nextValue) => {
+    updateField("purchaseType", nextValue);
+  };
+
+  const purchaseTypeRef = useChoiceList(form.purchaseType, handlePurchaseTypeChange);
+
   return (
     <s-stack gap="base">
       <s-section heading="Countries">
         <s-stack gap="base">
-          <div className="radio-group">
-            <label className="radio-label">
-              <input
-                type="radio"
-                name="shippingCountries"
-                value="all"
-                checked={form.shippingCountries === "all"}
-                onChange={() => {
-                  updateField("shippingCountries", "all");
-                  updateField("selectedCountries", []);
-                }}
-              />
-              <span>All countries</span>
-            </label>
-            <label className="radio-label">
-              <input
-                type="radio"
-                name="shippingCountries"
-                value="selected"
-                checked={form.shippingCountries === "selected"}
-                onChange={() => {
-                  updateField("shippingCountries", "selected");
-                }}
-              />
-              <span>Selected countries</span>
-            </label>
-          </div>
+          <s-choice-list
+            ref={countriesRef}
+            name="shippingCountries"
+            values={[form.shippingCountries]}
+          >
+            <s-choice value="all">All countries</s-choice>
+            <s-choice value="selected">Selected countries</s-choice>
+          </s-choice-list>
 
           {form.shippingCountries === "selected" && (
             <s-stack gap="tight">
@@ -91,7 +88,7 @@ export default function FreeShippingSection({
                           type="button"
                           className="tag-pill__remove"
                           onClick={() => {
-                            const next = form.selectedCountries.filter((c) => c !== countryCode);
+                            const next = form.selectedCountries.filter((code) => code !== countryCode);
                             updateField("selectedCountries", next);
                           }}
                         >
@@ -107,38 +104,15 @@ export default function FreeShippingSection({
 
           <div style={{ marginTop: "16px" }}>
             <label className="field-label" style={{ marginBottom: "8px", display: "block", fontWeight: 600 }}>Purchase type</label>
-            <div className="radio-group">
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="freeShippingPurchaseType"
-                  value="one_time"
-                  checked={form.purchaseType === "one_time"}
-                  onChange={() => updateField("purchaseType", "one_time")}
-                />
-                <span>One-time purchase</span>
-              </label>
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="freeShippingPurchaseType"
-                  value="subscription"
-                  checked={form.purchaseType === "subscription"}
-                  onChange={() => updateField("purchaseType", "subscription")}
-                />
-                <span>Subscription</span>
-              </label>
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  name="freeShippingPurchaseType"
-                  value="both"
-                  checked={form.purchaseType === "both"}
-                  onChange={() => updateField("purchaseType", "both")}
-                />
-                <span>Both</span>
-              </label>
-            </div>
+            <s-choice-list
+              ref={purchaseTypeRef}
+              name="freeShippingPurchaseType"
+              values={[form.purchaseType]}
+            >
+              <s-choice value="one_time">One-time purchase</s-choice>
+              <s-choice value="subscription">Subscription</s-choice>
+              <s-choice value="both">Both</s-choice>
+            </s-choice-list>
           </div>
 
           <div style={{ marginTop: "16px" }}>

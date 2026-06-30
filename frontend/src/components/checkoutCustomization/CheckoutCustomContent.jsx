@@ -38,20 +38,20 @@ export default function CheckoutCustomContentForm() {
     if (!isEdit) return;
     (async () => {
       try {
-        const { customization: cc } = await getCheckoutCustomization(id);
-        if (cc) {
+        const { customization: customizationData } = await getCheckoutCustomization(id);
+        if (customizationData) {
           setForm({
-            internalName: cc.internalName || "",
-            blockVisibility: cc.blockVisibility || "Dynamic",
-            displayRule: cc.displayRule || "all",
-            displayConditions: parseDisplayConditions(cc.displayConditions),
-            heading: cc.heading || "",
-            contents: parseJson(cc.contents).map((c) => ({
-              ...makeContent(c.type),
-              ...c,
+            internalName: customizationData.internalName || "",
+            blockVisibility: customizationData.blockVisibility || "Dynamic",
+            displayRule: customizationData.displayRule || "all",
+            displayConditions: parseDisplayConditions(customizationData.displayConditions),
+            heading: customizationData.heading || "",
+            contents: parseJson(customizationData.contents).map((contentItem) => ({
+              ...makeContent(contentItem.type),
+              ...contentItem,
               _id: generateId(),
             })),
-            isActive: Boolean(cc.isActive),
+            isActive: Boolean(customizationData.isActive),
           });
         }
       } catch (err) {
@@ -63,22 +63,22 @@ export default function CheckoutCustomContentForm() {
     })();
   }, [id, isEdit, shopify, navigate]);
 
-  const setF = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const setF = (key, val) => setForm((prevForm) => ({ ...prevForm, [key]: val }));
   const addContent = (type) =>
-    setForm((p) => ({ ...p, contents: [...p.contents, makeContent(type)] }));
-  const updateContent = (i, updated) =>
-    setForm((p) => {
-      const c = [...p.contents];
-      c[i] = updated;
-      return { ...p, contents: c };
+    setForm((prevForm) => ({ ...prevForm, contents: [...prevForm.contents, makeContent(type)] }));
+  const updateContent = (index, updated) =>
+    setForm((prevForm) => {
+      const contentsCopy = [...prevForm.contents];
+      contentsCopy[index] = updated;
+      return { ...prevForm, contents: contentsCopy };
     });
-  const removeContent = (i) =>
-    setForm((p) => ({
-      ...p,
-      contents: p.contents.filter((_, idx) => idx !== i),
+  const removeContent = (index) =>
+    setForm((prevForm) => ({
+      ...prevForm,
+      contents: prevForm.contents.filter((_, idx) => idx !== index),
     }));
-  const toggleCollapse = (i) =>
-    setCollapsed((prev) => ({ ...prev, [i]: !prev[i] }));
+  const toggleCollapse = (index) =>
+    setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
 
   const handleSave = useCallback(async () => {
     if (!form.internalName.trim()) {
@@ -91,7 +91,7 @@ export default function CheckoutCustomContentForm() {
         ...form,
         type: "custom_content",
         internalName: form.internalName.trim(),
-        contents: form.contents.map(({ _id, ...r }) => r),
+        contents: form.contents.map(({ _id, ...restItem }) => restItem),
       };
       if (isEdit) {
         await updateCheckoutCustomization(id, payload);
@@ -115,8 +115,8 @@ export default function CheckoutCustomContentForm() {
       <s-link
         slot="breadcrumb-actions"
         href="/checkout-customization"
-        onClick={(e) => {
-          e.preventDefault();
+        onClick={(event) => {
+          event.preventDefault();
           navigate("/checkout-customization");
         }}
       >
@@ -134,13 +134,13 @@ export default function CheckoutCustomContentForm() {
       <s-stack gap="base">
         <CheckoutCommonHeader
           internalName={form.internalName}
-          onInternalNameChange={(v) => setF("internalName", v)}
+          onInternalNameChange={(val) => setF("internalName", val)}
           blockVisibility={form.blockVisibility}
-          onBlockVisibilityChange={(v) => setF("blockVisibility", v)}
+          onBlockVisibilityChange={(val) => setF("blockVisibility", val)}
           displayRule={form.displayRule}
-          onDisplayRuleChange={(v) => setF("displayRule", v)}
+          onDisplayRuleChange={(val) => setF("displayRule", val)}
           displayConditions={form.displayConditions}
-          onDisplayConditionsChange={(v) => setF("displayConditions", v)}
+          onDisplayConditionsChange={(val) => setF("displayConditions", val)}
           radioName="cc-displayRule"
         />
 
@@ -149,27 +149,27 @@ export default function CheckoutCustomContentForm() {
             <s-text-field
               label="Heading (optional)"
               value={form.heading}
-              onInput={(e) => setF("heading", e.target.value)}
+              onInput={(event) => setF("heading", event.target.value)}
             />
 
             {form.contents.length > 0 && (
               <div className="ccf-fields-list">
-                {form.contents.map((item, i) => {
+                {form.contents.map((item, index) => {
                   const typeDef =
-                    CONTENT_TYPES.find((t) => t.id === item.type) ||
+                    CONTENT_TYPES.find((typeItem) => typeItem.id === item.type) ||
                     CONTENT_TYPES[0];
                   return (
                     <EditorShell
                       key={item._id}
                       icon={typeDef.icon}
                       label={typeDef.label}
-                      collapsed={!!collapsed[i]}
-                      onToggle={() => toggleCollapse(i)}
-                      onRemove={() => removeContent(i)}
+                      collapsed={!!collapsed[index]}
+                      onToggle={() => toggleCollapse(index)}
+                      onRemove={() => removeContent(index)}
                     >
                       <ContentBody
                         item={item}
-                        upd={(k, v) => updateContent(i, { ...item, [k]: v })}
+                        upd={(key, val) => updateContent(index, { ...item, [key]: val })}
                       />
                     </EditorShell>
                   );

@@ -36,7 +36,7 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
     return form.tags
       ? form.tags
           .split(",")
-          .map((t) => t.trim())
+          .map((tag) => tag.trim())
           .filter(Boolean)
       : [];
   }, [form.tags]);

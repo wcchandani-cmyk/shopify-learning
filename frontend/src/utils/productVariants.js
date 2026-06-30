@@ -147,7 +147,7 @@ export function deriveProductOptionsFromVariants(variants = []) {
     if (!values.length) continue;
 
     const nameKey = `${key}Name`;
-    const nameFromVariant = variants.find((v) => v[nameKey])?.[nameKey];
+    const nameFromVariant = variants.find((variant) => variant[nameKey])?.[nameKey];
     options.push({
       name: nameFromVariant || `Option ${index}`,
       values,
@@ -199,7 +199,7 @@ export function serializeProductOptions(options = []) {
     .slice(0, MAX_PRODUCT_OPTIONS)
     .map((option, index) => ({
       name: String(option.name || `Option ${index + 1}`).trim(),
-      values: [...new Set((option.values || []).map((v) => String(v).trim()).filter(Boolean))],
+      values: [...new Set((option.values || []).map((val) => String(val).trim()).filter(Boolean))],
       position: option.position ?? index + 1,
     }))
     .filter((option) => option.name && option.values.length > 0);
@@ -214,7 +214,7 @@ export function createNewVariantDraft({
   optionValues,
 }) {
   const values = Array.isArray(optionValues)
-    ? optionValues.map((v) => String(v || "").trim())
+    ? optionValues.map((val) => String(val || "").trim())
     : [];
   const title =
     values.filter(Boolean).join(" / ") ||

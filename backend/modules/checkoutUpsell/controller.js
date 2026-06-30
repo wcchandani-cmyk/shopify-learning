@@ -52,8 +52,8 @@ const ensureUpsellDefinition = async (graphqlClient) => {
     },
   });
   const errors = res?.data?.metaobjectDefinitionCreate?.userErrors || [];
-  if (errors.some((e) => e.code !== "TAKEN"))
-    throw new Error(errors.map((e) => e.message).join("; "));
+  if (errors.some((err) => err.code !== "TAKEN"))
+    throw new Error(errors.map((err) => err.message).join("; "));
 };
 
 const parsePayloadArray = (val) => {
@@ -75,7 +75,7 @@ const getCollectionProducts = async (graphqlClient, collectionId) => {
     });
     const products = res.data?.collection?.products;
     if (!products) break;
-    (products.nodes || []).forEach((p) => p.id && productIds.push(p.id));
+    (products.nodes || []).forEach((prod) => prod.id && productIds.push(prod.id));
     hasNext = products.pageInfo?.hasNextPage || false;
     cursor = products.pageInfo?.endCursor || null;
   }
@@ -89,11 +89,11 @@ const resolveTriggerProductIds = async (
   triggerCollectionsArr
 ) => {
   if (triggerType !== "collections")
-    return triggerProductsArr.map((p) => p.id).filter(Boolean);
+    return triggerProductsArr.map((prod) => prod.id).filter(Boolean);
   const results = await Promise.all(
     triggerCollectionsArr
-      .filter((c) => c.id)
-      .map((c) => getCollectionProducts(graphqlClient, c.id))
+      .filter((coll) => coll.id)
+      .map((coll) => getCollectionProducts(graphqlClient, coll.id))
   );
   return [...new Set(results.flat())];
 };

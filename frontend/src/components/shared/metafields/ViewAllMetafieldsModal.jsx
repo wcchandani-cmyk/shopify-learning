@@ -94,26 +94,26 @@ export default function ViewAllMetafieldsModal({
   };
 
   const { pinned, unpinned } = useMemo(() => {
-    const p = [];
-    const u = [];
-    metafields.forEach((m) => {
-      if (m.definition.pinned) p.push(m);
-      else u.push(m);
+    const pinnedList = [];
+    const unpinnedList = [];
+    metafields.forEach((metafield) => {
+      if (metafield.definition.pinned) pinnedList.push(metafield);
+      else unpinnedList.push(metafield);
     });
-    return { pinned: p, unpinned: u };
+    return { pinned: pinnedList, unpinned: unpinnedList };
   }, [metafields]);
 
-  const renderInputField = (m, isActive) => (
+  const renderInputField = (metafield, isActive) => (
     <MetafieldValueInput
-      def={m.definition}
-      value={localValues[m.definition.id] ?? ""}
-      onChange={(val) => handleValueChange(m.definition.id, val)}
+      def={metafield.definition}
+      value={localValues[metafield.definition.id] ?? ""}
+      onChange={(val) => handleValueChange(metafield.definition.id, val)}
       active={isActive}
     />
   );
 
-  const renderRow = (m) => {
-    const def = m.definition;
+  const renderRow = (metafield) => {
+    const def = metafield.definition;
     const isActive = activeId === def.id;
     const hasValue = String(localValues[def.id] ?? "") !== "";
     return (
@@ -130,11 +130,11 @@ export default function ViewAllMetafieldsModal({
           )}
         </div>
         <div className="metafield-view-all-row__field">
-          {renderInputField(m, isActive)}
+          {renderInputField(metafield, isActive)}
         </div>
         <div
           className="metafield-view-all-row__actions"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
         >
           {isActive ? (
             <button

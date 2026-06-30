@@ -29,10 +29,10 @@ export function PillFlag({ iso }) {
 }
 
 // Full country list — { code, name, phonecode } — sourced from country-state-city.
-export const COUNTRIES = Country.getAllCountries().map((c) => ({
-  code: c.isoCode,
-  name: c.name,
-  phonecode: c.phonecode,
+export const COUNTRIES = Country.getAllCountries().map((country) => ({
+  code: country.isoCode,
+  name: country.name,
+  phonecode: country.phonecode,
 }));
 
 // Returns the display name for an ISO code (e.g. "US" → "United States").

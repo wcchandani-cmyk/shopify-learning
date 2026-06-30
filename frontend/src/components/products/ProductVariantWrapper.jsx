@@ -91,9 +91,9 @@ export default function ProductVariantWrapper() {
 
   const handleSubmit = ({ optionValues, price, inventoryQuantity }) => {
     const hasOptionFields = initialOptions.length > 0;
-    const filledValues = optionValues.map((v) => String(v || "").trim());
+    const filledValues = optionValues.map((val) => String(val || "").trim());
 
-    if (hasOptionFields && filledValues.some((v) => !v)) {
+    if (hasOptionFields && filledValues.some((val) => !val)) {
       shopify.toast.show("Fill in all option values", { isError: true });
       return;
     }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../../styles/CustomDiscountDetail.css";
 import { SHIPPING_METHOD_OPTIONS } from "../../constants/customDiscounts";
+import { useChoiceList } from "../../hooks/useChoiceList";
 
 export default function ShippingMethodSection({
   scope = "all",
@@ -9,6 +10,7 @@ export default function ShippingMethodSection({
   onChangeMethods,
 }) {
   const [selected, setSelected] = useState("");
+  const choiceListRef = useChoiceList(scope, onChangeScope);
 
   const available = SHIPPING_METHOD_OPTIONS.filter(
     (option) => !methods.includes(option)
@@ -28,75 +30,55 @@ export default function ShippingMethodSection({
   return (
     <s-section heading="Select Shipping Method">
       <s-stack gap="base">
-        <div className="radio-options-stack">
-          <label className="radio-option-label">
-            <input
-              type="radio"
-              name="shippingMethodScope"
-              checked={scope === "all"}
-              onChange={() => onChangeScope("all")}
-            />
-            <span>All Shipping Methods</span>
-          </label>
-          <label className="radio-option-label">
-            <input
-              type="radio"
-              name="shippingMethodScope"
-              checked={scope === "specific"}
-              onChange={() => onChangeScope("specific")}
-            />
-            <span>Specific Shipping Method</span>
-          </label>
-        </div>
+        <s-choice-list
+          ref={choiceListRef}
+          name="shippingMethodScope"
+          values={[scope]}
+        >
+          <s-choice value="all">All Shipping Methods</s-choice>
+          <s-choice value="specific">Specific Shipping Method</s-choice>
+        </s-choice-list>
 
         {scope === "specific" && (
           <s-stack gap="base">
+            <s-select
+              label="Select Shipping Method"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+            >
+              <s-option value="">Select</s-option>
+              {available.map((option) => (
+                <s-option key={option} value={option}>
+                  {option}
+                </s-option>
+              ))}
+            </s-select>
+
             <div>
-              <label className="form-group-label">Select Shipping Method</label>
-              <select
-                className="custom-select-field"
-                value={selected}
-                onChange={(e) => setSelected(e.target.value)}
-              >
-                <option value="">Select</option>
-                {available.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              <s-button variant="primary" onClick={handleAdd}>
+                Add Shipping Method
+              </s-button>
             </div>
 
-            <s-button
-              variant="primary"
-              onClick={handleAdd}
-              className="custom-action-btn"
-            >
-              Add Shipping Method
-            </s-button>
-
             {methods.length > 0 && (
-              <div className="shipping-method-list">
+              <s-stack direction="inline" gap="tight" wrap>
                 {methods.map((name) => (
-                  <div key={name} className="shipping-method-chip">
-                    <span>{name}</span>
-                    <button
-                      type="button"
-                      className="shipping-method-chip__remove"
-                      onClick={() => handleRemove(name)}
-                      aria-label={`Remove ${name}`}
-                    >
-                      &times;
-                    </button>
-                  </div>
+                  <s-clickable-chip
+                    key={name}
+                    removable
+                    accessibilityLabel={name}
+                    onRemove={() => handleRemove(name)}
+                  >
+                    {name}
+                  </s-clickable-chip>
                 ))}
-              </div>
+              </s-stack>
             )}
 
-            <p className="form-group-subtext">
+            <s-text tone="subdued">
               The shipping method you want to apply the discount to must be
               selected, and a new one can be added.
-            </p>
+            </s-text>
           </s-stack>
         )}
       </s-stack>

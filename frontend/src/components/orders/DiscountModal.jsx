@@ -37,7 +37,7 @@ export default function DiscountModal({ open, onClose, onApply, onRemove, curren
           <s-select
             label="Discount type"
             value={type}
-            onChange={(e) => setType(getInputEventValue(e))}
+            onChange={(event) => setType(getInputEventValue(event))}
           >
             <s-option value="fixed_amount">Amount ($)</s-option>
             <s-option value="percentage">Percentage (%)</s-option>
@@ -47,7 +47,7 @@ export default function DiscountModal({ open, onClose, onApply, onRemove, curren
             type="number"
             prefix={type === "percentage" ? "%" : "$"}
             value={value}
-            onInput={(e) => setValue(getInputEventValue(e))}
+            onInput={(event) => setValue(getInputEventValue(event))}
             {...clearDefaultZeroProps(value, setValue, "0")}
           />
         </s-grid>
@@ -56,7 +56,7 @@ export default function DiscountModal({ open, onClose, onApply, onRemove, curren
           label="Reason (optional)"
           placeholder="e.g. Loyalty reward"
           value={reason}
-          onInput={(e) => setReason(getInputEventValue(e))}
+          onInput={(event) => setReason(getInputEventValue(event))}
         />
       </s-grid>
 

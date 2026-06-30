@@ -242,30 +242,3 @@
   background: #e8e8e8;
   border-color: #8c9196;
 }
-
-.product-options__tag--active {
-  background: #f1f8f5;
-  border-color: #29845a;
-}
-
-.product-options__tag-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  line-height: 1;
-  opacity: 0.6;
-  padding: 0 0.125rem;
-}
-
-.product-options__tag-remove:hover {
-  opacity: 1;
-}
-
-.product-options__value-edit {
-  margin-top: 0.25rem;
-  padding: 0.75rem;
-  border: 1px solid #e3e3e3;
-  border-radius: 0.5rem;
-  background: #fafbfb;
-}

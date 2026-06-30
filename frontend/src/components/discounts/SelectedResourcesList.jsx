@@ -13,7 +13,7 @@ export default function SelectedResourcesList({
   return (
     <div className="selected-resources-list">
       {visibleItems.map((item) => {
-        const selectedVariantsCount = item.variants ? item.variants.filter((v) => v.selected).length : 0;
+        const selectedVariantsCount = item.variants ? item.variants.filter((variant) => variant.selected).length : 0;
         const totalVariantsCount = item.variants ? item.variants.length : 0;
 
         return (

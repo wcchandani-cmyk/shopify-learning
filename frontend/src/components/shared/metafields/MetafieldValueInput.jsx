@@ -11,9 +11,9 @@ const MEASUREMENT_UNITS = {
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 const isImage = (url) => {
-  const s = String(url || "");
+  const strUrl = String(url || "");
   return (
-    /^data:image\//i.test(s) || /\.(png|jpe?g|gif|webp|svg|avif)(\?|$)/i.test(s)
+    /^data:image\//i.test(strUrl) || /\.(png|jpe?g|gif|webp|svg|avif)(\?|$)/i.test(strUrl)
   );
 };
 
@@ -31,9 +31,9 @@ const deriveName = (url) => {
 const parseFileValue = (value) => {
   if (!value) return { name: "", url: "" };
   try {
-    const p = JSON.parse(value);
-    if (p && typeof p === "object" && p.url) {
-      return { name: p.name || deriveName(p.url), url: p.url };
+    const parsedValue = JSON.parse(value);
+    if (parsedValue && typeof parsedValue === "object" && parsedValue.url) {
+      return { name: parsedValue.name || deriveName(parsedValue.url), url: parsedValue.url };
     }
   } catch {
     /* not JSON — treat as a plain URL string */
@@ -62,8 +62,8 @@ const idleDisplayValue = (baseType, value) => {
   if (!value) return "";
   if (MEASUREMENT_UNITS[baseType]) {
     try {
-      const p = JSON.parse(value);
-      if (p && typeof p === "object") return `${p.value} ${p.unit}`;
+      const parsedValue = JSON.parse(value);
+      if (parsedValue && typeof parsedValue === "object") return `${parsedValue.value} ${parsedValue.unit}`;
     } catch (e) {
       /* fall through */
     }
@@ -101,9 +101,9 @@ function FileInput({ value, onChange, disabled, active }) {
     if (!disabled) inputRef.current?.click();
   };
 
-  const handleChange = (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
+  const handleChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setError("Only image files are allowed");
@@ -164,9 +164,9 @@ function FileInput({ value, onChange, disabled, active }) {
 function MeasurementInput({ def, value, onChange, disabled, units }) {
   const parsed = (() => {
     try {
-      const p = JSON.parse(value);
-      if (p && typeof p === "object") {
-        return { num: p.value ?? "", unit: p.unit || units[0] };
+      const parsedValue = JSON.parse(value);
+      if (parsedValue && typeof parsedValue === "object") {
+        return { num: parsedValue.value ?? "", unit: parsedValue.unit || units[0] };
       }
     } catch (e) {}
     return { num: value || "", unit: units[0] };
@@ -175,8 +175,8 @@ function MeasurementInput({ def, value, onChange, disabled, units }) {
   const [unit, setUnit] = useState(parsed.unit);
   const num = parsed.num;
 
-  const emit = (n, u) =>
-    onChange(n === "" ? "" : JSON.stringify({ value: n, unit: u }));
+  const emit = (numVal, unitVal) =>
+    onChange(numVal === "" ? "" : JSON.stringify({ value: numVal, unit: unitVal }));
 
   return (
     <div className="metafield-measurement-input">
@@ -187,22 +187,22 @@ function MeasurementInput({ def, value, onChange, disabled, units }) {
         disabled={disabled || undefined}
         placeholder="0"
         value={String(num)}
-        onInput={(e) => emit(getInputEventValue(e), unit)}
+        onInput={(event) => emit(getInputEventValue(event), unit)}
       />
       <s-select
         label="Unit"
         {...exclusiveFieldLabel}
         disabled={disabled || undefined}
         value={unit}
-        onChange={(e) => {
-          const u = getInputEventValue(e);
-          setUnit(u);
-          emit(num, u);
+        onChange={(event) => {
+          const selectedUnit = getInputEventValue(event);
+          setUnit(selectedUnit);
+          emit(num, selectedUnit);
         }}
       >
-        {units.map((u) => (
-          <s-option key={u} value={u}>
-            {u}
+        {units.map((unitOption) => (
+          <s-option key={unitOption} value={unitOption}>
+            {unitOption}
           </s-option>
         ))}
       </s-select>
@@ -245,7 +245,7 @@ export default function MetafieldValueInput({
         {...exclusiveFieldLabel}
         disabled={disabled || undefined}
         value={String(value)}
-        onChange={(e) => onChange(getInputEventValue(e))}
+        onChange={(event) => onChange(getInputEventValue(event))}
       >
         <s-option value="">Select option</s-option>
         <s-option value="true">True</s-option>
@@ -262,7 +262,7 @@ export default function MetafieldValueInput({
         disabled={disabled || undefined}
         placeholder="Enter text"
         value={value}
-        onInput={(e) => onChange(getInputEventValue(e))}
+        onInput={(event) => onChange(getInputEventValue(event))}
       />
     );
   }
@@ -285,7 +285,7 @@ export default function MetafieldValueInput({
         disabled={disabled || undefined}
         placeholder="Enter number"
         value={value}
-        onInput={(e) => onChange(getInputEventValue(e))}
+        onInput={(event) => onChange(getInputEventValue(event))}
       />
     );
   }
@@ -299,7 +299,7 @@ export default function MetafieldValueInput({
         disabled={disabled || undefined}
         placeholder="https://"
         value={value}
-        onInput={(e) => onChange(getInputEventValue(e))}
+        onInput={(event) => onChange(getInputEventValue(event))}
       />
     );
   }
@@ -312,7 +312,7 @@ export default function MetafieldValueInput({
         aria-label={def.name}
         disabled={disabled}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
       />
     );
   }
@@ -326,7 +326,7 @@ export default function MetafieldValueInput({
           aria-label={`${def.name} color`}
           disabled={disabled}
           value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#000000"}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(event) => onChange(event.target.value)}
         />
         <input
           type="text"
@@ -335,7 +335,7 @@ export default function MetafieldValueInput({
           disabled={disabled}
           placeholder="#000000"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(event) => onChange(event.target.value)}
         />
       </div>
     );
@@ -361,7 +361,7 @@ export default function MetafieldValueInput({
       disabled={disabled || undefined}
       placeholder={isReference ? "Enter resource ID (gid://...)" : "Enter text"}
       value={value}
-      onInput={(e) => onChange(getInputEventValue(e))}
+      onInput={(event) => onChange(getInputEventValue(event))}
     />
   );
 }

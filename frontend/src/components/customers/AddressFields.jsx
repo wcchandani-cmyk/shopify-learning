@@ -7,9 +7,9 @@ import PhoneField from "./PhoneField";
 export default function AddressFields({ value, onChange }) {
   const countryOptions = useMemo(
     () =>
-      Country.getAllCountries().map((c) => ({
-        value: c.isoCode,
-        label: c.name,
+      Country.getAllCountries().map((country) => ({
+        value: country.isoCode,
+        label: country.name,
       })),
     []
   );
@@ -17,9 +17,9 @@ export default function AddressFields({ value, onChange }) {
   const stateOptions = useMemo(
     () =>
       value.countryCode
-        ? State.getStatesOfCountry(value.countryCode).map((s) => ({
-            value: s.isoCode,
-            label: s.name,
+        ? State.getStatesOfCountry(value.countryCode).map((state) => ({
+            value: state.isoCode,
+            label: state.name,
           }))
         : [],
     [value.countryCode]

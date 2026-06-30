@@ -41,7 +41,7 @@ export default function FulfillmentHoldForm({
             selected.length === 1 ? "item" : "items"
           } selected`}
           checked={allSelected || undefined}
-          onChange={(e) => toggleAll(getCheckboxChecked(e))}
+          onChange={(event) => toggleAll(getCheckboxChecked(event))}
         />
       </div>
 
@@ -52,7 +52,7 @@ export default function FulfillmentHoldForm({
               label={item.title}
               labelAccessibilityVisibility="exclusive"
               checked={selected.includes(index) || undefined}
-              onChange={(e) => toggleItem(index, getCheckboxChecked(e))}
+              onChange={(event) => toggleItem(index, getCheckboxChecked(event))}
             />
             <OrderItemThumbnail
               imageUrl={item.imageUrl}
@@ -78,7 +78,7 @@ export default function FulfillmentHoldForm({
         <s-select
           label="Hold reason"
           value={reason}
-          onChange={(e) => setReason(getInputEventValue(e))}
+          onChange={(event) => setReason(getInputEventValue(event))}
         >
           <s-option value="">Select the reason for holding</s-option>
           {HOLD_REASONS.map((item) => (

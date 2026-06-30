@@ -105,7 +105,15 @@ const OrderRow = memo(function OrderRow({ order, isDraftTab = false }) {
       <s-table-cell>{order.itemsCount} {order.itemsCount === 1 ? "item" : "items"}</s-table-cell>
       <s-table-cell>—</s-table-cell>
       <s-table-cell>Standard</s-table-cell>
-      <s-table-cell>{order.tags || "—"}</s-table-cell>
+      <s-table-cell>
+        {order.tags
+          ? order.tags
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag && tag !== "Draft" && !tag.startsWith("DraftNumber:"))
+              .join(", ") || "—"
+          : "—"}
+      </s-table-cell>
     </s-table-row>
   );
 });

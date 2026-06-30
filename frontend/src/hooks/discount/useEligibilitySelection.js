@@ -31,10 +31,10 @@ export function useEligibilitySelection(form, setForm) {
         const data = await listCustomers({ page: 1, limit: 100 });
         if (data && data.customers) {
           setItemsList(
-            data.customers.map((c) => ({
-              id: `customer-${c.shopifyId || c.id}`,
-              title: c.displayName || `${c.firstName || ""} ${c.lastName || ""}`.trim() || c.email || "Unknown Customer",
-              email: c.email || "",
+            data.customers.map((customer) => ({
+              id: `customer-${customer.shopifyId || customer.id}`,
+              title: customer.displayName || `${customer.firstName || ""} ${customer.lastName || ""}`.trim() || customer.email || "Unknown Customer",
+              email: customer.email || "",
             }))
           );
         } else {
@@ -71,8 +71,8 @@ export function useEligibilitySelection(form, setForm) {
   // Toggle item selection
   const handleToggleItem = useCallback((item) => {
     setTempSelection((prev) =>
-      prev.some((x) => x.id === item.id)
-        ? prev.filter((x) => x.id !== item.id)
+      prev.some((tempItem) => tempItem.id === item.id)
+        ? prev.filter((tempItem) => tempItem.id !== item.id)
         : [...prev, item]
     );
   }, []);
@@ -102,7 +102,7 @@ export function useEligibilitySelection(form, setForm) {
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.email && item.email.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesSelected = !showOnlySelected || tempSelection.some((x) => x.id === item.id);
+      const matchesSelected = !showOnlySelected || tempSelection.some((tempItem) => tempItem.id === item.id);
       return matchesSearch && matchesSelected;
     });
   }, [searchQuery, showOnlySelected, tempSelection, itemsList]);
@@ -110,7 +110,7 @@ export function useEligibilitySelection(form, setForm) {
   // Checkbox select all sync
   const isAllSelected = useMemo(() => {
     if (filteredItems.length === 0) return false;
-    return filteredItems.every((item) => tempSelection.some((x) => x.id === item.id));
+    return filteredItems.every((item) => tempSelection.some((tempItem) => tempItem.id === item.id));
   }, [filteredItems, tempSelection]);
 
   // Toggle Select All
@@ -118,9 +118,9 @@ export function useEligibilitySelection(form, setForm) {
     const ids = filteredItems.map((item) => item.id);
     setTempSelection((prev) => {
       if (isAllSelected) {
-        return prev.filter((x) => !ids.includes(x.id));
+        return prev.filter((tempItem) => !ids.includes(tempItem.id));
       }
-      const existingIds = new Set(prev.map((x) => x.id));
+      const existingIds = new Set(prev.map((tempItem) => tempItem.id));
       return [...prev, ...filteredItems.filter((item) => !existingIds.has(item.id))];
     });
   }, [isAllSelected, filteredItems]);

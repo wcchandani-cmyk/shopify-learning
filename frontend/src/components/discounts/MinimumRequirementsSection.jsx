@@ -1,35 +1,31 @@
+import { useChoiceList } from "../../hooks/useChoiceList";
 import { getInputEventValue } from "../../utils/fieldEvent";
 
 export default function MinimumRequirementsSection({ form, updateField }) {
+  const handleChoiceChange = (nextValue) => {
+    updateField("minimumRequirementType", nextValue);
+    if (nextValue === "none") {
+      updateField("minimumRequirementValue", "");
+    }
+  };
+
+  const choiceListRef = useChoiceList(form.minimumRequirementType, handleChoiceChange);
+
   return (
     <s-section heading="Minimum purchase requirements">
-      <div className="radio-group">
-        <label className="radio-label">
-          <input
-            type="radio"
-            name="minimumRequirementType"
-            value="none"
-            checked={form.minimumRequirementType === "none"}
-            onChange={() => {
-              updateField("minimumRequirementType", "none");
-              updateField("minimumRequirementValue", "");
-            }}
-          />
-          <span>No minimum requirements</span>
-        </label>
+      <s-stack gap="base">
+        <s-choice-list
+          ref={choiceListRef}
+          name="minimumRequirementType"
+          values={[form.minimumRequirementType]}
+        >
+          <s-choice value="none">No minimum requirements</s-choice>
+          <s-choice value="amount">Minimum purchase amount ($)</s-choice>
+          <s-choice value="quantity">Minimum quantity of items</s-choice>
+        </s-choice-list>
 
-        <label className="radio-label">
-          <input
-            type="radio"
-            name="minimumRequirementType"
-            value="amount"
-            checked={form.minimumRequirementType === "amount"}
-            onChange={() => updateField("minimumRequirementType", "amount")}
-          />
-          <span>Minimum purchase amount ($)</span>
-        </label>
         {form.minimumRequirementType === "amount" && (
-          <div className="radio-conditional-field">
+          <div className="radio-conditional-field" style={{ marginTop: "4px" }}>
             <s-number-field
               label="Minimum purchase amount"
               labelAccessibilityVisibility="exclusive"
@@ -44,18 +40,8 @@ export default function MinimumRequirementsSection({ form, updateField }) {
           </div>
         )}
 
-        <label className="radio-label">
-          <input
-            type="radio"
-            name="minimumRequirementType"
-            value="quantity"
-            checked={form.minimumRequirementType === "quantity"}
-            onChange={() => updateField("minimumRequirementType", "quantity")}
-          />
-          <span>Minimum quantity of items</span>
-        </label>
         {form.minimumRequirementType === "quantity" && (
-          <div className="radio-conditional-field">
+          <div className="radio-conditional-field" style={{ marginTop: "4px" }}>
             <s-number-field
               label="Minimum quantity"
               labelAccessibilityVisibility="exclusive"
@@ -69,7 +55,7 @@ export default function MinimumRequirementsSection({ form, updateField }) {
             </div>
           </div>
         )}
-      </div>
+      </s-stack>
     </s-section>
   );
 }

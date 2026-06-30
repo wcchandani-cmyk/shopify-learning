@@ -52,26 +52,21 @@ export default function MarkAsPaidModal({
         </s-text>
 
         {isRecord && (
-          <div className="record-payment-amount">
-            <label className="order-currency-label" htmlFor="record-amount">
-              Amount
-            </label>
-            <input
+          <s-stack gap="tight">
+            <s-number-field
+              label="Amount"
               id="record-amount"
-              type="number"
-              className="discount-input-field"
               value={amountValue}
-              onChange={(e) => setAmountValue(e.target.value)}
-              style={{ width: "100%" }}
+              onInput={(event) => setAmountValue(getInputEventValue(event))}
             />
-            <p className="order-pay-terms-help">This is a full payment</p>
-          </div>
+            <s-text tone="subdued">This is a full payment</s-text>
+          </s-stack>
         )}
 
         <s-select
           label="Method"
           value={method}
-          onChange={(e) => setMethod(getInputEventValue(e))}
+          onChange={(event) => setMethod(getInputEventValue(event))}
         >
           {PAYMENT_METHODS.map((name) => (
             <s-option key={name} value={name}>

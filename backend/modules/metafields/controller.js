@@ -27,7 +27,7 @@ const OWNER_TYPE = { product: "PRODUCT", variant: "PRODUCTVARIANT", customer: "C
 
 const throwUserErrors = (errors, fallback) => {
   if (Array.isArray(errors) && errors.length) {
-    const err = new Error(errors.map((e) => e?.message).filter(Boolean).join("; ") || fallback);
+    const err = new Error(errors.map((errItem) => errItem?.message).filter(Boolean).join("; ") || fallback);
     err.statusCode = 422;
     throw err;
   }
@@ -37,7 +37,7 @@ const parseValidations = (json) => {
   if (!json) return [];
   try {
     const arr = typeof json === "string" ? JSON.parse(json) : json;
-    return Array.isArray(arr) ? arr.filter((r) => r?.name) : [];
+    return Array.isArray(arr) ? arr.filter((rule) => rule?.name) : [];
   } catch {
     return [];
   }
@@ -79,8 +79,8 @@ const buildDefinitionInput = (def, { includeType }) => {
   if (includeType) input.type = def.type;
 
   const validations = parseValidations(def.validationRulesJson);
-  const uniqueRule = validations.find((v) => v.name === "unique_values");
-  const realValidations = validations.filter((v) => v.name !== "unique_values");
+  const uniqueRule = validations.find((val) => val.name === "unique_values");
+  const realValidations = validations.filter((val) => val.name !== "unique_values");
   if (realValidations.length) input.validations = realValidations;
 
   const capabilityByField = { useAsCollectionFilter: "adminFilterable", useAsSmartCollectionCondition: "smartCollectionCondition" };
@@ -249,7 +249,7 @@ const getMetafields = wrap("Failed to get metafields", async (req, res) => {
   });
 
   const values = await Metafield.findAll({ where: { shopId: shop.id, entityId: String(entityId) } });
-  const valuesMap = new Map(values.map((v) => [v.definitionId, v]));
+  const valuesMap = new Map(values.map((val) => [val.definitionId, val]));
 
   const metafields = definitions.map((definition) => {
     const record = valuesMap.get(definition.id);
@@ -363,7 +363,7 @@ const getCapabilityOptions = (typeName, entityType) => {
     },
   };
 
-  return caps.map((c) => all[c]).filter((o) => o && o.eligible).map(({ eligible, ...rest }) => rest);
+  return caps.map((cap) => all[cap]).filter((opt) => opt && opt.eligible).map(({ eligible, ...rest }) => rest);
 };
 
 const getIcon = (typeVal, category) => {
@@ -410,7 +410,7 @@ const getMetafieldTypes = wrap("Failed to fetch metafield types", async (req, re
   const response = await graphqlClient.request(METAFEILD_TYPE);
   const types = response?.data?.metafieldDefinitionTypes || [];
 
-  const findType = (name) => types.find((t) => t.name === name);
+  const findType = (name) => types.find((typeItem) => typeItem.name === name);
   const groupName = (str) => GROUP_OVERRIDES[str] || toSentenceCase(str);
 
   const buildItem = (cfg) => {
@@ -424,7 +424,7 @@ const getMetafieldTypes = wrap("Failed to fetch metafield types", async (req, re
       icon: cfg.icon || getIcon(cfg.baseType, base.category),
       validations: base.supportedValidations || [],
       options: getCapabilityOptions(cfg.baseType, entityType),
-      supportsList: types.some((t) => t.name === `list.${cfg.baseType}`),
+      supportsList: types.some((typeItem) => typeItem.name === `list.${cfg.baseType}`),
     };
   };
 
@@ -445,7 +445,7 @@ const getMetafieldTypes = wrap("Failed to fetch metafield types", async (req, re
   if (recommended.length > 0) groups.push({ group: "Recommended", items: recommended });
 
   Object.entries(categoriesMap).forEach(([group, items]) => {
-    groups.push({ group, items: items.sort((a, b) => a.label.localeCompare(b.label)) });
+    groups.push({ group, items: items.sort((itemA, itemB) => itemA.label.localeCompare(itemB.label)) });
   });
 
   successResponse(res, 200, "Metafield types fetched successfully from Shopify", { groups });

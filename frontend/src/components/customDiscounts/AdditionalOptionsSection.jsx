@@ -8,28 +8,26 @@ export default function AdditionalOptionsSection({ form, updateField }) {
 
   return (
     <s-section>
-      <div className="additional-options-header-row">
-        <span className="additional-options-header-title">
-          Additional Options
-        </span>
-        <button
-          type="button"
-          className="additional-options-collapse-btn"
-          onClick={() => setExpanded(!expanded)}
-          aria-label={
-            expanded
-              ? "Collapse additional options"
-              : "Expand additional options"
-          }
-        >
-          <s-icon type={expanded ? "chevron-up" : "chevron-down"} />
-        </button>
-      </div>
+      <s-stack gap="base">
+        <s-stack direction="inline" alignItems="center" gap="base">
+          <s-box grow="1">
+            <s-heading>Additional Options</s-heading>
+          </s-box>
+          <s-button
+            variant="tertiary"
+            icon={expanded ? "chevron-up" : "chevron-down"}
+            accessibilityLabel={
+              expanded
+                ? "Collapse additional options"
+                : "Expand additional options"
+            }
+            onClick={() => setExpanded(!expanded)}
+          />
+        </s-stack>
 
-      {expanded && (
-        <div className="additional-options-content-body">
-          {form.method === "Code" && (
-            <div className="additional-options-sub-section">
+        {expanded && (
+          <s-stack gap="base">
+            {form.method === "Code" && (
               <MaximumUsesSection
                 form={form}
                 updateField={updateField}
@@ -37,21 +35,17 @@ export default function AdditionalOptionsSection({ form, updateField }) {
                 title="Usage Limits"
                 limitTotalLabel="Limit number of times this discount can be used in total"
               />
-            </div>
-          )}
+            )}
 
-          <div className="additional-options-sub-section">
             <CombinationsSection
               form={form}
               updateField={updateField}
               displayType="Custom Discount"
             />
-          </div>
 
-          <div className="additional-options-sub-section additional-options-last-section">
-            <h4 className="additional-options-sub-heading">Active Dates</h4>
-            <div className="side-by-side-row">
-              <div>
+            <s-stack gap="base">
+              <s-heading>Active Dates</s-heading>
+              <s-grid gridTemplateColumns="1fr 1fr" gap="base">
                 <s-date-field
                   label="Start Date"
                   value={form.startDate || ""}
@@ -64,8 +58,6 @@ export default function AdditionalOptionsSection({ form, updateField }) {
                     updateField("startDate", getInputEventValue(e))
                   }
                 />
-              </div>
-              <div>
                 <s-date-field
                   label="End Date"
                   value={form.endDate || ""}
@@ -82,11 +74,11 @@ export default function AdditionalOptionsSection({ form, updateField }) {
                     updateField("hasEndDate", Boolean(val));
                   }}
                 />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+              </s-grid>
+            </s-stack>
+          </s-stack>
+        )}
+      </s-stack>
     </s-section>
   );
 }

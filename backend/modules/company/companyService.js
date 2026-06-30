@@ -38,7 +38,7 @@ const toCompanyDTO = (node) =>
 
 const throwUserErrors = (errors, fallback) => {
   if (Array.isArray(errors) && errors.length) {
-    const err = new Error(errors.map((e) => e.message).join("; ") || fallback);
+    const err = new Error(errors.map((errItem) => errItem.message).join("; ") || fallback);
     err.statusCode = 422;
     throw err;
   }
@@ -268,7 +268,7 @@ const getCompanyDetails = async (shop, companyId) => {
     .filter(Boolean);
 
   // Check if ordering is approved (at least one contact has roles assigned)
-  const isApproved = contacts.some((c) => c.roleAssignments.length > 0);
+  const isApproved = contacts.some((contact) => contact.roleAssignments.length > 0);
 
   // Map contact roles
   const contactRoles = node.contactRoles?.nodes || [];

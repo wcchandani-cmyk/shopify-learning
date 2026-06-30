@@ -40,22 +40,22 @@ export default function CheckoutCustomFieldForm() {
     if (!isEdit) return;
     (async () => {
       try {
-        const { customization: cf } = await getCheckoutCustomization(id);
-        if (cf) {
+        const { customization: customizationData } = await getCheckoutCustomization(id);
+        if (customizationData) {
           setForm({
-            internalName: cf.internalName || "",
-            blockVisibility: cf.blockVisibility || "Dynamic",
-            displayRule: cf.displayRule || "all",
-            displayConditions: parseDisplayConditions(cf.displayConditions),
-            orderFieldSetting: cf.orderFieldSetting || "order_metafield",
-            heading: cf.heading || "",
-            subheading: cf.subheading || "",
-            fields: parseJson(cf.fields).map((f) => ({
-              ...makeField(f.type),
-              ...f,
+            internalName: customizationData.internalName || "",
+            blockVisibility: customizationData.blockVisibility || "Dynamic",
+            displayRule: customizationData.displayRule || "all",
+            displayConditions: parseDisplayConditions(customizationData.displayConditions),
+            orderFieldSetting: customizationData.orderFieldSetting || "order_metafield",
+            heading: customizationData.heading || "",
+            subheading: customizationData.subheading || "",
+            fields: parseJson(customizationData.fields).map((field) => ({
+              ...makeField(field.type),
+              ...field,
               _id: generateId(),
             })),
-            isActive: Boolean(cf.isActive),
+            isActive: Boolean(customizationData.isActive),
           });
         }
       } catch (err) {
@@ -67,37 +67,37 @@ export default function CheckoutCustomFieldForm() {
     })();
   }, [id, isEdit, shopify, navigate]);
 
-  const setF = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const setF = (key, val) => setForm((prevForm) => ({ ...prevForm, [key]: val }));
 
 
   const addField = (type) =>
-    setForm((p) => ({ ...p, fields: [...p.fields, makeField(type)] }));
-  const updateField = (i, updated) =>
-    setForm((p) => {
-      const f = [...p.fields];
-      f[i] = updated;
-      return { ...p, fields: f };
+    setForm((prevForm) => ({ ...prevForm, fields: [...prevForm.fields, makeField(type)] }));
+  const updateField = (index, updated) =>
+    setForm((prevForm) => {
+      const fieldsCopy = [...prevForm.fields];
+      fieldsCopy[index] = updated;
+      return { ...prevForm, fields: fieldsCopy };
     });
-  const removeField = (i) =>
-    setForm((p) => ({ ...p, fields: p.fields.filter((_, idx) => idx !== i) }));
-  const toggleCollapse = (i) =>
-    setCollapsed((prev) => ({ ...prev, [i]: !prev[i] }));
+  const removeField = (index) =>
+    setForm((prevForm) => ({ ...prevForm, fields: prevForm.fields.filter((_, idx) => idx !== index) }));
+  const toggleCollapse = (index) =>
+    setCollapsed((prev) => ({ ...prev, [index]: !prev[index] }));
 
   const handleSave = useCallback(async () => {
     if (!form.internalName.trim()) {
       shopify.toast.show("Please enter an internal name", { isError: true });
       return;
     }
-    for (let i = 0; i < form.fields.length; i++) {
-      const f = form.fields[i];
-      if (!f.label.trim()) {
-        shopify.toast.show(`Field ${i + 1}: label is required`, {
+    for (let index = 0; index < form.fields.length; index++) {
+      const field = form.fields[index];
+      if (!field.label.trim()) {
+        shopify.toast.show(`Field ${index + 1}: label is required`, {
           isError: true,
         });
         return;
       }
-      if (!f.key.trim()) {
-        shopify.toast.show(`Field ${i + 1}: key is required`, {
+      if (!field.key.trim()) {
+        shopify.toast.show(`Field ${index + 1}: key is required`, {
           isError: true,
         });
         return;
@@ -109,7 +109,7 @@ export default function CheckoutCustomFieldForm() {
         ...form,
         type: "custom_field",
         internalName: form.internalName.trim(),
-        fields: form.fields.map(({ _id, ...r }) => r),
+        fields: form.fields.map(({ _id, ...restField }) => restField),
       };
       if (isEdit) {
         await updateCheckoutCustomization(id, payload);
@@ -128,15 +128,13 @@ export default function CheckoutCustomFieldForm() {
 
   if (loading) return <PageLoader />;
 
-  console.log("CheckoutCustomFieldForm render - form:", form);
-
   return (
     <s-page heading={isEdit ? "Edit Custom Field" : "Create Custom Field"}>
       <s-link
         slot="breadcrumb-actions"
         href="/checkout-customization"
-        onClick={(e) => {
-          e.preventDefault();
+        onClick={(event) => {
+          event.preventDefault();
           navigate("/checkout-customization");
         }}
       >
@@ -154,22 +152,22 @@ export default function CheckoutCustomFieldForm() {
       <s-stack gap="base">
         <CheckoutCommonHeader
           internalName={form.internalName}
-          onInternalNameChange={(v) => setF("internalName", v)}
+          onInternalNameChange={(val) => setF("internalName", val)}
           blockVisibility={form.blockVisibility}
-          onBlockVisibilityChange={(v) => setF("blockVisibility", v)}
+          onBlockVisibilityChange={(val) => setF("blockVisibility", val)}
           displayRule={form.displayRule}
-          onDisplayRuleChange={(v) => setF("displayRule", v)}
+          onDisplayRuleChange={(val) => setF("displayRule", val)}
           displayConditions={form.displayConditions}
-          onDisplayConditionsChange={(v) => setF("displayConditions", v)}
+          onDisplayConditionsChange={(val) => setF("displayConditions", val)}
           radioName="cf-displayRule"
         />
 
         <s-section heading="Order Field Setting">
           <s-stack gap="base">
             <div>
-              <div className="form-group-subtext" style={{ marginBottom: 12 }}>
-                Save order fields as
-              </div>
+              <s-box padding-block-end="tight">
+                <s-text tone="subdued">Save order fields as</s-text>
+              </s-box>
               <s-choice-list
                 ref={orderFieldRef}
                 name="cf-orderField"
@@ -179,56 +177,62 @@ export default function CheckoutCustomFieldForm() {
                 <s-choice value="cart_attribute">Cart attribute</s-choice>
                 <s-choice value="cart_note">Cart note</s-choice>
               </s-choice-list>
-              <div className="form-group-subtext" style={{ marginTop: 12 }}>
-                We suggest saving custom field data under the Meta field
-                namespace of AddUpCheckoutCustomization.
-              </div>
+              <s-box padding-block-start="tight">
+                <s-text tone="subdued">
+                  We suggest saving custom field data under the Meta field
+                  namespace of AddUpCheckoutCustomization.
+                </s-text>
+              </s-box>
             </div>
           </s-stack>
         </s-section>
 
         <s-section heading="Block Heading &amp; Subheading">
           <s-stack gap="base">
-            <div className="form-group-subtext">
-              Adding a heading and subheading is highly recommended
-            </div>
+            <s-box padding-block-end="tight">
+              <s-text tone="subdued">
+                Adding a heading and subheading is highly recommended
+              </s-text>
+            </s-box>
             <s-text-field
               label="Heading (optional)"
               value={form.heading}
-              onInput={(e) => setF("heading", e.target.value)}
+              onInput={(event) => setF("heading", event.target.value)}
             />
             <s-text-field
               label="Subheading (optional)"
               value={form.subheading}
-              onInput={(e) => setF("subheading", e.target.value)}
+              onInput={(event) => setF("subheading", event.target.value)}
             />
           </s-stack>
         </s-section>
 
         <s-section heading="Add Field">
           <s-stack gap="base">
-            <div className="form-group-subtext">
-              We recommend adding these fields only when they serve as a new
-              section in the checkout process.
-            </div>
+            <s-box padding-block-end="tight">
+              <s-text tone="subdued">
+                We recommend adding these fields only when they serve as a new
+                section in the checkout process.
+              </s-text>
+            </s-box>
             {form.fields.length > 0 && (
               <div className="ccf-fields-list">
-                {form.fields.map((field, i) => {
+                {form.fields.map((field, index) => {
                   const typeDef =
-                    FIELD_TYPES.find((t) => t.id === field.type) ||
+                    FIELD_TYPES.find((typeItem) => typeItem.id === field.type) ||
                     FIELD_TYPES[0];
                   return (
                     <EditorShell
                       key={field._id}
                       icon={typeDef.icon}
                       label={typeDef.label}
-                      collapsed={!!collapsed[i]}
-                      onToggle={() => toggleCollapse(i)}
-                      onRemove={() => removeField(i)}
+                      collapsed={!!collapsed[index]}
+                      onToggle={() => toggleCollapse(index)}
+                      onRemove={() => removeField(index)}
                     >
                       <FieldBody
                         field={field}
-                        upd={(k, v) => updateField(i, { ...field, [k]: v })}
+                        upd={(key, val) => updateField(index, { ...field, [key]: val })}
                         orderFieldSetting={form.orderFieldSetting}
                       />
                     </EditorShell>
@@ -243,9 +247,11 @@ export default function CheckoutCustomFieldForm() {
                 label="Add Field"
                 groupLabel="Fields"
               />
-              <div className="form-group-subtext" style={{ marginTop: 8 }}>
-                Create and add fields based on your specific requirements.
-              </div>
+              <s-box padding-block-start="tight">
+                <s-text tone="subdued">
+                  Create and add fields based on your specific requirements.
+                </s-text>
+              </s-box>
             </div>
           </s-stack>
         </s-section>

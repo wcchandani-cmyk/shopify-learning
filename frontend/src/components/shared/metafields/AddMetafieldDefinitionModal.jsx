@@ -97,41 +97,41 @@ export default function AddMetafieldDefinitionModal({
 
     const saveType = currentTypeInfo?.baseType || type;
     const supported = currentTypeInfo?.validations || [];
-    const valNames = supported.map((v) => v.name);
+    const valNames = supported.map((validation) => validation.name);
     const validationRules = [];
 
-    const pushScalar = (name) => {
-      const raw = vValues[name];
+    const pushScalar = (nameItem) => {
+      const raw = vValues[nameItem];
       if (raw !== undefined && String(raw).trim() !== "") {
-        validationRules.push({ name, value: String(raw).trim() });
+        validationRules.push({ name: nameItem, value: String(raw).trim() });
       }
     };
-    const pushList = (name) => {
-      const raw = (vValues[name] || "").trim();
+    const pushList = (nameItem) => {
+      const raw = (vValues[nameItem] || "").trim();
       if (raw) {
         const arr = raw
           .split("\n")
-          .map((s) => s.trim())
+          .map((segment) => segment.trim())
           .filter(Boolean);
         if (arr.length)
-          validationRules.push({ name, value: JSON.stringify(arr) });
+          validationRules.push({ name: nameItem, value: JSON.stringify(arr) });
       }
     };
 
-    ["min", "max", "scale_min", "scale_max", "max_precision"].forEach((n) => {
-      if (valNames.includes(n)) pushScalar(n);
+    ["min", "max", "scale_min", "scale_max", "max_precision"].forEach((nameItem) => {
+      if (valNames.includes(nameItem)) pushScalar(nameItem);
     });
     if (valNames.includes("regex") || valNames.includes("regular_expression")) {
-      const r = (vValues.regex || "").trim();
-      if (r) validationRules.push({ name: "regex", value: r });
+      const regexValue = (vValues.regex || "").trim();
+      if (regexValue) validationRules.push({ name: "regex", value: regexValue });
     }
     if (valNames.includes("schema")) pushScalar("schema");
-    ["allowed_domains", "file_type_options"].forEach((n) => {
-      if (valNames.includes(n)) pushList(n);
+    ["allowed_domains", "file_type_options"].forEach((nameItem) => {
+      if (valNames.includes(nameItem)) pushList(nameItem);
     });
     if (isList) {
-      ["list.min", "list.max"].forEach((n) => {
-        if (valNames.includes(n)) pushScalar(n);
+      ["list.min", "list.max"].forEach((nameItem) => {
+        if (valNames.includes(nameItem)) pushScalar(nameItem);
       });
     }
     if (uniqueValues) {
@@ -140,7 +140,7 @@ export default function AddMetafieldDefinitionModal({
 
     // Only persist capabilities the API marked eligible for this type + owner.
     const eligibleFields = new Set(
-      (currentTypeInfo?.options || []).map((o) => o.field)
+      (currentTypeInfo?.options || []).map((option) => option.field)
     );
 
     const payload = {
@@ -195,14 +195,14 @@ export default function AddMetafieldDefinitionModal({
   };
 
   const supportedValidations = selectedTypeObj?.validations || [];
-  const valNames = supportedValidations.map((v) => v.name);
-  const hasVal = (n) => valNames.includes(n);
+  const valNames = supportedValidations.map((validation) => validation.name);
+  const hasVal = (nameItem) => valNames.includes(nameItem);
 
   const isTextType = [
     "single_line_text_field",
     "multi_line_text_field",
   ].includes(baseType);
-  const minValidation = supportedValidations.find((v) => v.name === "min");
+  const minValidation = supportedValidations.find((validation) => validation.name === "min");
   const minMaxIsDate =
     (!!minValidation &&
       (minValidation.type === "date" || minValidation.type === "date_time")) ||
@@ -257,8 +257,8 @@ export default function AddMetafieldDefinitionModal({
             label="Name"
             placeholder="e.g. Snowboard length"
             value={name}
-            onInput={(e) => {
-              const val = getInputEventValue(e);
+            onInput={(event) => {
+              const val = getInputEventValue(event);
               setName(val);
               setKey(
                 val
@@ -372,7 +372,7 @@ export default function AddMetafieldDefinitionModal({
                   className="searchable-select__search"
                   placeholder="Search"
                   value={popoverSearch}
-                  onChange={(e) => setPopoverSearch(e.target.value)}
+                  onChange={(event) => setPopoverSearch(event.target.value)}
                   aria-label="Search metafield types"
                 />
               </div>
@@ -456,7 +456,7 @@ export default function AddMetafieldDefinitionModal({
                 label="Description"
                 placeholder="Add description"
                 value={description}
-                onInput={(e) => setDescription(getInputEventValue(e))}
+                onInput={(event) => setDescription(getInputEventValue(event))}
               />
             )}
           </div>
@@ -492,7 +492,7 @@ export default function AddMetafieldDefinitionModal({
                           type={minMaxInputType}
                           placeholder={minMaxPlaceholder || "Min"}
                           value={vValues.min || ""}
-                          onInput={(e) => setV("min", getInputEventValue(e))}
+                          onInput={(event) => setV("min", getInputEventValue(event))}
                         />
                       </div>
                       <div className="metafield-modal-flex-row__item-2">
@@ -502,7 +502,7 @@ export default function AddMetafieldDefinitionModal({
                           type={minMaxInputType}
                           placeholder={minMaxPlaceholder || "Max"}
                           value={vValues.max || ""}
-                          onInput={(e) => setV("max", getInputEventValue(e))}
+                          onInput={(event) => setV("max", getInputEventValue(event))}
                         />
                       </div>
                     </div>
@@ -522,8 +522,8 @@ export default function AddMetafieldDefinitionModal({
                           type="number"
                           placeholder="e.g. 1"
                           value={vValues.scale_min || ""}
-                          onInput={(e) =>
-                            setV("scale_min", getInputEventValue(e))
+                          onInput={(event) =>
+                            setV("scale_min", getInputEventValue(event))
                           }
                         />
                       </div>
@@ -534,8 +534,8 @@ export default function AddMetafieldDefinitionModal({
                           type="number"
                           placeholder="e.g. 5"
                           value={vValues.scale_max || ""}
-                          onInput={(e) =>
-                            setV("scale_max", getInputEventValue(e))
+                          onInput={(event) =>
+                            setV("scale_max", getInputEventValue(event))
                           }
                         />
                       </div>
@@ -554,8 +554,8 @@ export default function AddMetafieldDefinitionModal({
                       type="number"
                       placeholder="e.g. 2"
                       value={vValues.max_precision || ""}
-                      onInput={(e) =>
-                        setV("max_precision", getInputEventValue(e))
+                      onInput={(event) =>
+                        setV("max_precision", getInputEventValue(event))
                       }
                     />
                   </div>
@@ -571,7 +571,7 @@ export default function AddMetafieldDefinitionModal({
                       {...exclusiveFieldLabel}
                       placeholder="e.g. ^[a-zA-Z0-9]+$"
                       value={vValues.regex || ""}
-                      onInput={(e) => setV("regex", getInputEventValue(e))}
+                      onInput={(event) => setV("regex", getInputEventValue(event))}
                     />
                   </div>
                 )}
@@ -586,8 +586,8 @@ export default function AddMetafieldDefinitionModal({
                       {...exclusiveFieldLabel}
                       placeholder={"example.com"}
                       value={vValues.allowed_domains || ""}
-                      onInput={(e) =>
-                        setV("allowed_domains", getInputEventValue(e))
+                      onInput={(event) =>
+                        setV("allowed_domains", getInputEventValue(event))
                       }
                     />
                   </div>
@@ -603,8 +603,8 @@ export default function AddMetafieldDefinitionModal({
                       {...exclusiveFieldLabel}
                       placeholder={"Image\nVideo"}
                       value={vValues.file_type_options || ""}
-                      onInput={(e) =>
-                        setV("file_type_options", getInputEventValue(e))
+                      onInput={(event) =>
+                        setV("file_type_options", getInputEventValue(event))
                       }
                     />
                   </div>
@@ -620,7 +620,7 @@ export default function AddMetafieldDefinitionModal({
                       {...exclusiveFieldLabel}
                       placeholder='{ "type": "object" }'
                       value={vValues.schema || ""}
-                      onInput={(e) => setV("schema", getInputEventValue(e))}
+                      onInput={(event) => setV("schema", getInputEventValue(event))}
                     />
                   </div>
                 )}
@@ -638,8 +638,8 @@ export default function AddMetafieldDefinitionModal({
                           type="number"
                           placeholder="Min"
                           value={vValues["list.min"] || ""}
-                          onInput={(e) =>
-                            setV("list.min", getInputEventValue(e))
+                          onInput={(event) =>
+                            setV("list.min", getInputEventValue(event))
                           }
                         />
                       </div>
@@ -650,8 +650,8 @@ export default function AddMetafieldDefinitionModal({
                           type="number"
                           placeholder="Max"
                           value={vValues["list.max"] || ""}
-                          onInput={(e) =>
-                            setV("list.max", getInputEventValue(e))
+                          onInput={(event) =>
+                            setV("list.max", getInputEventValue(event))
                           }
                         />
                       </div>
@@ -664,7 +664,7 @@ export default function AddMetafieldDefinitionModal({
                     <s-checkbox
                       label="Unique values only"
                       checked={uniqueValues}
-                      onChange={(e) => setUniqueValues(getCheckboxChecked(e))}
+                      onChange={(event) => setUniqueValues(getCheckboxChecked(event))}
                     />
                   </div>
                 )}
@@ -692,8 +692,8 @@ export default function AddMetafieldDefinitionModal({
                   </span>
                   <s-switch
                     checked={capabilityValues[opt.field] || undefined}
-                    onChange={(e) =>
-                      capabilitySetters[opt.field](getCheckboxChecked(e))
+                    onChange={(event) =>
+                      capabilitySetters[opt.field](getCheckboxChecked(event))
                     }
                   />
                 </div>
@@ -709,7 +709,7 @@ export default function AddMetafieldDefinitionModal({
             <s-checkbox
               label="Pin definition"
               checked={pinned}
-              onChange={(e) => setPinned(getCheckboxChecked(e))}
+              onChange={(event) => setPinned(getCheckboxChecked(event))}
             />
           </div>
         </div>
