@@ -133,6 +133,7 @@
 .variant-group__chevron {
   flex: 0 0 auto;
   color: #6d7175;
+  margin-right: 12px;
   transition: transform 0.15s ease;
 }
 
@@ -159,6 +160,16 @@
 .variant-group__count {
   font-size: 0.75rem;
   color: #6d7175;
+}
+
+.variant-toggle-content {
+  display: inline-flex;
+  align-items: center;
+}
+
+.variant-thumb-wrapper {
+  display: inline-flex;
+  margin-right: 12px;
 }
 
 .variant-group__children {

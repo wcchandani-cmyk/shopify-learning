@@ -93,17 +93,16 @@ export default function FulfillmentHoldForm({
       </div>
 
       <div className="order-fulfillment-actions">
-        <button type="button" className="order-btn-sm" onClick={onCancel}>
+        <s-button onClick={onCancel}>
           Cancel
-        </button>
-        <button
-          type="button"
-          className="order-btn-sm order-btn-sm--primary"
+        </s-button>
+        <s-button
+          variant="primary"
           onClick={() => onConfirm(reason)}
-          disabled={!reason || saving}
+          disabled={!reason || saving || undefined}
         >
           Mark as on hold
-        </button>
+        </s-button>
       </div>
     </div>
   );

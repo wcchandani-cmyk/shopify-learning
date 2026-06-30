@@ -56,7 +56,6 @@ export default function PhoneField({
 
   return (
     <div className="phone-field">
-      <label className="phone-field__label">{label}</label>
       <div className="phone-field__row">
         <s-button
           variant="tertiary"
@@ -71,26 +70,27 @@ export default function PhoneField({
           <Flag iso={country.code} />
         </s-button>
 
-        <input
-          className="phone-field__input"
+        <s-text-field
+          label={label}
+          labelAccessibilityVisibility="exclusive"
           type="tel"
           inputMode="tel"
           value={national}
           onInput={handleNumberInput}
-          aria-label={label}
+          style={{ flex: "1 1 auto" }}
         />
       </div>
 
       <s-popover id={popoverId} ref={popoverRef} maxBlockSize="320px">
         <div className="phone-field__search-wrap">
-          <input
+          <s-search-field
             ref={searchInputRef}
             className="phone-field__search"
-            type="text"
             value={ccSearch}
-            onChange={(e) => setCcSearch(e.target.value)}
+            onInput={(event) => setCcSearch(getInputEventValue(event))}
             placeholder="Search country…"
-            aria-label="Search country calling code"
+            label="Search country calling code"
+            labelAccessibilityVisibility="exclusive"
           />
         </div>
         <div className="phone-field__list" role="listbox">
@@ -98,19 +98,21 @@ export default function PhoneField({
             <div className="phone-field__no-results">No results</div>
           )}
           {filteredCodes.map((item) => (
-            <button
-              type="button"
+            <s-button
               key={item.code}
+              variant="tertiary"
               className="phone-field__option"
               command="--hide"
               commandFor={popoverId}
               onClick={() => selectCountry(item.code)}
             >
-              <Flag iso={item.code} />
-              <span className="phone-field__option-name">
-                {item.name} (+{item.dial})
-              </span>
-            </button>
+              <s-stack direction="inline" gap="small-100" alignItems="center">
+                <Flag iso={item.code} />
+                <span className="phone-field__option-name">
+                  {item.name} (+{item.dial})
+                </span>
+              </s-stack>
+            </s-button>
           ))}
         </div>
       </s-popover>

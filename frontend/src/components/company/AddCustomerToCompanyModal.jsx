@@ -125,28 +125,16 @@ export default function AddCustomerToCompanyModal({
             borderRadius: "8px",
           }}
         >
-          <button
-            type="button"
+          <s-button
+            variant="tertiary"
+            width="100%"
             onClick={handleAddNewCustomer}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "12px",
-              borderBottom: "1px solid #f1f2f4",
-              background: "transparent",
-              border: "none",
-              color: "#303030",
-              fontWeight: 500,
-              fontSize: "14px",
-              cursor: "pointer",
-              textAlign: "left",
-            }}
           >
-            <s-icon type="plus-circle" />
-            Add new customer
-          </button>
+            <s-stack direction="inline" gap="small-200" alignItems="center">
+              <s-icon type="plus-circle" />
+              <span>Add new customer</span>
+            </s-stack>
+          </s-button>
 
           {loading ? (
             <div style={{ padding: "12px" }}>
@@ -161,44 +149,29 @@ export default function AddCustomerToCompanyModal({
               const status = statusFor(customer);
               const disabled = Boolean(customer.companyId) || Boolean(assigningId);
               return (
-                <button
+                <s-button
                   key={customer.id}
-                  type="button"
+                  variant="tertiary"
+                  width="100%"
                   onClick={() => !disabled && handleAssign(customer)}
-                  disabled={disabled}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "8px",
-                    padding: "12px",
-                    borderBottom: "1px solid #f1f2f4",
-                    background: "transparent",
-                    border: "none",
-                    cursor: disabled ? "default" : "pointer",
-                    textAlign: "left",
-                    opacity: disabled && !assigningId ? 0.7 : 1,
-                  }}
+                  disabled={disabled || undefined}
                 >
-                  <span style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 500, color: "#303030" }}>
-                      {customer.displayName}
-                    </span>
-                    {customer.email ? (
-                      <span style={{ fontSize: "13px", color: "#616161" }}>
-                        {customer.email}
-                      </span>
+                  <s-stack direction="inline" gap="base" alignItems="center" justifyContent="space-between" width="100%">
+                    <s-stack gap="extra-tight">
+                      <s-text fontWeight="medium">{customer.displayName}</s-text>
+                      {customer.email ? (
+                        <s-text color="subdued" size="small">{customer.email}</s-text>
+                      ) : null}
+                    </s-stack>
+                    {status ? (
+                      <s-text color="subdued" size="small">
+                        {assigningId === customer.id ? "Adding…" : status}
+                      </s-text>
+                    ) : assigningId === customer.id ? (
+                      <s-text color="subdued" size="small">Adding…</s-text>
                     ) : null}
-                  </span>
-                  {status ? (
-                    <s-text color="subdued" size="small">
-                      {assigningId === customer.id ? "Adding…" : status}
-                    </s-text>
-                  ) : assigningId === customer.id ? (
-                    <s-text color="subdued" size="small">Adding…</s-text>
-                  ) : null}
-                </button>
+                  </s-stack>
+                </s-button>
               );
             })
           )}

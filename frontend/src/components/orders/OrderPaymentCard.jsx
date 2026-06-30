@@ -73,13 +73,10 @@ export default function OrderPaymentCard({
       </div>
 
       {!isPaid && balance > 0 && (
-        <div className="order-payment-warning">
-          <s-icon type="alert" size="small" />
-          <span>
-            {formatMoney(balance, currency)} of the balance is currently
-            unauthorized
-          </span>
-        </div>
+        <s-banner tone="warning">
+          {formatMoney(balance, currency)} of the balance is currently
+          unauthorized
+        </s-banner>
       )}
 
       {!isPaid && (
@@ -98,23 +95,25 @@ export default function OrderPaymentCard({
           </s-button>
           <s-popover id="order-collect-payment-popover" position="below">
             <div className="payment-popover-menu">
-              <button
-                type="button"
+              <s-button
+                variant="tertiary"
                 className="payment-popover-item"
                 disabled
               >
-                <s-icon type="credit-card" />
-                Credit card
-              </button>
-              <button
-                type="button"
+                <s-stack direction="inline" gap="small-100" alignItems="center">
+                  <s-icon type="credit-card" />
+                  <span>Credit card</span>
+                </s-stack>
+              </s-button>
+              <s-button
+                variant="tertiary"
                 className="payment-popover-item"
                 command="--hide"
                 commandFor="order-collect-payment-popover"
                 onClick={onManualPayment}
               >
                 {isDraft ? "Mark as paid" : "Manual payment"}
-              </button>
+              </s-button>
             </div>
           </s-popover>
         </div>

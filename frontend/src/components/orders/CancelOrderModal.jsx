@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getInputEventValue } from "../../utils/fieldEvent";
 import { useOverlayModal } from "../../hooks/useOverlayModal";
 import { formatMoney } from "../../utils/customerForm";
+import { useChoiceList } from "../../hooks/useChoiceList";
 
 const CANCEL_ORDER_MODAL_ID = "cancel-order-modal";
 
@@ -41,6 +42,8 @@ export default function CancelOrderModal({
     }
   }, [open]);
 
+  const refundChoiceListRef = useChoiceList(refundChoice, setRefundChoice);
+
   const handleConfirm = () => {
     onConfirm({
       reason,
@@ -50,28 +53,6 @@ export default function CancelOrderModal({
       staffNote: staffNote.trim() || null,
     });
   };
-
-  const refundOption = (value, title, subtitle) => (
-    <label
-      className={`cancel-order-refund-option${
-        refundChoice === value ? " cancel-order-refund-option--selected" : ""
-      }`}
-    >
-      <input
-        type="radio"
-        name="cancel-order-refund"
-        value={value}
-        checked={refundChoice === value}
-        onChange={() => setRefundChoice(value)}
-      />
-      <span className="cancel-order-refund-option__text">
-        <span className="cancel-order-refund-option__title">{title}</span>
-        {subtitle ? (
-          <span className="cancel-order-refund-option__subtitle">{subtitle}</span>
-        ) : null}
-      </span>
-    </label>
-  );
 
   return (
     <s-modal
@@ -88,17 +69,23 @@ export default function CancelOrderModal({
         )}
 
         {canRefund && (
-          <s-stack gap="small-200">
-            <s-text fontWeight="bold">Refund payments</s-text>
-            <div className="cancel-order-refund-options">
-              {refundOption(
-                REFUND_ORIGINAL,
-                "Original payment method",
-                `Refund ${formatMoney(refundAmount, currency)} (Manual)`
-              )}
-              {refundOption(REFUND_LATER, "Later", null)}
-            </div>
-          </s-stack>
+          <s-choice-list
+            ref={refundChoiceListRef}
+            name="cancel-order-refund"
+            values={[refundChoice]}
+          >
+            <s-choice value={REFUND_ORIGINAL}>
+              <s-stack gap="extra-tight">
+                <s-text fontWeight="bold">Original payment method</s-text>
+                <s-text color="subdued" size="small">
+                  Refund {formatMoney(refundAmount, currency)} (Manual)
+                </s-text>
+              </s-stack>
+            </s-choice>
+            <s-choice value={REFUND_LATER}>
+              <s-text fontWeight="bold">Later</s-text>
+            </s-choice>
+          </s-choice-list>
         )}
 
         <s-select

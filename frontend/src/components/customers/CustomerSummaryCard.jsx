@@ -55,14 +55,12 @@ export default function CustomerSummaryCard({
           {form.email ? (
             <div className="cust-email-row">
               <s-link href={`mailto:${form.email}`}>{form.email}</s-link>
-              <button
-                type="button"
-                className="cust-copy"
-                aria-label="Copy email"
+              <s-button
+                variant="tertiary"
+                icon="clipboard"
+                accessibilityLabel="Copy email"
                 onClick={onCopyEmail}
-              >
-                <s-icon type="clipboard" />
-              </button>
+              />
             </div>
           ) : (
             <s-text color="subdued">No email provided</s-text>
@@ -73,38 +71,28 @@ export default function CustomerSummaryCard({
           </s-text>
         </s-stack>
 
-        {expanded ? (
-          <>
-            <s-stack gap="small-400">
-              <s-text fontWeight="bold">Default address</s-text>
-              {hasAddress ? (
-                lines.map((line, index) => <s-text key={index}>{line}</s-text>)
-              ) : (
-                <s-text color="subdued">No address provided</s-text>
-              )}
-            </s-stack>
+      {expanded ? (
+        <>
+          <s-stack gap="small-400">
+            <s-text fontWeight="bold">Default address</s-text>
+            {hasAddress ? (
+              lines.map((line, index) => <s-text key={index}>{line}</s-text>)
+            ) : (
+              <s-text color="subdued">No address provided</s-text>
+            )}
+          </s-stack>
 
-            <s-stack gap="small-300">
-              <s-text fontWeight="bold">Marketing</s-text>
-              <div className="cust-marketing">
-                <span className="cust-badge">
-                  <span
-                    className={`cust-badge__dot cust-badge__dot--${
-                      form.emailSubscribed ? "on" : "off"
-                    }`}
-                  />
-                  Email
-                </span>
-                <span className="cust-badge">
-                  <span
-                    className={`cust-badge__dot cust-badge__dot--${
-                      form.smsSubscribed ? "on" : "off"
-                    }`}
-                  />
-                  SMS
-                </span>
-              </div>
+          <s-stack gap="small-300">
+            <s-text fontWeight="bold">Marketing</s-text>
+            <s-stack direction="inline" gap="small-100" className="cust-marketing">
+              <s-badge tone={form.emailSubscribed ? "success" : undefined}>
+                Email
+              </s-badge>
+              <s-badge tone={form.smsSubscribed ? "success" : undefined}>
+                SMS
+              </s-badge>
             </s-stack>
+          </s-stack>
 
             <s-stack gap="small-300">
               <s-text fontWeight="bold">Tax details</s-text>

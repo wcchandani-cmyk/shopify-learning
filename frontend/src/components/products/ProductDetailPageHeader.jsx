@@ -6,7 +6,7 @@ export default function ProductDetailPageHeader({ title, status }) {
   return (
     <div className="product-detail-page-header">
       <s-stack direction="inline" gap="small" alignItems="center">
-        <h1 className="product-detail-page-header__title">{title}</h1>
+        <s-heading>{title}</s-heading>
         <s-badge size="large" {...getStatusBadgeProps(status || "draft")}>
           {statusLabel}
         </s-badge>

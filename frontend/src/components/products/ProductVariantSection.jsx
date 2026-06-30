@@ -178,27 +178,40 @@ export default function ProductVariantSection({
               return (
                 <div className="variant-group" key={group.value}>
                   <div className="variant-group__header">
-                    <button
+                    <s-button
                       type="button"
+                      variant="tertiary"
                       className="variant-group__toggle"
                       aria-expanded={!isCollapsed}
                       onClick={() => toggleGroup(group.value)}
                     >
-                      <s-icon
-                        type="chevron-down"
-                        className={`variant-group__chevron${!isCollapsed ? " variant-group__chevron--open" : ""}`}
-                      />
-                      <ProductThumbnail imageUrl={imageUrl} size={28} title={group.value} />
-                      <span className="variant-group__title">
-                        <span className="variant-group__name">
-                          {group.value}
+                      <span className="variant-toggle-content">
+                        <s-icon
+                          type="chevron-down"
+                          className={`variant-group__chevron${!isCollapsed ? " variant-group__chevron--open" : ""
+                            }`}
+                        />
+
+                        <span className="variant-thumb-wrapper">
+                          <ProductThumbnail
+                            imageUrl={imageUrl}
+                            size={28}
+                            title={group.value}
+                          />
                         </span>
-                        <span className="variant-group__count">
-                          {group.items.length}{" "}
-                          {group.items.length === 1 ? "variant" : "variants"}
+
+                        <span className="variant-group__title">
+                          <span className="variant-group__name">
+                            {group.value}
+                          </span>
+
+                          <span className="variant-group__count">
+                            {group.items.length}{" "}
+                            {group.items.length === 1 ? "variant" : "variants"}
+                          </span>
                         </span>
                       </span>
-                    </button>
+                    </s-button>
                     <div className="variant-row__price">
                       <s-money-field
                         label="Price"

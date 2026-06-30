@@ -35,21 +35,21 @@ export default function ConversionSummaryCard({ customer }) {
       <s-section heading="Conversion summary">
         {customer ? (
           <s-stack gap="small-200" className="order-conversion-summary">
-            <div className="order-conversion-row">
+            <s-stack direction="inline" gap="small-200" alignItems="center">
               <s-icon type="order" color="subdued" />
-              <span>
+              <s-text>
                 This is their {orderNum}
                 {getOrdinalSuffix(orderNum)} order
-              </span>
-            </div>
-            <div className="order-conversion-row">
+              </s-text>
+            </s-stack>
+            <s-stack direction="inline" gap="small-200" alignItems="center">
               <s-icon type="globe" color="subdued" />
-              <span>1st session from shopify.com</span>
-            </div>
-            <div className="order-conversion-row">
+              <s-text>1st session from shopify.com</s-text>
+            </s-stack>
+            <s-stack direction="inline" gap="small-200" alignItems="center">
               <s-icon type="calendar" color="subdued" />
-              <span>12 sessions over 13 days</span>
-            </div>
+              <s-text>12 sessions over 13 days</s-text>
+            </s-stack>
             <div style={{ marginTop: "12px" }}>
               <s-link href="#" onClick={handleOpenConversion}>
                 View conversion details
@@ -57,9 +57,7 @@ export default function ConversionSummaryCard({ customer }) {
             </div>
           </s-stack>
         ) : (
-          <div style={{ color: "#6d7175" }}>
-            No conversion summary available
-          </div>
+          <s-text color="subdued">No conversion summary available</s-text>
         )}
       </s-section>
 
@@ -71,31 +69,35 @@ export default function ConversionSummaryCard({ customer }) {
       >
         <s-stack gap="base">
           {/* Stats Box */}
-          <div className="conversion-stats-box">
-            <div className="conversion-stat-col">
-              <div className="conversion-stat-label">Total sessions</div>
-              <div className="conversion-stat-value">12</div>
-            </div>
-            <div className="conversion-stat-col">
-              <div className="conversion-stat-label">Days to conversion</div>
-              <div className="conversion-stat-value">13</div>
-            </div>
-          </div>
+          <s-stack direction="inline" gap="base">
+            <s-box padding="base" background="subdued" borderRadius="base">
+              <s-stack gap="extra-tight">
+                <s-text color="subdued" size="small">Total sessions</s-text>
+                <s-text fontWeight="bold" size="large">12</s-text>
+              </s-stack>
+            </s-box>
+            <s-box padding="base" background="subdued" borderRadius="base">
+              <s-stack gap="extra-tight">
+                <s-text color="subdued" size="small">Days to conversion</s-text>
+                <s-text fontWeight="bold" size="large">13</s-text>
+              </s-stack>
+            </s-box>
+          </s-stack>
 
           {/* Visit Date & Button Row */}
-          <div className="conversion-session-row">
-            <div className="conversion-session-info">
+          <s-stack direction="inline" gap="base" alignItems="center" justifyContent="space-between">
+            <s-stack direction="inline" gap="small-200" alignItems="center">
               <s-icon type="info" color="subdued" />
-              <span>5 June 2026</span>
-            </div>
+              <s-text>5 June 2026</s-text>
+            </s-stack>
             <s-button onClick={handleOpenSession}>View full sessions</s-button>
-          </div>
+          </s-stack>
 
           {/* Returned Row */}
-          <div className="conversion-returned-row">
+          <s-stack direction="inline" gap="small-200" alignItems="center">
             <s-icon type="refresh" color="subdued" />
-            <span>Returned 10 times</span>
-          </div>
+            <s-text>Returned 10 times</s-text>
+          </s-stack>
         </s-stack>
 
         <s-button slot="primary-action" onClick={handleCloseConversion}>
@@ -115,14 +117,14 @@ export default function ConversionSummaryCard({ customer }) {
             <span className="session-modal-back-title">Session details</span>
           </div>
 
-          <s-stack gap="small-100" style={{ marginTop: "8px" }}>
-            <div className="session-detail-item">
+          <s-stack gap="small-200" style={{ marginTop: "8px" }}>
+            <s-stack direction="inline" gap="small-200" alignItems="center">
               <s-icon type="chat" color="subdued" />
-              <span>Store visit was direct</span>
-            </div>
-            <div className="session-detail-item">
+              <s-text>Store visit was direct</s-text>
+            </s-stack>
+            <s-stack direction="inline" gap="small-200" alignItems="flex-start">
               <s-icon type="product" color="subdued" />
-              <span>
+              <s-text>
                 The first page they visited was{" "}
                 <s-link
                   href="https://wcdev-chandani.myshopify.com"
@@ -130,20 +132,20 @@ export default function ConversionSummaryCard({ customer }) {
                 >
                   wcdev-chandani.myshopify.com
                 </s-link>
-              </span>
-            </div>
-            <div className="session-detail-item">
+              </s-text>
+            </s-stack>
+            <s-stack direction="inline" gap="small-200" alignItems="center">
               <s-icon type="calendar" color="subdued" />
-              <span>Visited on 5 June 2026 at 05:31 am</span>
-            </div>
+              <s-text>Visited on 5 June 2026 at 05:31 am</s-text>
+            </s-stack>
           </s-stack>
 
-          <div className="session-utm-section">
-            <div className="session-utm-title">UTM Parameters</div>
-            <div className="session-utm-desc">
+          <s-stack gap="small-100">
+            <s-text fontWeight="bold">UTM Parameters</s-text>
+            <s-text color="subdued">
               No UTM parameters were available for this session.
-            </div>
-          </div>
+            </s-text>
+          </s-stack>
         </s-stack>
 
         <s-button slot="primary-action" onClick={handleCloseSession}>

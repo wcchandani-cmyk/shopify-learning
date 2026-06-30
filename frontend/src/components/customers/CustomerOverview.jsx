@@ -57,6 +57,7 @@ export default function CustomerOverview({ customer }) {
 
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [timelineReloadTrigger, setTimelineReloadTrigger] = useState(0);
 
   const tagList = useMemo(() => {
     return form.tags
@@ -226,6 +227,7 @@ export default function CustomerOverview({ customer }) {
         shopify.toast.show("Customer updated");
       }
       modalRef.current?.hideOverlay?.();
+      setTimelineReloadTrigger((prev) => prev + 1);
     } catch (err) {
       shopify.toast.show(err.message || "Failed to save customer", {
         isError: true,
@@ -241,6 +243,7 @@ export default function CustomerOverview({ customer }) {
       const updated = await updateCustomer(customer.id, payload);
       setForm(customerToFormState(updated));
       shopify.toast.show("Tags updated");
+      setTimelineReloadTrigger((prev) => prev + 1);
     } catch (err) {
       shopify.toast.show(err.message || "Failed to update tags", {
         isError: true,
@@ -285,6 +288,7 @@ export default function CustomerOverview({ customer }) {
                 listComments={listCustomerComments}
                 addComment={addCustomerComment}
                 deleteComment={deleteCustomerComment}
+                reloadTrigger={timelineReloadTrigger}
               />
             </s-stack>
           </div>

@@ -3,11 +3,7 @@ const { getRestClient } = require("../../utils/shopify");
 const { parsePageSize, handleError } = require("../../utils/controllerHelper");
 const Order = require("./model");
 const Customer = require("../customer/model");
-const Comment = require("../comment/model");
-const {
-  toCommentDTO,
-  createCommentHandlers,
-} = require("../comment/controller");
+const { createCommentHandlers } = require("../comment/controller");
 const {
   toOrderDTO,
   toOrderDetail,
@@ -176,61 +172,33 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-const { createComment, deleteComment } = createCommentHandlers({
+const { listComments, createComment, deleteComment } = createCommentHandlers({
   resolveParent: async (req) => {
     const { shop, order, error } = await resolveShopOrder(req);
     return { shop, parent: order, error };
   },
   foreignKey: "orderId",
   entityName: "order",
+  fetchShopifyEvents: async (shop, order) => {
+    const { getGraphQLClient } = require("../../utils/shopify");
+    const { graphqlClient } = getGraphQLClient({
+      shopDomain: shop.myshopifyDomain,
+      accessToken: shop.token,
+    });
+    const { ORDER_EVENTS_QUERY } = require("./query");
+    const resp = await graphqlClient.request(ORDER_EVENTS_QUERY, {
+      variables: { id: `gid://shopify/Order/${order.shopifyId}` },
+    });
+    return (resp?.data?.order?.events?.nodes || []).map((evt) => ({
+      id: evt.id,
+      body: evt.message,
+      authorName: "Shopify",
+      createdAt: evt.createdAt,
+      isSystemEvent: true,
+    }));
+  },
 });
 
-const listComments = async (req, res) => {
-  try {
-    const { shop, order, error } = await resolveShopOrder(req);
-    if (error) return errorResponse(res, ...error);
-
-    const localComments = await Comment.findAll({
-      where: { shopId: shop.id, orderId: order.id },
-      order: [["createdAt", "DESC"]],
-    });
-
-    const commentsList = localComments.map(toCommentDTO);
-    let shopifyEvents = [];
-
-    try {
-      const { getGraphQLClient } = require("../../utils/shopify");
-      const { graphqlClient } = getGraphQLClient({
-        shopDomain: shop.myshopifyDomain,
-        accessToken: shop.token,
-      });
-      const { ORDER_EVENTS_QUERY } = require("./query");
-
-      const resp = await graphqlClient.request(ORDER_EVENTS_QUERY, {
-        variables: { id: `gid://shopify/Order/${order.shopifyId}` },
-      });
-      shopifyEvents = (resp?.data?.order?.events?.nodes || []).map((evt) => ({
-        id: evt.id,
-        body: evt.message,
-        authorName: "Shopify",
-        createdAt: evt.createdAt,
-        isSystemEvent: true,
-      }));
-    } catch (err) {
-      console.warn("Failed to fetch order events from Shopify:", err.message);
-    }
-
-    const merged = [...commentsList, ...shopifyEvents].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-    successResponse(res, 200, "Comments fetched successfully", {
-      comments: merged,
-    });
-  } catch (err) {
-    console.error("Error listing order timeline:", err.message);
-    handleError(res, err, "Failed to load timeline");
-  }
-};
 
 const updateOrder = async (req, res) => {
   try {

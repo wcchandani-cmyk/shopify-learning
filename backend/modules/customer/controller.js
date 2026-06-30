@@ -163,6 +163,28 @@ const { listComments, createComment, deleteComment } = createCommentHandlers({
   },
   foreignKey: "customerId",
   entityName: "customer",
+  fetchShopifyEvents: async (shop, customer) => {
+    const { getGraphQLClient } = require("../../utils/shopify");
+    const { graphqlClient } = getGraphQLClient({
+      shopDomain: shop.myshopifyDomain,
+      accessToken: shop.token,
+    });
+    const { CUSTOMER_EVENTS_QUERY } = require("./query");
+    const gid = `gid://shopify/Customer/${customer.shopifyId}`;
+    console.log("[CustomerTimeline] Fetching events for GID:", gid);
+    const resp = await graphqlClient.request(CUSTOMER_EVENTS_QUERY, {
+      variables: { id: gid },
+    });
+    const nodes = resp?.data?.customer?.events?.nodes || [];
+    console.log("[CustomerTimeline] Events received:", nodes.length, JSON.stringify(nodes.slice(0, 2)));
+    return nodes.map((evt) => ({
+      id: evt.id,
+      body: evt.message,
+      authorName: "Shopify",
+      createdAt: evt.createdAt,
+      isSystemEvent: true,
+    }));
+  },
 });
 
 module.exports = {

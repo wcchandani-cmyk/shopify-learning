@@ -52,16 +52,16 @@ export default function OrderRiskCard() {
       <s-modal id="order-risk-modal" ref={modalRef} heading="About this order">
         <s-stack gap="base">
           {ORDER_RISK_FACTORS.map((factor, index) => (
-            <div key={index} className="order-risk-factor">
+            <s-stack key={index} direction="inline" gap="small-200" alignItems="flex-start">
               <s-icon
                 type={factor.positive ? "check" : "info"}
                 color={factor.positive ? "success" : "subdued"}
                 size="small"
               />
-              <span>{factor.text}</span>
-            </div>
+              <s-text>{factor.text}</s-text>
+            </s-stack>
           ))}
-          <div className="order-risk-footer">
+          <s-text color="subdued">
             Learn more about{" "}
             <s-link
               href="https://help.shopify.com/manual/fraud/fraud-protect"
@@ -69,7 +69,7 @@ export default function OrderRiskCard() {
             >
               fraud analysis
             </s-link>
-          </div>
+          </s-text>
         </s-stack>
       </s-modal>
     </>

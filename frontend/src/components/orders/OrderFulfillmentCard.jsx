@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { formatMoney } from "../../utils/customerForm";
 import OrderItemThumbnail from "./OrderItemThumbnail";
 import FulfillmentHoldForm from "./FulfillmentHoldForm";
@@ -21,18 +20,6 @@ export default function OrderFulfillmentCard({
   onConfirmHold,
   onReleaseHold,
 }) {
-  const [splitMenuOpen, setSplitMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
-
-  const toggleSplitMenu = (event) => {
-    if (!splitMenuOpen) {
-      const rect = event.currentTarget
-        .closest(".order-split-button")
-        .getBoundingClientRect();
-      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-    }
-    setSplitMenuOpen((open) => !open);
-  };
 
   return (
     <s-section>
@@ -131,55 +118,41 @@ export default function OrderFulfillmentCard({
             <div className="order-fulfillment-actions">
               {isOnHold ? (
                 <>
-                  <button
-                    type="button"
-                    className="order-btn-sm"
+                  <s-button
                     onClick={onOpenHoldForm}
                   >
                     Add hold
-                  </button>
-                  <button
-                    type="button"
-                    className="order-btn-sm order-btn-sm--primary"
+                  </s-button>
+                  <s-button
+                    variant="primary"
                     onClick={onReleaseHold}
                   >
                     Release hold
-                  </button>
+                  </s-button>
                 </>
               ) : (
                 <>
-                  <div className="order-split-button">
-                    <button
-                      type="button"
-                      className="order-split-button__action"
-                      onClick={onMarkFulfilled}
-                    >
+                  <s-button-group gap="none">
+                    <s-button variant="primary" onClick={onMarkFulfilled}>
                       Mark as fulfilled
-                    </button>
-                    <button
-                      type="button"
-                      className="order-split-button__toggle"
-                      aria-label="Fulfillment options"
-                      aria-expanded={splitMenuOpen}
-                      onClick={toggleSplitMenu}
-                    >
-                      <s-icon
-                        type="chevron-down"
-                        className="order-split-button__chevron"
-                      />
-                    </button>
-                    {splitMenuOpen ? (
-                      <div
-                        className="order-split-popover-menu"
-                        style={{ top: menuPos.top, right: menuPos.right }}
-                      >
+                    </s-button>
+                    <s-button
+                      variant="primary"
+                      icon="chevron-down"
+                      commandFor="fulfillment-options-popover"
+                      command="--toggle"
+                      accessibilityLabel="Fulfillment options"
+                    />
+                    <s-popover id="fulfillment-options-popover" position="below">
+                      <s-stack padding="none" gap="none">
                         {fulfillmentMenuOptions.map((option) => (
-                          <button
+                          <s-button
                             key={option.status}
-                            type="button"
-                            className="order-split-popover-item"
+                            variant="tertiary"
+                            width="100%"
+                            command="--hide"
+                            commandFor="fulfillment-options-popover"
                             onClick={() => {
-                              setSplitMenuOpen(false);
                               if (option.status === "on hold") {
                                 onOpenHoldForm();
                               } else {
@@ -188,11 +161,11 @@ export default function OrderFulfillmentCard({
                             }}
                           >
                             {option.label}
-                          </button>
+                          </s-button>
                         ))}
-                      </div>
-                    ) : null}
-                  </div>
+                      </s-stack>
+                    </s-popover>
+                  </s-button-group>
                 </>
               )}
             </div>

@@ -162,29 +162,28 @@ export default function Timeline({
             >
               {authorInitial || <s-icon type="customers" />}
             </span>
-            <textarea
-              className="cust-timeline__input"
-              aria-label="Leave a comment"
+            <s-text-area
+              label="Leave a comment"
+              labelAccessibilityVisibility="exclusive"
               placeholder="Leave a comment..."
               rows={1}
               value={text}
               onInput={(event) => setText(getInputEventValue(event))}
-              onChange={(event) => setText(getInputEventValue(event))}
+              style={{ flex: "1 1 auto" }}
             />
           </div>
           <div className="cust-timeline__toolbar">
             <div className="cust-timeline__tools">
               {TOOLBAR_ICONS.map((tool) => (
-                <button
+                <s-button
                   key={tool.id}
-                  type="button"
+                  variant="tertiary"
                   className="cust-timeline__tool"
-                  tabIndex={-1}
                   aria-label={tool.label}
                   onClick={(event) => event.preventDefault()}
                 >
                   {tool.node}
-                </button>
+                </s-button>
               ))}
             </div>
             <s-button
@@ -227,14 +226,14 @@ export default function Timeline({
                       {relativeOrTime(item.createdAt)}
                     </span>
                     {!item.isSystemEvent && (
-                      <button
-                        type="button"
+                      <s-button
+                        variant="tertiary"
                         className="cust-timeline__delete"
                         aria-label="Delete comment"
                         onClick={() => handleDelete(item.id)}
                       >
                         ×
-                      </button>
+                      </s-button>
                     )}
                   </div>
                 ))}

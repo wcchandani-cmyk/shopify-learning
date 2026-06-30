@@ -216,10 +216,12 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
                     />
                   </s-stack>
 
-                  <div className="customer-marketing-note">
-                    You should ask your customers for permission before you
-                    subscribe them to your marketing emails or SMS.
-                  </div>
+                  <s-box padding="base" background="subdued" borderRadius="base">
+                    <s-text tone="subdued" size="small">
+                      You should ask your customers for permission before you
+                      subscribe them to your marketing emails or SMS.
+                    </s-text>
+                  </s-box>
                 </s-stack>
               </s-section>
 
@@ -228,8 +230,7 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
                   <s-text color="subdued">
                     The primary address of this customer
                   </s-text>
-                  <button
-                    type="button"
+                  <s-clickable
                     className="address-add-card"
                     onClick={() => setAddressModalOpen(true)}
                   >
@@ -240,7 +241,7 @@ export default function CustomerDetail({ customer, isNew = false, onSaved }) {
                       </span>
                     </span>
                     <span className="address-add-card__chevron">›</span>
-                  </button>
+                  </s-clickable>
                 </s-stack>
               </s-section>
 

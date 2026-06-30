@@ -8,19 +8,33 @@ const toCommentDTO = (row) => ({
   createdAt: row.createdAt || new Date(),
 });
 
-const createCommentHandlers = ({ resolveParent, foreignKey, entityName }) => {
+const createCommentHandlers = ({ resolveParent, foreignKey, entityName, fetchShopifyEvents }) => {
   const listComments = async (req, res) => {
     try {
       const { shop, parent, error } = await resolveParent(req);
       if (error) return errorResponse(res, ...error);
 
-      const comments = await Comment.findAll({
+      const localRows = await Comment.findAll({
         where: { shopId: shop.id, [foreignKey]: parent.id },
         order: [["createdAt", "DESC"]],
       });
+      const localComments = localRows.map(toCommentDTO);
+
+      let shopifyEvents = [];
+      if (typeof fetchShopifyEvents === "function") {
+        try {
+          shopifyEvents = await fetchShopifyEvents(shop, parent);
+        } catch (shopifyErr) {
+          console.warn(`Failed to fetch Shopify events for ${entityName}:`, shopifyErr.message);
+        }
+      }
+
+      const allComments = [...localComments, ...shopifyEvents].sort(
+        (commentA, commentB) => new Date(commentB.createdAt) - new Date(commentA.createdAt)
+      );
 
       successResponse(res, 200, "Comments fetched successfully", {
-        comments: comments.map(toCommentDTO),
+        comments: allComments,
       });
     } catch (err) {
       console.error(`Error listing comments for ${entityName}:`, err.message);
