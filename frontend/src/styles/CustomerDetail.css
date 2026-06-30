@@ -390,6 +390,14 @@
   flex: 0 0 auto;
 }
 
+.cust-badge__dot--on {
+  background-color: #008060 !important;
+}
+
+.cust-badge__dot--off {
+  background-color: #8c9196 !important;
+}
+
 /* ── Customer timeline ──────────────────────────────── */
 .cust-timeline {
   display: flex;
